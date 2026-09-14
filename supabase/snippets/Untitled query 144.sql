@@ -1,0 +1,1 @@
+supabase functions invoke google-workspace-sync --no-verify-jwt

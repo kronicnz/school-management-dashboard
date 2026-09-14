@@ -1,0 +1,1 @@
+SELECT year_group, COUNT(*) FROM students GROUP BY year_group ORDER BY year_group

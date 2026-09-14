@@ -1,0 +1,11 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "indexing": {
+    "enabled": true
+  },
+  "mcp": {
+    "supabase": {
+      "enabled": true
+    }
+  }
+}
