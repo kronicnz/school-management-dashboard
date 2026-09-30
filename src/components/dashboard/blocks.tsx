@@ -3,8 +3,8 @@ import { Link } from "react-router-dom"
 import { BarChart3, Clock3, RefreshCw, Table2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Button } from "../ui/button"
-import { StatisticCard, type StatisticTone } from "../ui/StatisticCard"
-import { TableBadge, type TableBadgeTone } from "../ui/TableBadge"
+import type { StatisticTone } from "../ui/StatisticCard"
+import { TableBadge } from "../ui/TableBadge"
 import { cn } from "../../utils/cn"
 import type { DashboardTrendPoint, DashboardWorkItem } from "./types"
 
@@ -323,19 +323,6 @@ export function StackedCompletionChart({ data, seriesLabel, emptyMessage = "No c
         ))}
       </div>
     </ChartFrame>
-  )
-}
-
-/** Secondary-weight KPI. Shares the single primitive with the primary variant. */
-export function HeroStat({ label, value, detail, tone }: { label: string; value: string; detail?: string; tone?: TableBadgeTone }) {
-  return (
-    <StatisticCard
-      label={label}
-      value={value}
-      variant="secondary"
-      description={detail}
-      tone={tone === "rose" ? "destructive" : tone === "amber" ? "warning" : tone === "emerald" ? "success" : "neutral"}
-    />
   )
 }
 
