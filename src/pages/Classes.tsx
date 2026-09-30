@@ -135,12 +135,12 @@ export default function ClassesPage() {
           <p className="text-xs text-[var(--color-muted)]">Capacity and curriculum coverage at a glance.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Classes" value={totalClasses} icon={Plus} description="Class sections scheduled in the system" accentClassName="text-cyan-300" />
-          <StatisticCard label="Grades Represented" value={grades.length} icon={RefreshCw} description="Distinct grade levels in use" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Subject Linked" value={subjectLinkedClasses} icon={BookOpen} description="Classes tied to subject assignments" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Rooms Assigned" value={roomsAssigned} icon={School} description="Classes with a room allocation" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Total Capacity" value={totalCapacity} icon={Users} description="Combined seats across all classes" accentClassName="text-cyan-300" />
-          <StatisticCard label="Avg Capacity" value={averageCapacity} icon={BarChart3} description="Average seats per class" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Classes" value={totalClasses} icon={Plus} description="Class sections scheduled in the system" tone="information" />
+          <StatisticCard label="Grades Represented" value={grades.length} icon={RefreshCw} description="Distinct grade levels in use" tone="primary" />
+          <StatisticCard label="Subject Linked" value={subjectLinkedClasses} icon={BookOpen} description="Classes tied to subject assignments" tone="pending" />
+          <StatisticCard label="Rooms Assigned" value={roomsAssigned} icon={School} description="Classes with a room allocation" tone="completed" />
+          <StatisticCard label="Total Capacity" value={totalCapacity} icon={Users} description="Combined seats across all classes" tone="information" />
+          <StatisticCard label="Avg Capacity" value={averageCapacity} icon={BarChart3} description="Average seats per class" tone="primary" />
         </StatisticGrid>
       </section>
 

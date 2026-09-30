@@ -71,6 +71,10 @@ export default function AssetsPage() {
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("")
   const [isAssigning, setIsAssigning] = useState(false)
 
+  function normalizeStatValue(value: string | null | undefined) {
+    return (value ?? "").trim().toLowerCase().replace(/\s+/g, "_")
+  }
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
@@ -269,8 +273,12 @@ export default function AssetsPage() {
 
   const filteredAssets = useMemo(() => {
     return assets.filter((a) => {
-      const matchesStatus = !filterStatus || a.status === filterStatus
       const locationCategory = getLocationCategory(a.location)
+      if (!filterLocationCategory && locationCategory === "deprovisioned") {
+        return false
+      }
+
+      const matchesStatus = !filterStatus || a.status === filterStatus
       const matchesLocationCategory =
         !filterLocationCategory || locationCategory === filterLocationCategory
       const query = search.trim().toLowerCase()
@@ -289,12 +297,14 @@ export default function AssetsPage() {
     })
   }, [assets, filterStatus, filterLocationCategory, getAssignedToName, search])
 
-  const totalAssets = assets.length
-  const availableAssets = assets.filter((asset) => asset.status === "available").length
-  const assignedAssets = assets.filter((asset) => Boolean(asset.assigned_to)).length
-  const maintenanceAssets = assets.filter((asset) => asset.status === "maintenance").length
-  const retiredAssets = assets.filter((asset) => asset.status === "retired").length
-  const lostAssets = assets.filter((asset) => asset.status === "lost").length
+  const deprovisionedAssets = assets.filter((asset) => getLocationCategory(asset.location) === "deprovisioned").length
+  const activeAssets = assets.filter((asset) => getLocationCategory(asset.location) !== "deprovisioned")
+  const totalAssets = activeAssets.length
+  const availableAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "available").length
+  const assignedAssets = activeAssets.filter((asset) => Boolean(asset.assigned_to)).length
+  const maintenanceAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "maintenance").length
+  const retiredAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "retired").length
+  const lostAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "lost").length
 
   const statuses = ["available", "in_use", "maintenance", "retired", "lost"]
   const locationCategories = [
@@ -362,15 +372,17 @@ export default function AssetsPage() {
       header: "Status",
       sortable: true,
       className: "whitespace-nowrap min-w-[130px]",
-      cell: (val: string) => {
+      cell: (val: string, row: Asset) => {
+        const locationCategory = getLocationCategory(row.location)
+        const displayValue = locationCategory === "deprovisioned" ? "deprovisioned" : (val || "available")
         const tone =
-          val === "available" ? "emerald" :
-          val === "in_use" ? "cyan" :
-          val === "maintenance" ? "amber" :
-          val === "retired" ? "rose" :
-          val === "lost" ? "purple" :
+          displayValue === "available" ? "emerald" :
+          displayValue === "in_use" ? "cyan" :
+          displayValue === "maintenance" ? "amber" :
+          displayValue === "retired" ? "rose" :
+          displayValue === "lost" ? "purple" :
           "slate"
-        return <TableBadge tone={tone} className="capitalize">{(val || "available").replace("_", " ")}</TableBadge>
+        return <TableBadge tone={tone} className="capitalize">{displayValue.replace("_", " ")}</TableBadge>
       },
     },
     {
@@ -386,18 +398,19 @@ export default function AssetsPage() {
     },
     {
       accessor: "assigned_to",
-      header: "Assigned To",
+      header: "Allocated To",
       sortable: true,
       className: "whitespace-nowrap min-w-[180px]",
       cell: (_: any, row: Asset) => {
         const assignedName = getAssignedToName(row)
+        const isDeprovisioned = getLocationCategory(row.location) === "deprovisioned"
         if (!row.assigned_to) {
-          return <span className="text-xs text-slate-500 whitespace-nowrap">Unassigned</span>
+          return <span className="text-xs text-slate-500 whitespace-nowrap">{isDeprovisioned ? "Deprovisioned" : "Unassigned"}</span>
         }
         return (
           <div className="whitespace-nowrap">
             <div className="text-xs font-medium text-indigo-300">
-              {assignedName || "Assigned User"}
+              {assignedName || "Allocated User"}
             </div>
             <div className="text-[10px] capitalize text-slate-400">{row.assigned_to_type || "User"}</div>
           </div>
@@ -476,12 +489,13 @@ export default function AssetsPage() {
           <p className="text-xs text-slate-400">Device lifecycle counts and assignment status.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Assets" value={totalAssets} icon={Laptop} description="Inventory items tracked in the register" accentClassName="text-cyan-300" />
-          <StatisticCard label="Available" value={availableAssets} icon={RefreshCw} description="Ready to assign or issue" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Assigned" value={assignedAssets} icon={UserPlus} description="Currently allocated to users" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Maintenance" value={maintenanceAssets} icon={UserMinus} description="Temporarily unavailable for use" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Retired" value={retiredAssets} icon={Trash2} description="Removed from active circulation" accentClassName="text-slate-300" glowClassName="from-slate-400/25 via-slate-400/10 to-transparent" />
-          <StatisticCard label="Lost" value={lostAssets} icon={AlertTriangle} description="Items marked as missing" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
+          <StatisticCard label="Total Assets" value={totalAssets} icon={Laptop} description="Inventory items tracked in the register" tone="information" />
+          <StatisticCard label="Deprovisioned" value={deprovisionedAssets} icon={AlertTriangle} description="Devices excluded from the active directory" tone="inactive" />
+          <StatisticCard label="Available" value={availableAssets} icon={RefreshCw} description="Ready to assign or issue" tone="success" />
+          <StatisticCard label="Assigned" value={assignedAssets} icon={UserPlus} description="Currently allocated to users" tone="pending" />
+          <StatisticCard label="Maintenance" value={maintenanceAssets} icon={UserMinus} description="Temporarily unavailable for use" tone="warning" />
+          <StatisticCard label="Retired" value={retiredAssets} icon={Trash2} description="Removed from active circulation" tone="inactive" />
+          <StatisticCard label="Lost" value={lostAssets} icon={AlertTriangle} description="Items marked as missing" tone="destructive" />
         </StatisticGrid>
       </section>
 

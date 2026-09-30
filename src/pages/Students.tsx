@@ -232,12 +232,12 @@ export default function StudentsPage() {
           <p className="text-xs text-slate-400">Compact counts for the current student cohort.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Students" value={totalStudents} icon={Plus} description="Full roster tracked in the system" accentClassName="text-cyan-300" />
-          <StatisticCard label="Active" value={activeStudents} icon={RefreshCw} description="Currently enrolled and in good standing" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Inactive" value={inactiveStudents} icon={Trash2} description="Archived or inactive records" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Assigned Classes" value={assignedStudents} icon={BookOpen} description="Students linked to classes" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Unassigned Students" value={unassignedStudents} icon={Users} description="Students not linked to a class" accentClassName="text-cyan-300" />
-          <StatisticCard label="Year Groups" value={yearGroups} icon={GraduationCap} description="Distinct year levels represented" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Students" value={totalStudents} icon={Plus} description="Full roster tracked in the system" tone="information" />
+          <StatisticCard label="Active" value={activeStudents} icon={RefreshCw} description="Currently enrolled and in good standing" tone="success" />
+          <StatisticCard label="Inactive" value={inactiveStudents} icon={Trash2} description="Archived or inactive records" tone="destructive" />
+          <StatisticCard label="Assigned Classes" value={assignedStudents} icon={BookOpen} description="Students linked to classes" tone="warning" />
+          <StatisticCard label="Unassigned Students" value={unassignedStudents} icon={Users} description="Students not linked to a class" tone="warning" />
+          <StatisticCard label="Year Groups" value={yearGroups} icon={GraduationCap} description="Distinct year levels represented" tone="primary" />
         </StatisticGrid>
       </section>
 

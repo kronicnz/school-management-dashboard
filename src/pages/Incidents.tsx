@@ -60,6 +60,7 @@ import type {
   Student,
 } from "../lib/api/database.types"
 import { useAuth } from "../context/useAuth"
+import { can } from "../lib/access/permissions"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { Button } from "../components/ui/button"
 import { Dialog } from "../components/ui/Dialog"
@@ -73,7 +74,7 @@ import { TableBadge } from "../components/ui/TableBadge"
 import { useToast } from "../components/ui/useToast"
 import { getErrorMessage } from "../utils/getErrorMessage"
 import type { CreateDraft, DetailDraft, EmailPreview, RetentionRow } from "./incidents/types"
-import { csvEscape, downloadTextFile, formatDate, leadershipRoles, severityBadgeTone, visibilityBadgeTone } from "./incidents/utils"
+import { csvEscape, downloadTextFile, formatDate, severityBadgeTone, visibilityBadgeTone } from "./incidents/utils"
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
@@ -133,8 +134,12 @@ export default function IncidentsPage() {
     follow_up_next_action: "",
   })
 
-  const isTeacherOnly = user?.roles.includes("teacher") && !user?.roles.some((role) => leadershipRoles.includes(role))
-  const canManageSensitive = Boolean(user?.roles.some((role) => leadershipRoles.includes(role)))
+  // Sensitive incidents are gated on one capability rather than a list of role
+  // names, so the UI and `is_counsellor_or_leadership` cannot drift apart.
+  const canManageSensitive = can(user?.roles, "incidents.view_sensitive")
+  // A requester raising an incident cannot set its visibility, assignment, or
+  // follow-up: those controls belong to whoever manages incidents.
+  const isRaiseOnly = !can(user?.roles, "incidents.update_all") && !canManageSensitive
 
   const studentNameMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -438,7 +443,7 @@ export default function IncidentsPage() {
       occurred_at: new Date(createForm.occurred_at).toISOString(),
       severity: createForm.severity,
       status: createForm.status,
-      visibility: isTeacherOnly ? "standard" : createForm.visibility,
+      visibility: isRaiseOnly ? "standard" : createForm.visibility,
       assigned_to: canManageSensitive ? createForm.assigned_to || null : null,
       description: createForm.description,
       action_taken: createForm.action_taken || null,
@@ -461,7 +466,7 @@ export default function IncidentsPage() {
           status: "open",
           notes: createForm.follow_up_notes.trim(),
           next_action: createForm.follow_up_next_action.trim() || null,
-          visibility: isTeacherOnly ? "standard" : createForm.visibility,
+          visibility: isRaiseOnly ? "standard" : createForm.visibility,
         })
       }
 
@@ -492,16 +497,27 @@ export default function IncidentsPage() {
   async function handleSaveDetail() {
     if (!selectedIncident || !detailDraft) return
     try {
+      const visibilityChanged = canManageSensitive && detailDraft.visibility !== selectedIncident.visibility
+      const visibilityReason = visibilityChanged
+        ? window.prompt(`Reason for visibility change to ${detailDraft.visibility}`)
+        : null
+
+      if (visibilityChanged && !visibilityReason) {
+        return
+      }
+
       await updateIncident(selectedIncident.id, {
         status: detailDraft.status,
         severity: detailDraft.severity,
-        visibility: canManageSensitive ? detailDraft.visibility : selectedIncident.visibility,
         assigned_to: canManageSensitive ? detailDraft.assigned_to || null : selectedIncident.assigned_to,
-        description: detailDraft.description.trim(),
         resolution_summary: detailDraft.resolution_summary.trim() || null,
         action_taken: detailDraft.action_taken.trim() || null,
         sensitivity_review_requested: detailDraft.sensitivity_review_requested,
       })
+
+      if (visibilityChanged) {
+        await setIncidentVisibility(selectedIncident.id, detailDraft.visibility, visibilityReason ?? "")
+      }
 
       if (user?.id) {
         await replaceIncidentStudents(selectedIncident.id, detailDraft.tagged_student_ids)
@@ -849,12 +865,12 @@ export default function IncidentsPage() {
           <p className="text-xs text-[var(--color-muted)]">Operational counts for case handling and follow-up.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Cases" value={totalIncidents} icon={FileText} description="All incident records in scope" accentClassName="text-cyan-300" />
-          <StatisticCard label="Open" value={report?.open_count ?? openIncident} icon={Clock3} description="Cases waiting to be worked" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="In Review" value={report?.in_review_count ?? inReviewCount} icon={RefreshCw} description="Cases currently under assessment" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Resolved" value={report?.resolved_count ?? resolvedCount} icon={CheckCircle2} description="Cases closed with action completed" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Closed" value={closedCount} icon={X} description="Cases fully closed from the workflow" accentClassName="text-slate-300" glowClassName="from-slate-400/25 via-slate-400/10 to-transparent" />
-          <StatisticCard label="Overdue" value={report?.overdue_follow_up_count ?? overdueFollowUpCount} icon={AlertTriangle} description="Follow-ups past their due date" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
+          <StatisticCard label="Total Cases" value={totalIncidents} icon={FileText} description="All incident records in scope" tone="information" />
+          <StatisticCard label="Open" value={report?.open_count ?? openIncident} icon={Clock3} description="Cases waiting to be worked" tone="warning" />
+          <StatisticCard label="In Review" value={report?.in_review_count ?? inReviewCount} icon={RefreshCw} description="Cases currently under assessment" tone="pending" />
+          <StatisticCard label="Resolved" value={report?.resolved_count ?? resolvedCount} icon={CheckCircle2} description="Cases closed with action completed" tone="success" />
+          <StatisticCard label="Closed" value={closedCount} icon={X} description="Cases fully closed from the workflow" tone="inactive" />
+          <StatisticCard label="Overdue" value={report?.overdue_follow_up_count ?? overdueFollowUpCount} icon={AlertTriangle} description="Follow-ups past their due date" tone="destructive" />
         </StatisticGrid>
       </section>
 
@@ -1013,9 +1029,9 @@ export default function IncidentsPage() {
               <FormField label="Visibility" htmlFor="incident-visibility" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
                 <Select
                   id="incident-visibility"
-                  value={isTeacherOnly ? "standard" : createForm.visibility}
+                  value={isRaiseOnly ? "standard" : createForm.visibility}
                   onChange={(event) => setCreateForm({ ...createForm, visibility: event.target.value as "standard" | "sensitive" })}
-                  disabled={Boolean(isTeacherOnly)}
+                  disabled={Boolean(isRaiseOnly)}
                 >
                   <option value="standard">Standard</option>
                   <option value="sensitive">Sensitive</option>
@@ -1371,8 +1387,11 @@ export default function IncidentsPage() {
                   <Textarea
                     rows={4}
                     value={detailDraft.description}
-                    onChange={(event) => setDetailDraft({ ...detailDraft, description: event.target.value })}
+                    readOnly
+                    title="Incident description cannot be edited after creation."
+                    aria-readonly="true"
                   />
+                  <p className="text-xs text-slate-400">Incident descriptions are locked after creation.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

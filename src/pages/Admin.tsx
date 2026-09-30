@@ -13,12 +13,18 @@ import {
   Crown,
   Download,
   Filter,
+  History,
+  KeyRound,
   Layers3,
+  MailWarning,
   RefreshCw,
+  RotateCcw,
   School,
   Search,
   Pencil,
+  Send,
   ShieldCheck,
+  ShieldOff,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -31,18 +37,29 @@ import { useAuth } from "../context/useAuth"
 import type { Class, Incident, Student } from "../lib/api/database.types"
 import {
   createStaff,
+  createStaffAccount,
+  fetchAccountAudit,
+  fetchAccountSettings,
   fetchClasses,
   fetchCurrentUserRoles,
   fetchIncidents,
   fetchStaff,
   fetchStudents,
   replaceStaffRolesByProfileId,
+  resendStaffInvite,
   resolveProfileIdByEmail,
+  restoreStaffAccess,
+  revokeStaffAccess,
+  setStaffRoles,
   syncStaffFromGoogleWorkspace,
   syncStudentsFromGoogleWorkspace,
   updateStaff,
+  type AccountAuditRow,
   type StaffDirectoryRow,
+  type StaffRoleGrant,
 } from "../lib/api/supabaseApi"
+import { ASSIGNABLE_ROLES } from "../lib/access/registry"
+import { todayInSchoolZone } from "../lib/school-time"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { Button } from "../components/ui/button"
 import { Dialog } from "../components/ui/Dialog"
@@ -77,35 +94,82 @@ type AssignmentDraft = {
 
 type DashboardTab = "directory" | "assignments" | "sync" | "analytics"
 
-const roleOptions = [
-  "teacher",
-  "counsellor",
-  "principal",
-  "deputy_principal",
-  "counsellor_delegate",
-  "leadership_delegate",
-  "it_staff",
-  "it_admin",
-]
+type RoleWindow = { effective_from: string; effective_to: string }
+
+/**
+ * The date the school considers today, used to decide which grants are in force.
+ *
+ * This replaces a local-calendar implementation built from `getFullYear()` and
+ * friends, which put the *viewer's* timezone in charge of a window that the
+ * server compares in the *database's* timezone. An admin signing in from
+ * overseas could see a different answer to the same question than the RLS
+ * policies. Both sides now resolve through src/lib/school-time.ts.
+ */
+function todayIso(): string {
+  return todayInSchoolZone()
+}
+
+function toRoleGrants(roles: StaffRole[], windows: Record<string, RoleWindow>): StaffRoleGrant[] {
+  return roles.map((role) => ({
+    role,
+    effective_from: windows[role]?.effective_from || null,
+    effective_to: windows[role]?.effective_to || null,
+  }))
+}
+
+// The grantable role set, straight from the catalogue in
+// src/lib/access/registry.ts. `teacher` is retired and deliberately absent.
+const roleOptions = [...ASSIGNABLE_ROLES] as const
 
 type StaffRole = (typeof roleOptions)[number]
 
-const statusOptions = ["active", "inactive", "pending"]
+/**
+ * The status values the `staff.status` check constraint actually allows.
+ *
+ * "pending" was offered here before and violated the constraint, so every save
+ * with it ticked failed against the database with an opaque error.
+ */
+const statusOptions = ["active", "inactive", "on_leave"]
 
-const scopeModeOptions = ["primary_teacher", "co_teacher", "manual_inclusion", "manual_exclusion"]
+// `assignment_role` values the `class_staff_assignments` CHECK allows. `dean` and
+// `pastoral_support` are legal in the database but are not staffing modes this
+// screen offers, so they are left out rather than offered and rejected.
+const scopeModeOptions = ["primary_teacher", "co_teacher", "manual_inclusion", "manual_exclusion"] as const
 
 function getRoleBadgeTone(value: string) {
-  if (["principal", "deputy_principal", "it_admin"].includes(value)) return "violet"
-  if (["teacher", "counsellor", "it_staff"].includes(value)) return "cyan"
-  if (["counsellor_delegate", "leadership_delegate"].includes(value)) return "amber"
+  if (["site_admin", "it_admin"].includes(value)) return "violet"
+  if (["finance_admin", "board_member"].includes(value)) return "amber"
+  if (["finance_read_only"].includes(value)) return "slate"
+  if (["staff", "counsellor", "it_staff", "property_staff", "property_manager"].includes(value)) return "cyan"
   return "slate"
 }
 
 function getStatusBadgeTone(value: string) {
   if (value === "active") return "emerald"
+  if (value === "on_leave") return "amber"
   if (value === "pending") return "amber"
   if (value === "inactive") return "slate"
   return "slate"
+}
+
+/**
+ * Account status is not the same thing as `staff.status`. That column is an HR
+ * field; this one is whether the person can sign in and what they can reach.
+ *
+ * `unknown` means the viewer is not allowed to read the registration table, so it
+ * is reported as the honest "a login exists" rather than a guessed "active".
+ */
+function getAccountStatusTone(value: string) {
+  if (value === "active") return "emerald"
+  if (value === "invited") return "amber"
+  if (value === "revoked") return "rose"
+  return "slate"
+}
+
+function getAccountStatusLabel(value: string | null | undefined) {
+  if (!value || value === "none") return "No login"
+  if (value === "unknown") return "Login linked"
+  return labelize(value)
 }
 
 function getModeBadgeTone(value: string) {
@@ -154,7 +218,14 @@ export default function AdminPage() {
     org_unit_path: "",
     profile_id: "",
     roles: [] as StaffRole[],
+    roleWindows: {} as Record<string, RoleWindow>,
+    createAccount: false,
   })
+  const [allowedEmailDomains, setAllowedEmailDomains] = useState<string[]>([])
+  const [auditRows, setAuditRows] = useState<AccountAuditRow[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
+  const [accountAction, setAccountAction] = useState<"resend" | "revoke" | "restore" | null>(null)
+  const [confirmRevokeFor, setConfirmRevokeFor] = useState<string | null>(null)
   const [assignmentDrafts, setAssignmentDrafts] = useState<AssignmentDraft[]>([])
   const [assignmentForm, setAssignmentForm] = useState({
     scopeType: "teaching scope" as AssignmentDraft["scopeType"],
@@ -170,18 +241,21 @@ export default function AdminPage() {
 
   const loadAdminData = useCallback(() => {
     return run(async () => {
-      const [staffData, studentData, classData, incidentData, roleData] = await Promise.all([
+      const [staffData, studentData, classData, incidentData, roleData, settingsData] = await Promise.all([
         fetchStaff(),
         fetchStudents(),
         fetchClasses(),
         fetchIncidents(),
         fetchCurrentUserRoles(),
+        // Read-only and never load-bearing: a failure here must not blank the page.
+        fetchAccountSettings().catch(() => ({ allowedEmailDomains: [] })),
       ])
       setStaff(staffData)
       setStudents(studentData)
       setClasses(classData)
       setIncidents(incidentData)
       setRoles(roleData)
+      setAllowedEmailDomains(settingsData.allowedEmailDomains)
       setSelectedStaffId((current) => current ?? staffData[0]?.id ?? null)
     }, {
       onError: (error) => logError("Failed to load admin dashboard", error),
@@ -195,10 +269,91 @@ export default function AdminPage() {
   }, [loadAdminData])
 
   const isAdmin = roles.some((role) =>
-    ["principal", "deputy_principal", "counsellor_delegate", "leadership_delegate"].includes(role)
+    ["site_admin", "it_admin"].includes(role)
   )
-  
+
   const selectedStaff = selectedStaffId ? staff.find((entry) => entry.id === selectedStaffId) ?? null : null
+  const selectedProfileId = selectedStaff?.profile_id ?? null
+
+  // The audit trail is admin-only on purpose, so it is not fetched for a
+  // read-only viewer and is never fetched for a person with no login.
+  useEffect(() => {
+    if (!isAdmin || !selectedProfileId) {
+      setAuditRows([])
+      return
+    }
+
+    let cancelled = false
+    setAuditLoading(true)
+
+    void fetchAccountAudit(selectedProfileId, 10)
+      .then((rows) => {
+        if (!cancelled) setAuditRows(rows)
+      })
+      .catch((error) => {
+        if (!cancelled) setAuditRows([])
+        logError("Failed to load the account audit log", error)
+      })
+      .finally(() => {
+        if (!cancelled) setAuditLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAdmin, selectedProfileId])
+
+  async function handleResendInvite() {
+    if (!selectedProfileId) return
+    setAccountAction("resend")
+    try {
+      await resendStaffInvite(selectedProfileId)
+      toast.success("Invitation resent", `${selectedStaff?.first_name} has a fresh set-password link.`)
+      await loadAdminData()
+    } catch (error) {
+      logError("Failed to resend the invitation", error)
+      toast.error("Could not resend the invitation", getErrorMessage(error))
+    } finally {
+      setAccountAction(null)
+    }
+  }
+
+  async function handleRevokeAccess() {
+    if (!selectedProfileId) return
+    setAccountAction("revoke")
+    try {
+      await revokeStaffAccess(selectedProfileId)
+      setConfirmRevokeFor(null)
+      toast.success(
+        "Access revoked",
+        `${selectedStaff?.first_name} can no longer sign in, and every role grant was deactivated.`,
+      )
+      await loadAdminData()
+    } catch (error) {
+      logError("Failed to revoke access", error)
+      toast.error("Could not revoke access", getErrorMessage(error))
+    } finally {
+      setAccountAction(null)
+    }
+  }
+
+  async function handleRestoreAccess() {
+    if (!selectedProfileId) return
+    setAccountAction("restore")
+    try {
+      await restoreStaffAccess(selectedProfileId)
+      toast.success(
+        "Suspension lifted",
+        `${selectedStaff?.first_name} can sign in again. Their role grants stay off until an admin re-grants them.`,
+      )
+      await loadAdminData()
+    } catch (error) {
+      logError("Failed to restore access", error)
+      toast.error("Could not restore access", getErrorMessage(error))
+    } finally {
+      setAccountAction(null)
+    }
+  }
 
   const departments = useMemo(() => {
     const list = staff.map((s) => s.department).filter(Boolean) as string[]
@@ -226,7 +381,14 @@ export default function AdminPage() {
     })
   }, [staff, search, statusFilter, roleFilter, departmentFilter])
   const activeIncidents = incidents.filter((incident) => ["open", "in_review"].includes(incident.status)).length
-  const teacherCount = staff.filter((entry) => entry.roles.some((role) => role.toLowerCase().includes("teacher"))).length
+  // `teacher` is retired in favour of `staff`, so both must be counted or this
+  // tile reads zero on a school that has no historical teacher grants left.
+  const teacherCount = staff.filter((entry) =>
+    entry.roles.some((role) => {
+      const value = role.toLowerCase()
+      return value === "staff" || value.includes("teacher")
+    }),
+  ).length
   const departmentCount = departments.length
   const totalClasses = classes.length
   const totalStudents = students.length
@@ -331,6 +493,17 @@ export default function AdminPage() {
       ),
     },
     {
+      accessor: "account_status",
+      header: "Account",
+      sortable: true,
+      className: "whitespace-nowrap min-w-[150px]",
+      cell: (_: unknown, row: StaffDirectoryRow) => (
+        <TableBadge tone={getAccountStatusTone(row.account_status ?? "none")}>
+          {getAccountStatusLabel(row.account_status)}
+        </TableBadge>
+      ),
+    },
+    {
       accessor: "department",
       header: "Department",
       sortable: true,
@@ -376,10 +549,45 @@ export default function AdminPage() {
       org_unit_path: "",
       profile_id: "",
       roles: [],
+      roleWindows: {},
+      createAccount: false,
     })
   }
 
-  function handleEditStaff(row: StaffDirectoryRow) {
+  function handleEditStaff(row: StaffDirectoryRow, options: { createAccount?: boolean } = {}) {
+    const inForce = row.roles.length > 0 ? row.roles as StaffRole[] : row.role ? [row.role as StaffRole] : []
+
+    // Grants staged for a first Google sign-in. Loaded here for the same reason the
+    // dated grants are: the form writes back the full ticked list, so anything not
+    // loaded is silently dropped on the next save of an unrelated field.
+    const staged = row.pending_roles
+
+    // Grants that are active but not in force today, such as next year's board seat
+    // or a relief-cover term, are merged in so the dialog shows what is actually
+    // granted. Leaving them out would not merely hide them: saving this form writes
+    // back the full ticked list, so an unrelated phone-number edit would deactivate
+    // them for good.
+    //
+    // The form is keyed by role, so a role with more than one out-of-window grant
+    // collapses to a single row. Upcoming grants win over lapsed ones, because
+    // losing a future grant is worse than losing an expired one.
+    const upcoming = row.dated_roles
+      .filter((grant) => !grant.effective_to || grant.effective_to >= todayIso())
+      .sort((a, b) => (a.effective_from ?? "9999-12-31").localeCompare(b.effective_from ?? "9999-12-31"))
+
+    const windowsFromGrants: Record<string, RoleWindow> = {}
+    for (const grant of [...staged, ...upcoming, ...row.dated_roles]) {
+      if (windowsFromGrants[grant.role]) continue
+      windowsFromGrants[grant.role] = {
+        effective_from: grant.effective_from ?? "",
+        effective_to: grant.effective_to ?? "",
+      }
+    }
+
+    const roles = Array.from(
+      new Set([...inForce, ...staged.map((grant) => grant.role), ...row.dated_roles.map((grant) => grant.role)]),
+    ) as StaffRole[]
+
     setEditingStaff(row)
     setStaffForm({
       first_name: row.first_name,
@@ -390,19 +598,56 @@ export default function AdminPage() {
       status: row.status ?? "active",
       org_unit_path: row.org_unit_path ?? "",
       profile_id: row.profile_id ?? "",
-      roles: row.roles.length > 0 ? row.roles as StaffRole[] : row.role ? [row.role as StaffRole] : [],
+      roles,
+      // Existing dates are carried over, so opening and saving a form unchanged is a
+      // no-op for grants. A windowed grant in force today still opens empty: the
+      // directory row reports the role but not whether the window was deliberate, and
+      // guessing either way would silently rewrite someone's access.
+      roleWindows: Object.fromEntries(
+        roles.map((role) => [role, windowsFromGrants[role] ?? { effective_from: "", effective_to: "" }]),
+      ),
+      // Pre-ticked when opened from the "create login" action so the admin does not
+      // have to find the checkbox to get the thing they asked for.
+      createAccount: options.createAccount ?? false,
     })
     setShowStaffDialog(true)
   }
 
   const handleSubmitStaff: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault()
+
+      const fullName = `${staffForm.first_name} ${staffForm.last_name}`.trim()
+      const grants = toRoleGrants(staffForm.roles, staffForm.roleWindows)
+      // Resolved below; declared here so the outcome toast can report it.
+      let rolesStaged = false
+
     try {
-      const resolvedProfileId =
+      let resolvedProfileId =
         editingStaff?.profile_id?.trim() ||
         staffForm.profile_id.trim() ||
         (staffForm.email.trim() ? await resolveProfileIdByEmail(staffForm.email.trim()) : null) ||
         null
+
+      // When creating a login, the edge function runs first. The staff row needs a
+      // profile_id and a profile only comes into existence when the login is made,
+      // so the old order (save the staff row, then look for a profile) could only
+      // ever find one that already existed.
+      let accountCreated = false
+      let rolesAlreadyApplied = false
+      if (staffForm.createAccount && isAdmin) {        const result = await createStaffAccount({
+          email: staffForm.email.trim(),
+          firstName: staffForm.first_name.trim(),
+          lastName: staffForm.last_name.trim(),
+          grants,
+          staffId: editingStaff?.id ?? null,
+        })
+        resolvedProfileId = result.profileId
+        accountCreated = result.invited
+        // The function already applied these exact grants through the same RPC.
+        // Writing them a second time would be a redundant round trip that only
+        // obscures which write is authoritative in the audit trail.
+        rolesAlreadyApplied = true
+      }
 
       const payload = {
         first_name: staffForm.first_name,
@@ -413,7 +658,14 @@ export default function AdminPage() {
         status: staffForm.status,
         org_unit_path: staffForm.org_unit_path || null,
         profile_id: resolvedProfileId,
+        // No profile means organisation staff who have not signed in with Google
+        // yet. The grants are staged on the staff row and applied by the
+        // `handle_new_user` trigger at first sign-in, because `user_roles` is keyed
+        // on a profile that does not exist until then.
+        pending_roles: resolvedProfileId ? [] : grants,
       }
+
+      rolesStaged = !resolvedProfileId && grants.length > 0
 
       if (editingStaff) {
         await updateStaff(editingStaff.id, payload)
@@ -421,10 +673,35 @@ export default function AdminPage() {
         await createStaff(payload)
       }
 
-      if (resolvedProfileId) {
-        await replaceStaffRolesByProfileId(resolvedProfileId, staffForm.roles)
+      if (resolvedProfileId && !rolesAlreadyApplied) {
+        // Through the edge function rather than straight to the RPC, so the change
+        // lands in the audit log. `create_account` already covers the first grant;
+        // without this, later grants would be invisible.
+        if (isAdmin) {
+          await setStaffRoles(resolvedProfileId, grants)
+        } else {
+          await replaceStaffRolesByProfileId(resolvedProfileId, grants)
+        }
       }
-      toast.success(editingStaff ? "Staff user updated" : "Staff user created", `${staffForm.first_name} ${staffForm.last_name} was saved successfully.`)
+
+      if (rolesStaged) {
+        toast.success(
+          editingStaff ? "Staff user updated" : "Staff user created",
+          `${fullName} was saved. ${grants.length} role(s) are held until they first sign in with `
+            + "Google, then applied automatically.",
+        )
+      } else if (accountCreated) {
+        toast.success(
+          editingStaff ? "Staff user updated" : "Staff user created",
+          `${fullName} was saved and an invitation was sent to set their password.`,
+        )
+      } else {
+        toast.success(
+          editingStaff ? "Staff user updated" : "Staff user created",
+          `${fullName} was saved successfully.`,
+        )
+      }
+
       setShowStaffDialog(false)
       resetStaffForm()
       await loadAdminData()
@@ -588,35 +865,23 @@ export default function AdminPage() {
           </div>
         </div>
         <StatisticGrid>
-          {[
-          { label: "Staff Accounts", value: totalStaff, icon: Users, accent: "text-cyan-400", description: "Users with linked staff records" },
-          { label: "Teaching Staff", value: teacherCount, icon: School, accent: "text-emerald-400", description: "Staff assigned to classroom teaching" },
-          { label: "Total Students", value: totalStudents, icon: BookOpen, accent: "text-amber-400", description: "Learner records available to governance" },
-          { label: "Total Classes", value: totalClasses, icon: ClipboardList, accent: "text-rose-400", description: "Class sections tracked in the schedule" },
-          { label: "Open Incidents", value: activeIncidents, icon: AlertTriangle, accent: "text-cyan-400", description: "Unresolved governance and safety items" },
-          { label: "Departments", value: departmentCount, icon: Layers3, accent: "text-emerald-400", description: "Distinct departments represented" },
-        ].map((card) => {
-          const Icon = card.icon
-          return (
-            <StatisticCard
-              key={card.label}
-              label={card.label}
-              value={card.value}
-              icon={Icon}
-              description={card.description}
-              accentClassName={card.accent}
-              glowClassName={
-                card.label === "Open Incidents"
-                  ? "from-rose-400/25 via-rose-400/10 to-transparent"
-                  : card.label === "Teaching Staff"
-                    ? "from-emerald-400/25 via-emerald-400/10 to-transparent"
-                    : card.label === "Total Students"
-                      ? "from-amber-400/25 via-amber-400/10 to-transparent"
-                      : "from-cyan-400/25 via-cyan-400/10 to-transparent"
-              }
-            />
-          )
-        })}
+          {([
+          { label: "Staff Accounts", value: totalStaff, icon: Users, tone: "information" as const, description: "Users with linked staff records" },
+          { label: "Teaching Staff", value: teacherCount, icon: School, tone: "completed" as const, description: "Staff assigned to classroom teaching" },
+          { label: "Total Students", value: totalStudents, icon: BookOpen, tone: "warning" as const, description: "Learner records available to governance" },
+          { label: "Total Classes", value: totalClasses, icon: ClipboardList, tone: "destructive" as const, description: "Class sections tracked in the schedule" },
+          { label: "Open Incidents", value: activeIncidents, icon: AlertTriangle, tone: "overdue" as const, description: "Unresolved governance and safety items" },
+          { label: "Departments", value: departmentCount, icon: Layers3, tone: "pending" as const, description: "Distinct departments represented" },
+        ]).map((card) => (
+          <StatisticCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            icon={card.icon}
+            description={card.description}
+            tone={card.tone}
+          />
+        ))}
         </StatisticGrid>
       </section>
 
@@ -774,19 +1039,187 @@ export default function AdminPage() {
                             </button>
                           </div>
                         </div>
-                        <TableBadge tone={getStatusBadgeTone(selectedStaff.status ?? "active")}>
-                          {labelize(selectedStaff.status ?? "active")}
-                        </TableBadge>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <TableBadge tone={getStatusBadgeTone(selectedStaff.status ?? "active")}>
+                            {labelize(selectedStaff.status ?? "active")}
+                          </TableBadge>
+                          <TableBadge tone={getAccountStatusTone(selectedStaff.account_status ?? "none")}>
+                            {getAccountStatusLabel(selectedStaff.account_status)}
+                          </TableBadge>
+                        </div>
                       </div>
 
                       <div className="pt-2 border-t border-white/10 grid gap-2 text-xs text-slate-300">
                         <div className="flex justify-between"><span className="text-slate-500">Roles:</span> <span className="font-medium text-slate-200">{selectedStaff.roles.length > 0 ? selectedStaff.roles.map(labelize).join(", ") : "Unassigned"}</span></div>
+                        {selectedStaff.dated_roles.length > 0 && (
+                          <div className="flex justify-between gap-3">
+                            <span className="text-slate-500 shrink-0">Not in force:</span>
+                            <span className="font-medium text-amber-300/90 text-right">
+                              {selectedStaff.dated_roles
+                                .map((grant) => {
+                                  const from = grant.effective_from
+                                  const to = grant.effective_to
+                                  if (from && to) return `${labelize(grant.role)} (${from} to ${to})`
+                                  if (from) return `${labelize(grant.role)} (from ${from})`
+                                  if (to) return `${labelize(grant.role)} (until ${to})`
+                                  return labelize(grant.role)
+                                })
+                                .join(", ")}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex justify-between"><span className="text-slate-500">Department:</span> <span className="font-medium text-slate-200">{selectedStaff.department || "Unassigned"}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Phone:</span> <span className="font-medium text-slate-200">{selectedStaff.phone || "Not provided"}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Org Unit:</span> <span className="font-medium text-slate-200 truncate max-w-[180px]">{selectedStaff.org_unit_path || "Root"}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Invited:</span> <span className="font-medium text-slate-200">{selectedStaff.account_invited_at ? new Date(selectedStaff.account_invited_at).toLocaleDateString() : "Never"}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Drafted Queue:</span> <span className="font-medium text-cyan-400">{selectedDrafts.length} updates</span></div>
                       </div>
                     </div>
+
+                    {isAdmin && (
+                      <div className="space-y-2 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                          <KeyRound className="size-3.5 text-cyan-400" />
+                          Login &amp; Access
+                        </div>
+
+                        {!selectedProfileId ? (
+                          <div className="space-y-2">
+                            <p className="text-[11px] leading-relaxed text-slate-400">
+                              Organisation staff sign in with Google, so no password login is needed. The roles
+                              below are held on their staff record and applied automatically the first time
+                              they sign in.
+                              {selectedStaff.pending_roles.length > 0 && (
+                                <> Currently holding {selectedStaff.pending_roles.map((grant) => labelize(grant.role)).join(", ")}.</>
+                              )}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="justify-between w-full text-xs border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10"
+                              onClick={() => handleEditStaff(selectedStaff, { createAccount: true })}
+                            >
+                              <span>Create manual login (no Google)</span>
+                              <Send className="size-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="grid gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="justify-between text-xs"
+                                disabled={accountAction !== null}
+                                onClick={handleResendInvite}
+                              >
+                                <span>Resend invitation</span>
+                                {accountAction === "resend" ? <Spinner size="sm" /> : <Send className="size-3.5" />}
+                              </Button>
+
+                              {selectedStaff.account_status === "revoked" ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="justify-between text-xs border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
+                                  disabled={accountAction !== null}
+                                  onClick={handleRestoreAccess}
+                                >
+                                  <span>Restore access</span>
+                                  {accountAction === "restore" ? <Spinner size="sm" /> : <RotateCcw className="size-3.5" />}
+                                </Button>
+                              ) : confirmRevokeFor === selectedProfileId ? (
+                                <div className="space-y-2 rounded-lg border border-rose-500/30 bg-rose-950/20 p-2.5">
+                                  <p className="text-[11px] leading-relaxed text-rose-200">
+                                    Revoking deactivates every role grant and suspends the login. It is
+                                    reversible, and roles are not restored automatically.
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="flex-1 text-xs"
+                                      onClick={() => setConfirmRevokeFor(null)}
+                                      disabled={accountAction !== null}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 text-xs"
+                                      onClick={handleRevokeAccess}
+                                      disabled={accountAction !== null}
+                                    >
+                                      {accountAction === "revoke" ? <Spinner size="sm" /> : <ShieldOff className="size-3.5 mr-1.5" />}
+                                      Confirm revoke
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="justify-between text-xs border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
+                                  onClick={() => setConfirmRevokeFor(selectedProfileId)}
+                                >
+                                  <span>Revoke access</span>
+                                  <ShieldOff className="size-3.5" />
+                                </Button>
+                              )}
+                            </div>
+
+                            {selectedStaff.account_status === "revoked" && (
+                              <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2.5">
+                                <p className="text-[11px] leading-relaxed text-amber-200">
+                                  This account is suspended and every role grant is deactivated. Lifting the
+                                  suspension does not bring the roles back &mdash; re-granting them is a
+                                  separate decision.
+                                </p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-2 w-full justify-between text-xs text-amber-200 hover:bg-amber-500/10"
+                                  onClick={() => handleEditStaff(selectedStaff)}
+                                >
+                                  <span>Re-grant roles</span>
+                                  <ShieldCheck className="size-3.5" />
+                                </Button>
+                              </div>
+                            )}
+
+                            <div className="border-t border-white/10 pt-2">
+                              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                                <History className="size-3 text-slate-500" />
+                                Recent account activity
+                              </div>
+                              {auditLoading ? (
+                                <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
+                                  <Spinner size="sm" /> Loading...
+                                </div>
+                              ) : auditRows.length === 0 ? (
+                                <p className="mt-2 text-[11px] text-slate-500">No account changes recorded.</p>
+                              ) : (
+                                <ul className="mt-2 space-y-1.5">
+                                  {auditRows.map((row) => (
+                                    <li key={row.id} className="flex items-start justify-between gap-2 text-[11px]">
+                                      <span className="text-slate-300">
+                                        {labelize(row.action)}
+                                        {row.actor_email ? (
+                                          <span className="text-slate-500"> by {row.actor_email}</span>
+                                        ) : null}
+                                      </span>
+                                      <span className="shrink-0 text-slate-500">
+                                        {new Date(row.created_at).toLocaleString()}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
 
                     <div className="grid gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEditStaff(selectedStaff)} className="justify-between text-xs">
@@ -1298,45 +1731,165 @@ export default function AdminPage() {
             </FormField>
           </div>
 
+          {isAdmin && (
+            <div className="rounded-xl border border-cyan-500/25 bg-cyan-950/15 p-3.5">
+              <div className="flex items-start gap-3">
+                <input
+                  id="admin-staff-create-account"
+                  type="checkbox"
+                  className="mt-0.5 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                  checked={staffForm.createAccount}
+                  onChange={(event) =>
+                    setStaffForm((current) => ({ ...current, createAccount: event.target.checked }))
+                  }
+                />
+                <label htmlFor="admin-staff-create-account" className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-white">
+                    Create a manual login (no Google account)
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-400">
+                    Only for people outside the organisation, who cannot sign in with Google. Creates a
+                    password sign-in for {staffForm.email || "this address"} and emails a one-time link so
+                    they set their own password. No password is ever generated, emailed, or shown here.
+                    Leave this unticked for organisation staff: they sign in with Google, and the roles
+                    below are held for them until their first sign-in.
+                  </span>
+                </label>
+              </div>
+
+              <div className="mt-3 flex items-start gap-2 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-slate-400">
+                <MailWarning className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
+                <span>
+                  {allowedEmailDomains.length === 0
+                    ? "No email domain rule is configured, so any address is accepted."
+                    : `Only these domains may receive a login: ${allowedEmailDomains.join(", ")}.`}
+                </span>
+              </div>
+            </div>
+          )}
+
           <FormField label="Roles" htmlFor="admin-staff-roles" labelClassName="text-xs font-medium text-slate-300">
             <div id="admin-staff-roles" className="space-y-3 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-slate-400">Manage all active roles for this staff member.</p>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setStaffForm((current) => ({ ...current, roles: [] }))} disabled={staffForm.roles.length === 0}>
+                <p className="text-xs text-slate-400">
+                  Manage all active roles for this staff member. Dates are optional; a role with no dates is
+                  open-ended.
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStaffForm((current) => ({ ...current, roles: [], roleWindows: {} }))}
+                  disabled={staffForm.roles.length === 0}
+                >
                   Clear
                 </Button>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {roleOptions.map((role) => {
                   const selected = staffForm.roles.includes(role)
+                  const window = staffForm.roleWindows[role] ?? { effective_from: "", effective_to: "" }
 
                   return (
-                    <label
+                    <div
                       key={role}
-                      className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-cyan-500/50 bg-cyan-500/10 text-white" : "border-white/10 bg-slate-900/50 text-slate-300 hover:border-white/20"}`}
+                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-cyan-500/50 bg-cyan-500/10 text-white" : "border-white/10 bg-slate-900/50 text-slate-300 hover:border-white/20"}`}
                     >
-                      <span>{labelize(role)}</span>
-                      <input
-                        type="checkbox"
-                        className="rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
-                        checked={selected}
-                        onChange={() => {
-                          setStaffForm((current) => ({
-                            ...current,
-                            roles: selected ? current.roles.filter((value) => value !== role) : [...current.roles, role],
-                          }))
-                        }}
-                      />
-                    </label>
+                      <label className="flex cursor-pointer items-center justify-between gap-3">
+                        <span>{labelize(role)}</span>
+                        <input
+                          type="checkbox"
+                          className="rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                          checked={selected}
+                          onChange={() => {
+                            setStaffForm((current) => ({
+                              ...current,
+                              roles: selected
+                                ? current.roles.filter((value) => value !== role)
+                                : [...current.roles, role],
+                              roleWindows: selected
+                                ? Object.fromEntries(
+                                    Object.entries(current.roleWindows).filter(([key]) => key !== role),
+                                  )
+                                : { ...current.roleWindows, [role]: window },
+                            }))
+                          }}
+                        />
+                      </label>
+
+                      {selected && (
+                        <div className="mt-2 grid gap-2 border-t border-white/10 pt-2 sm:grid-cols-2">
+                          <div>
+                            <label
+                              htmlFor={`admin-staff-role-from-${role}`}
+                              className="block text-[10px] font-medium uppercase tracking-wider text-slate-500"
+                            >
+                              From
+                            </label>
+                            <Input
+                              id={`admin-staff-role-from-${role}`}
+                              type="date"
+                              aria-label={`${labelize(role)} start date`}
+                              value={window.effective_from}
+                              onChange={(event) =>
+                                setStaffForm((current) => ({
+                                  ...current,
+                                  roleWindows: {
+                                    ...current.roleWindows,
+                                    [role]: { ...window, effective_from: event.target.value },
+                                  },
+                                }))
+                              }
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`admin-staff-role-to-${role}`}
+                              className="block text-[10px] font-medium uppercase tracking-wider text-slate-500"
+                            >
+                              To
+                            </label>
+                            <Input
+                              id={`admin-staff-role-to-${role}`}
+                              type="date"
+                              aria-label={`${labelize(role)} end date`}
+                              value={window.effective_to}
+                              onChange={(event) =>
+                                setStaffForm((current) => ({
+                                  ...current,
+                                  roleWindows: {
+                                    ...current.roleWindows,
+                                    [role]: { ...window, effective_to: event.target.value },
+                                  },
+                                }))
+                              }
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
               <div className="flex flex-wrap gap-2">
-                {staffForm.roles.length > 0 ? staffForm.roles.map((role) => (
-                  <span key={role} className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-200">
-                    {labelize(role)}
-                  </span>
-                )) : (
+                {staffForm.roles.length > 0 ? staffForm.roles.map((role) => {
+                  const window = staffForm.roleWindows[role]
+                  return (
+                    <span
+                      key={role}
+                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-200"
+                    >
+                      {labelize(role)}
+                      {window?.effective_from || window?.effective_to ? (
+                        <span className="ml-1 text-slate-400">
+                          ({formatWindow(window.effective_from, window.effective_to)})
+                        </span>
+                      ) : null}
+                    </span>
+                  )
+                }) : (
                   <span className="text-xs text-slate-500">No roles selected</span>
                 )}
               </div>

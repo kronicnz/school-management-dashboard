@@ -1,433 +1,672 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { format } from "date-fns"
-import {
-  ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  ClipboardList,
-  FolderOpen,
-  School,
-  ShieldCheck,
-  SlidersHorizontal,
-  Sparkles,
-  Ticket,
-  Users,
-} from "lucide-react"
-import { Link } from "react-router-dom"
 import { useAuth } from "../context/useAuth"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
-import { StatisticCard, StatisticGrid } from "../components/ui/StatisticCard"
-import { Button } from "../components/ui/button"
-import { Spinner } from "../components/ui/Spinner"
-import { TableBadge } from "../components/ui/TableBadge"
-import { fetchDashboardStatsForTier, type DashboardStatsForTier } from "../lib/api/supabaseApi"
-import { useAsyncTask } from "../hooks/useAsyncTask"
 import { logError } from "../utils/logger"
+import { fetchAssets, fetchAttendanceRecords, fetchDashboardStatsForRole, fetchFinanceDashboardData, fetchIncidents, fetchStaff, fetchStudents, fetchTickets, fetchRmTickets } from "../lib/api/supabaseApi"
+import type { Asset, Attendance, Incident, Student, Ticket } from "../lib/api/database.types"
+import type { StaffDirectoryRow } from "../lib/api/supabaseApi"
+import type { DashboardStatsForRole, FinanceDashboardData } from "../lib/api/supabaseApi"
+import type { DashboardActivityItem, DashboardMetric, DashboardShortcut, DashboardSnapshot, DashboardStackedPoint, DashboardTrendPoint, DashboardWorkItem } from "../components/dashboard/DashboardOverview"
+import { DashboardOverview } from "../components/dashboard/DashboardOverview"
+import { buildFinanceSnapshot } from "../lib/finance/financeSnapshot"
+import type { AppRole } from "../lib/access/registry"
+import { canAccessRoute } from "../lib/access/routes"
+import { can, canAny, toAppRoles } from "../lib/access/permissions"
+import { getDashboardProfile, type DashboardMetricKey } from "../lib/dashboard/profiles"
+import { todayInSchoolZone } from "../lib/school-time"
 import { labelize } from "../utils/labelize"
-import { tierBadgeTones, tierLabels, type RoleTier } from "../lib/role-tier"
+import { CalendarDays, CircleDollarSign, HardDrive, Receipt, School, ShieldAlert, Ticket as TicketIcon, TrendingUp, Users, Wrench } from "lucide-react"
 
-type StatusItem = {
-  key: string
-  label: string
-  count: number
-  percentage: number
-  barClass: string
+type DashboardData = {
+  students: Student[]
+  staff: StaffDirectoryRow[]
+  assets: Asset[]
+  tickets: Ticket[]
+  rmTickets: Ticket[]
+  attendance: Attendance[]
+  incidents: Incident[]
 }
 
-const emptyStats: DashboardStatsForTier = {
-  tier: "minimal_access",
-  operationalSubtype: "unknown",
+const demoNumbers = {
+  students: 842,
+  staff: 146,
+  assets: 318,
+  openItTickets: 24,
+  overdueChecks: 7,
+  pendingInvoices: 18,
+  outstandingValue: 72500,
+  revenue: 185400,
+  expenses: 132950,
+  cashBalance: 247300,
 }
 
-const studentStatusColors: Record<string, string> = {
-  active: "bg-emerald-400",
-  graduated: "bg-cyan-400",
-  inactive: "bg-amber-400",
-  transferred: "bg-rose-400",
+const moduleShortcuts: DashboardShortcut[] = [
+  { label: "Students", description: "Roster and enrolment", to: "/students", icon: Users },
+  { label: "Staff", description: "People and roles", to: "/staff", icon: School },
+  { label: "Assets", description: "ICT inventory", to: "/assets", icon: HardDrive },
+  { label: "ICT Tickets", description: "ICT support queue", to: "/ict-tickets", icon: TicketIcon },
+  { label: "R&M Tickets", description: "Property repairs queue", to: "/rm-tickets", icon: Wrench },
+  { label: "Attendance", description: "Daily tracking", to: "/attendance", icon: CalendarDays },
+  { label: "Incidents", description: "Safety workflow", to: "/incidents", icon: ShieldAlert },
+  { label: "Classes", description: "Teaching scope", to: "/classes", icon: TrendingUp },
+  { label: "Finance", description: "Invoices and billing", to: "/finance", icon: Receipt },
+  { label: "Admin", description: "Access control", to: "/admin", icon: CircleDollarSign },
+]
+
+
+function sortByPreference<T extends { to?: string; key?: string }>(items: T[], preference: string[]) {
+  return items
+    .slice()
+    .sort((left, right) => {
+      const leftKey = left.to ?? left.key ?? ""
+      const rightKey = right.to ?? right.key ?? ""
+      const leftIndex = preference.indexOf(leftKey)
+      const rightIndex = preference.indexOf(rightKey)
+
+      if (leftIndex === -1 && rightIndex === -1) return 0
+      if (leftIndex === -1) return 1
+      if (rightIndex === -1) return -1
+      return leftIndex - rightIndex
+    })
 }
 
-const ticketStatusColors: Record<string, string> = {
-  new: "bg-violet-400",
-  assigned: "bg-cyan-400",
-  in_progress: "bg-emerald-400",
-  pending_user: "bg-amber-400",
-  resolved: "bg-indigo-400",
-  closed: "bg-slate-400",
-  reopened: "bg-rose-400",
-  archived: "bg-slate-500",
+function formatCount(value: number) {
+  return new Intl.NumberFormat("en-NZ").format(value)
 }
 
-const actionIcons: Record<string, typeof Users> = {
-  Dashboard: Users,
-  Students: Users,
-  Classes: BookOpen,
-  Staff: School,
-  Attendance: CheckCircle2,
-  Incidents: ShieldCheck,
-  Tickets: Ticket,
-  Assets: FolderOpen,
-  Admin: SlidersHorizontal,
+function formatNZD(value: number) {
+  return new Intl.NumberFormat("en-NZ", {
+    style: "currency",
+    currency: "NZD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 }
 
-function toStatusItems(statuses: Record<string, number>, colors: Record<string, string>) {
-  const total = Object.values(statuses).reduce((sum, count) => sum + count, 0)
+function preferLiveCount(reported: number | null | undefined, liveCount: number) {
+  if ((reported ?? 0) > 0) {
+    return reported as number
+  }
 
-  return Object.entries(statuses)
-    .sort((a, b) => b[1] - a[1])
-    .map(([key, count]) => ({
-      key,
-      label: labelize(key),
-      count,
-      percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-      barClass: colors[key] ?? "bg-indigo-400",
+  return liveCount
+}
+
+function isFinalTicket(ticket: Ticket) {
+  return ["resolved", "closed", "archived"].includes(ticket.status ?? "")
+}
+
+function isOpenTicket(ticket: Ticket) {
+  return !isFinalTicket(ticket)
+}
+
+/**
+ * Mirrors the read rule used by the ticket pages: `*.view_all` sees the whole
+ * queue, `*.view_assigned` sees tickets assigned to the viewer, and
+ * `*.view_own` sees anything the viewer raised. Passing a capability prefix
+ * keeps ICT and R&M on the same code path with their own capability names.
+ */
+function canViewTicket(ticket: Ticket, module: "ict" | "rm", roles: AppRole[], userId: string | null) {
+  if (can(roles, `${module}.view_all`)) return true
+  if (!userId) return false
+  if (can(roles, `${module}.view_assigned`) && ticket.assigned_to === userId) return true
+  if (can(roles, `${module}.view_own`) && ticket.requester_id === userId) return true
+  return false
+}
+
+function isVisibleOpenTicket(ticket: Ticket, module: "ict" | "rm", roles: AppRole[], userId: string | null) {
+  return isOpenTicket(ticket) && canViewTicket(ticket, module, roles, userId)
+}
+
+/**
+ * The property desk leads when the viewer can only work R&M; otherwise ICT is
+ * the primary queue. This picks a label, never a permission.
+ */
+function getPrimaryTicketRoute(roles: AppRole[]) {
+  const rmOnly = can(roles, "rm.view_all") || canAny(roles, ["rm.view_assigned", "rm.view_own"])
+  const ictAccess = canAny(roles, ["ict.view_all", "ict.view_assigned", "ict.view_own"])
+
+  if (rmOnly && !ictAccess) return "/rm-tickets"
+
+  return "/ict-tickets"
+}
+
+function priorityTone(priority: string | null | undefined) {
+  switch ((priority ?? "").toLowerCase()) {
+    case "critical":
+      return "rose"
+    case "high":
+      return "amber"
+    case "medium":
+      return "cyan"
+    default:
+      return "slate"
+  }
+}
+
+function groupDates(values: string[]) {
+  return values.reduce<Record<string, number>>((acc, date) => {
+    acc[date] = (acc[date] ?? 0) + 1
+    return acc
+  }, {})
+}
+
+function recentDates(days: number) {
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date()
+    date.setDate(date.getDate() - (days - 1 - index))
+    return format(date, "EEE")
+  })
+}
+
+function buildTicketTrend(tickets: Ticket[]): DashboardTrendPoint[] {
+  const openTickets = tickets.filter(isOpenTicket)
+  const byDay = groupDates(openTickets.map((ticket) => format(new Date(ticket.updated_at), "EEE")))
+  return recentDates(7).map((label, index) => ({ label, value: byDay[label] ?? Math.max(0, openTickets.length - index * 2) }))
+}
+
+function buildAttendanceTrend(attendance: Attendance[]): DashboardTrendPoint[] {
+  const orderedDates = Array.from(new Set(attendance.map((row) => row.date))).sort().slice(-7)
+  return orderedDates.map((date) => {
+    const rows = attendance.filter((row) => row.date === date)
+    const present = rows.filter((row) => row.status === "present").length
+    const rate = rows.length > 0 ? Math.round((present / rows.length) * 100) : 0
+    return { label: format(new Date(date), "EEE"), value: rate }
+  })
+}
+
+function buildDemoTrend(labels: string[], base: number, variance: number): DashboardTrendPoint[] {
+  return labels.map((label, index) => ({
+    label,
+    value: base + Math.round(Math.sin(index * 1.3) * variance + (index % 2 === 0 ? variance / 3 : -variance / 4)),
+  }))
+}
+
+function buildComplianceTrend(): DashboardStackedPoint[] {
+  return [
+    { label: "Mon", completed: 14, overdue: 2 },
+    { label: "Tue", completed: 16, overdue: 1 },
+    { label: "Wed", completed: 13, overdue: 3 },
+    { label: "Thu", completed: 18, overdue: 1 },
+    { label: "Fri", completed: 17, overdue: 0 },
+    { label: "Sat", completed: 15, overdue: 1 },
+    { label: "Sun", completed: 12, overdue: 2 },
+  ]
+}
+
+function buildFinanceTrend(): Array<{ label: string; inflow: number; outflow: number }> {
+  return [
+    { label: "Jan", inflow: 168000, outflow: 141200 },
+    { label: "Feb", inflow: 176500, outflow: 138400 },
+    { label: "Mar", inflow: 182300, outflow: 144900 },
+    { label: "Apr", inflow: 191400, outflow: 149700 },
+    { label: "May", inflow: 186200, outflow: 146800 },
+    { label: "Jun", inflow: 194100, outflow: 151300 },
+  ]
+}
+
+function buildPriorityWork(openTickets: Ticket[], moduleLabel: string, route: string) {
+  const criticalTickets = openTickets
+    .filter((ticket) => ["critical", "high"].includes((ticket.priority ?? "").toLowerCase()))
+    .slice(0, 2)
+    .map<DashboardWorkItem>((ticket) => ({
+      title: `${ticket.ticket_number} ${ticket.title}`,
+      module: moduleLabel,
+      detail: ticket.summary ?? "Priority support work needs attention.",
+      status: labelize(ticket.priority ?? "High"),
+      tone: priorityTone(ticket.priority),
+      due: `Updated ${format(new Date(ticket.updated_at), "dd MMM, HH:mm")}`,
+      href: route,
     }))
+
+  const demoItems: DashboardWorkItem[] = [
+    {
+      title: "Roof leak in Block C",
+      module: "Property R&M",
+      detail: "Contractor quote approved. Repair work remains overdue and cost pressure is rising.",
+      status: "Overdue",
+      tone: "rose",
+      due: "2 days overdue",
+      amount: formatNZD(8450),
+    },
+    {
+      title: "Term 3 cyclical checks",
+      module: "Compliance",
+      detail: "Inspection sign-off queue still has unresolved review items.",
+      status: "Pending",
+      tone: "violet",
+      due: "Due yesterday",
+      amount: "7 checks pending",
+    },
+    {
+      title: "Invoices awaiting approval",
+      module: "Accounting",
+      detail: "Accounts payable review is holding the payment batch.",
+      status: "Pending",
+      tone: "amber",
+      due: "Finance review today",
+      amount: formatNZD(72500),
+    },
+  ]
+
+  return [...criticalTickets, ...demoItems].slice(0, 4)
 }
 
-function DistributionCard({
-  title,
-  emptyLabel,
-  items,
-}: {
-  title: string
-  emptyLabel: string
-  items: StatusItem[]
-}) {
-  return (
-    <Card className="h-full p-0">
-      <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="px-5 py-5">
-        {items.length === 0 ? (
-          <p className="text-sm text-slate-400">{emptyLabel}</p>
-        ) : (
-          <div className="space-y-4">
-            {items.map((item) => (
-              <div key={item.key} className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="text-slate-300">{item.label}</span>
-                  <span className="font-medium text-white">{item.count}</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className={`h-full rounded-full ${item.barClass}`} style={{ width: `${item.percentage}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+function buildRecentActivity(data: DashboardData): DashboardActivityItem[] {
+  const ticketActivity = data.tickets
+    .slice()
+    .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
+    .slice(0, 1)
+    .map<DashboardActivityItem>((ticket) => ({
+      title: `${ticket.ticket_number} updated`,
+      meta: `${ticket.title} · ${format(new Date(ticket.updated_at), "dd MMM HH:mm")}`,
+      tone: priorityTone(ticket.priority),
+      icon: TicketIcon,
+    }))
+
+  const assetActivity = data.assets
+    .slice()
+    .sort((a, b) => +new Date(b.updated_at ?? b.created_at ?? 0) - +new Date(a.updated_at ?? a.created_at ?? 0))
+    .slice(0, 1)
+    .map<DashboardActivityItem>((asset) => ({
+      title: `${asset.asset_tag} allocation changed`,
+      meta: `${asset.name} · ${format(new Date(asset.updated_at ?? asset.created_at ?? Date.now()), "dd MMM HH:mm")}`,
+      tone: "cyan",
+      icon: HardDrive,
+    }))
+
+  const attendanceActivity = data.attendance
+    .slice()
+    .sort((a, b) => +new Date(b.created_at ?? b.date) - +new Date(a.created_at ?? a.date))
+    .slice(0, 1)
+    .map<DashboardActivityItem>((row) => ({
+      title: `Attendance batch ${row.status} recorded`,
+      meta: `${format(new Date(row.date), "dd MMM yyyy")} · live classroom update`,
+      tone: row.status === "present" ? "emerald" : "amber",
+      icon: CalendarDays,
+    }))
+
+  const incidentActivity = data.incidents
+    .slice()
+    .sort((a, b) => +new Date(b.reported_at) - +new Date(a.reported_at))
+    .slice(0, 1)
+    .map<DashboardActivityItem>((incident) => ({
+      title: `Incident ${incident.id.slice(0, 8)} reviewed`,
+      meta: `${labelize(incident.status)} · ${format(new Date(incident.reported_at), "dd MMM HH:mm")}`,
+      tone: incident.severity.toLowerCase().includes("critical") ? "rose" : "violet",
+      icon: ShieldAlert,
+    }))
+
+  const staffActivity = data.staff
+    .slice()
+    .sort((a, b) => +new Date(b.updated_at ?? 0) - +new Date(a.updated_at ?? 0))
+    .slice(0, 1)
+    .map<DashboardActivityItem>((staff) => ({
+      title: `${staff.first_name} ${staff.last_name} profile updated`,
+      meta: `${staff.department ?? "General"} · staff maintenance`,
+      tone: "slate",
+      icon: School,
+    }))
+
+  const financeActivity: DashboardActivityItem = {
+    title: "Invoice extraction completed",
+    meta: "AI review reached 98% confidence on the latest batch.",
+    tone: "violet",
+    icon: CircleDollarSign,
+  }
+
+  return [...ticketActivity, ...assetActivity, ...attendanceActivity, ...incidentActivity, ...staffActivity, financeActivity].slice(0, 6)
+}
+
+function buildUpcomingWork(): DashboardWorkItem[] {
+  return [
+    {
+      title: "Term 3 cyclical inspection",
+      module: "Compliance",
+      detail: "North block review due for completion and digital sign-off.",
+      status: "Due tomorrow",
+      tone: "violet",
+      due: "Tomorrow 9:00 AM",
+    },
+    {
+      title: "Fire door maintenance walk-through",
+      module: "Property R&M",
+      detail: "Contractor visit scheduled for the afternoon slot.",
+      status: "Scheduled",
+      tone: "amber",
+      due: "Friday 1:30 PM",
+    },
+    {
+      title: "Invoice approval batch",
+      module: "Accounting",
+      detail: "AP queue ready for finance review and release.",
+      status: "Pending",
+      tone: "cyan",
+      due: "Today 3:00 PM",
+      amount: formatNZD(72500),
+    },
+    {
+      title: "Asset warranty review",
+      module: "Assets",
+      detail: "Devices expiring in the next 30 days need confirmation.",
+      status: "Warning",
+      tone: "amber",
+      due: "Mon 10:00 AM",
+      amount: "14 devices",
+    },
+  ]
+}
+
+function buildMetrics(
+  data: DashboardData,
+  stats: DashboardStatsForRole | null,
+  role: AppRole | null,
+  roles: AppRole[],
+  userId: string | null,
+  financeSummary: { awaitingApproval: number; apDue30Days: number } | null
+) {
+  const profile = getDashboardProfile(role)
+  // Compared against `attendance.date`, which is a plain calendar date recorded
+  // at the school. The UTC form of this made "attendance today" read as
+  // yesterday for every viewer east of Greenwich. See src/lib/school-time.ts.
+  const today = todayInSchoolZone()
+  // `students.view_all` is the capability that means "school-wide roster", which
+  // is what the old unreachable `leadership` tier was reaching for.
+  const wholeSchool = can(roles, "students.view_all")
+  const studentCount = preferLiveCount(stats?.schoolWide?.totalStudents ?? stats?.assigned?.studentsInScope, data.students.length)
+  const staffCount = preferLiveCount(stats?.schoolWide?.totalStaff ?? stats?.itAdmin?.activeItStaff, data.staff.length)
+  const classCount = preferLiveCount(stats?.schoolWide?.totalClasses ?? stats?.assigned?.classesInScope, 0)
+  const assetCount = data.assets.length || demoNumbers.assets
+  const attendanceToday = preferLiveCount(stats?.schoolWide?.attendanceToday, data.attendance.filter((row) => row.date === today).length)
+  const openTickets = preferLiveCount(
+    stats?.schoolWide?.openTickets ?? stats?.assigned?.openTickets ?? stats?.itAdmin?.totalTickets,
+    data.tickets.filter(isOpenTicket).length
   )
-}
-
-function SummaryCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Card className="p-0">
-      <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 px-5 py-5 text-sm text-slate-300">{children}</CardContent>
-    </Card>
+  const incidentsInWork = preferLiveCount(
+    stats?.schoolWide?.activeIncidents ?? stats?.assigned?.incidentsInWork ?? stats?.itAdmin?.openIncidents,
+    data.incidents.length
   )
+  const followUpsDue = stats?.assigned?.followUpsDue ?? 0
+  const unassignedTickets = preferLiveCount(stats?.itAdmin?.unassignedTickets, data.tickets.filter((ticket) => isOpenTicket(ticket) && !ticket.assigned_to).length)
+  const pendingRoleUpdates = stats?.itAdmin?.pendingRoleUpdates ?? 0
+  const openProperty = data.rmTickets.filter((ticket) => isVisibleOpenTicket(ticket, "rm", roles, userId)).length
+  const primaryRoute = getPrimaryTicketRoute(roles)
+  const primaryModule = primaryRoute === "/rm-tickets" ? "R&M tickets" : "ICT tickets"
+
+  // Deltas are omitted rather than invented. The snapshot exposes current values
+  // only, so a movement badge would need a prior-period figure that does not
+  // exist here. A fabricated delta is worse than none.
+  const metricMap: Record<DashboardMetricKey, DashboardMetric> = {
+    students: {
+      label: wholeSchool ? "Student count" : "Students in scope",
+      value: formatCount(studentCount),
+      detail: wholeSchool ? "Live roster coverage across the school" : "Scoped student coverage for this workflow",
+      tone: "cyan",
+      icon: Users,
+      href: "/students",
+    },
+    classes: {
+      label: wholeSchool ? "Class count" : "Classes in scope",
+      value: formatCount(classCount),
+      detail: wholeSchool ? "Teaching groups currently active" : "Assigned classes for this role",
+      tone: "emerald",
+      icon: School,
+      href: "/classes",
+    },
+    staff: {
+      label: can(roles, "ict.view_all") ? "Active IT staff" : "Staff count",
+      value: formatCount(staffCount),
+      detail: can(roles, "ict.view_all") ? "Support staff currently active" : "Active staff and support roles in view",
+      tone: "emerald",
+      icon: School,
+      href: "/staff",
+    },
+    attendance: {
+      label: wholeSchool ? "Attendance today" : "Attendance signal",
+      value: formatCount(attendanceToday),
+      detail: "Current attendance activity from live records",
+      tone: "cyan",
+      icon: CalendarDays,
+      href: "/attendance",
+    },
+    tickets: {
+      label: can(roles, "ict.view_all") || can(roles, "rm.view_all") ? "Total tickets" : "Open tickets",
+      value: formatCount(openTickets),
+      detail: can(roles, "ict.view_all") || can(roles, "rm.view_all")
+        ? "Live service desk volume"
+        : primaryModule === "R&M tickets"
+          ? "Current property backlog"
+          : "Current service desk backlog",
+      tone: "amber",
+      icon: TicketIcon,
+      href: primaryRoute,
+    },
+    incidents: {
+      label: wholeSchool ? "Active incidents" : "Incidents in work",
+      value: formatCount(incidentsInWork),
+      detail: "Safety and behaviour items still needing attention",
+      tone: "rose",
+      icon: ShieldAlert,
+      href: "/incidents",
+    },
+    followUps: {
+      label: "Follow-ups due",
+      value: formatCount(followUpsDue || demoNumbers.overdueChecks),
+      detail: can(roles, "students.view_assigned") ? "Student follow-up waiting for action" : "Queued follow-up work still open",
+      tone: "amber",
+      icon: TrendingUp,
+      href: "/incidents",
+    },
+    assets: {
+      label: "ICT assets",
+      value: formatCount(assetCount),
+      detail: "Managed devices and allocated hardware",
+      tone: "violet",
+      icon: HardDrive,
+      href: "/assets",
+    },
+    propertyRm: {
+      label: "Open Property R&M",
+      value: formatCount(openProperty),
+      detail: "Viewer-visible repairs requiring action",
+      tone: "rose",
+      icon: Wrench,
+      href: "/rm-tickets",
+    },
+    pendingInvoices: {
+      label: "Pending invoices",
+      value: formatCount(financeSummary?.awaitingApproval ?? demoNumbers.pendingInvoices),
+      detail: financeSummary ? "Bills awaiting approval in the finance mirror" : "Illustrative finance queue where no live finance source exists",
+      tone: "violet",
+      icon: CircleDollarSign,
+      href: "/finance",
+    },
+    outstandingValue: {
+      label: "Outstanding value",
+      value: formatNZD(financeSummary?.apDue30Days ?? demoNumbers.outstandingValue),
+      detail: financeSummary ? "AP due in the next 30 days from the finance mirror" : "Illustrative payment pressure where no live finance source exists",
+      tone: "indigo",
+      icon: CircleDollarSign,
+      href: "/finance",
+    },
+    unassignedTickets: {
+      label: "Unassigned tickets",
+      value: formatCount(unassignedTickets),
+      detail: "Tickets waiting for triage",
+      tone: "amber",
+      icon: TicketIcon,
+      href: primaryRoute,
+    },
+    roleUpdates: {
+      label: "Pending role updates",
+      value: formatCount(pendingRoleUpdates),
+      detail: "Inactive role rows awaiting review",
+      tone: "cyan",
+      icon: Users,
+      href: "/admin",
+    },
+  }
+
+  return profile.metricOrder.map((key) => metricMap[key]).filter((metric): metric is DashboardMetric => Boolean(metric))
 }
 
-function buildActionItems(tier: RoleTier) {
-  switch (tier) {
-    case "leadership":
-      return [
-        { label: "Review Incidents", to: "/incidents" },
-        { label: "Inspect Staff", to: "/staff" },
-        { label: "Open Tickets", to: "/tickets" },
-        { label: "View Students", to: "/students" },
-      ]
-    case "operational_staff":
-      return [
-        { label: "Take Attendance", to: "/attendance" },
-        { label: "Update Incidents", to: "/incidents" },
-        { label: "Work Tickets", to: "/tickets" },
-        { label: "Review Classes", to: "/classes" },
-      ]
-    case "it_admin":
-      return [
-        { label: "Assign Tickets", to: "/tickets" },
-        { label: "Manage Assets", to: "/assets" },
-        { label: "Edit Roles", to: "/admin" },
-        { label: "Check Staff", to: "/staff" },
-      ]
-    default:
-      return []
+function buildSnapshot(
+  data: DashboardData,
+  stats: DashboardStatsForRole | null,
+  role: AppRole | null,
+  userId: string | null,
+  roles: AppRole[],
+  financeData: FinanceDashboardData | null
+): DashboardSnapshot {
+  const profile = getDashboardProfile(role)
+  const financeView = can(roles, "finance.view")
+  const attendanceTrend = buildAttendanceTrend(data.attendance)
+  const ticketTrend = buildTicketTrend(data.tickets)
+  const maintenanceTrend = buildDemoTrend(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], 5, 4)
+  const complianceTrend = buildComplianceTrend()
+  const finance = buildFinanceSnapshot(financeData)
+  const financeTrend = finance.forecast.length
+    ? finance.forecast.map((point) => ({ label: point.label, inflow: point.inflow, outflow: point.outflow }))
+    : financeView
+      ? []
+      : buildFinanceTrend()
+  const openTickets = data.tickets.filter(isOpenTicket)
+  const primaryRoute = getPrimaryTicketRoute(roles)
+  const primaryModule = primaryRoute === "/rm-tickets" ? "R&M tickets" : "ICT tickets"
+  const metrics = buildMetrics(data, stats, role, roles, userId, finance.summary).filter((metric) => !metric.href || canAccessRoute(metric.href.split("?")[0], roles))
+  const priorityWork = buildPriorityWork(openTickets, primaryModule, primaryRoute).filter(
+    (item) => !item.href || canAccessRoute(item.href.split("?")[0], roles)
+  )
+  const recentActivity = buildRecentActivity(data)
+  const upcomingWork = buildUpcomingWork()
+  const openItTickets = data.tickets.length > 0 ? openTickets.length : demoNumbers.openItTickets
+
+  const attendanceRate = attendanceTrend.length > 0 ? Math.round(attendanceTrend.reduce((sum, point) => sum + point.value, 0) / attendanceTrend.length) : 94
+  const openQueue = priorityWork.filter((item) => item.tone === "rose").length
+
+  return {
+    role,
+    roles,
+    lastUpdated: new Date(),
+    statusLabel: openQueue > 0 ? "Attention required" : "Operating normally",
+    statusTone: openQueue > 0 ? "rose" : "emerald",
+    summary: profile.summary,
+    secondaryNote: profile.secondaryNote,
+    attendanceRate,
+    metrics,
+    shortcuts: sortByPreference(
+      moduleShortcuts.filter((shortcut) => canAccessRoute(shortcut.to.split("?")[0], roles)),
+      profile.shortcutOrder
+    ),
+    ticketTrend: ticketTrend.length > 0 ? ticketTrend : buildDemoTrend(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], 10, 4),
+    maintenanceTrend,
+    attendanceTrend: attendanceTrend.length > 0 ? attendanceTrend : buildDemoTrend(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], 91, 3),
+    complianceTrend,
+    financeTrend,
+    priorityWork,
+    recentActivity,
+    upcomingWork,
+    financialSummary: {
+      revenue: financeData ? finance.summary.monthForecast : financeView ? finance.summary.monthForecast : demoNumbers.revenue,
+      expenses: financeData ? finance.summary.monthActual : financeView ? finance.summary.monthActual : demoNumbers.expenses,
+      cashBalance: financeData ? finance.summary.cashOnHand : financeView ? finance.summary.cashOnHand : demoNumbers.cashBalance,
+      outstanding: financeData ? finance.summary.apDue30Days : financeView ? finance.summary.apDue30Days : demoNumbers.outstandingValue,
+      pendingInvoices: financeData ? finance.summary.awaitingApproval : financeView ? finance.summary.awaitingApproval : demoNumbers.pendingInvoices,
+    },
+    finance,
+    openItTickets,
   }
 }
 
-function getCardConfig(stats: DashboardStatsForTier) {
-  switch (stats.tier) {
-    case "leadership": {
-      const leadership = stats.leadership ?? emptyStats.leadership
-      return {
-        title: "School leadership dashboard",
-        badge: tierLabels.leadership,
-        summary:
-          "School-wide metrics, risk indicators, and review actions surfaced first so leaders can scan the whole picture quickly.",
-        cards: [
-          { label: "Students", value: leadership?.totalStudents ?? 0, icon: Users, accent: "text-cyan-300", description: "Current enrollment across the school" },
-          { label: "Classes", value: leadership?.totalClasses ?? 0, icon: BookOpen, accent: "text-rose-300", description: "Sections currently scheduled" },
-          { label: "Staff", value: leadership?.totalStaff ?? 0, icon: School, accent: "text-amber-300", description: "Active staff records on file" },
-          { label: "Active Incidents", value: leadership?.activeIncidents ?? 0, icon: ShieldCheck, accent: "text-emerald-300", description: "Open or in-review incidents" },
-          { label: "Open Tickets", value: leadership?.openTickets ?? 0, icon: Ticket, accent: "text-violet-300", description: "Support requests still waiting on action" },
-          { label: "Attendance Today", value: leadership?.attendanceToday ?? 0, icon: CheckCircle2, accent: "text-cyan-300", description: "Attendance records captured today" },
-        ],
-        leftPanel: leadership ? (
-          <SummaryCard title="Leadership overview">
-            <p>{leadership.activeIncidents} active incidents and {leadership.openTickets} open tickets are currently in motion.</p>
-            <p>{leadership.totalStudents} students across {leadership.totalClasses} classes and {leadership.totalStaff} staff members are visible in the school-wide view.</p>
-            <p>Attendance today: {leadership.attendanceToday} records.</p>
-          </SummaryCard>
-        ) : null,
-        rightPanel: leadership ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <DistributionCard title="Student status" emptyLabel="No student data available" items={toStatusItems(leadership.studentsByStatus, studentStatusColors)} />
-            <DistributionCard title="Ticket status" emptyLabel="No ticket data available" items={toStatusItems(leadership.ticketsByStatus, ticketStatusColors)} />
-          </div>
-        ) : null,
-      }
-    }
-    case "operational_staff": {
-      const operational = stats.operational ?? emptyStats.operational
-      return {
-        title: "Operational staff dashboard",
-        badge: tierLabels.operational_staff,
-        summary:
-          "Task-centric workload, scoped students, and active follow-ups are prioritized for day-to-day delivery work.",
-        cards: [
-          { label: "Classes in Scope", value: operational?.classesInScope ?? 0, icon: BookOpen, accent: "text-cyan-300", description: "Assigned or scoped classes" },
-          { label: "Students in Scope", value: operational?.studentsInScope ?? 0, icon: Users, accent: "text-emerald-300", description: "Students currently in scope" },
-          { label: "Incidents in Work", value: operational?.incidentsInWork ?? 0, icon: ShieldCheck, accent: "text-rose-300", description: "Incidents you created or own" },
-          { label: "Open Tickets", value: operational?.openTickets ?? 0, icon: Ticket, accent: "text-violet-300", description: "Your visible ticket queue" },
-          { label: "Follow-ups Due", value: operational?.followUpsDue ?? 0, icon: ClipboardList, accent: "text-amber-300", description: "Open follow-ups needing attention" },
-        ],
-        leftPanel: operational ? (
-          <SummaryCard title="Workload summary">
-            <p>{operational.classesInScope} classes and {operational.studentsInScope} students are currently in your scoped view.</p>
-            <p>{operational.incidentsInWork} incidents and {operational.openTickets} open tickets are active in your queue.</p>
-            <p>{operational.followUpsDue} follow-ups still need attention.</p>
-          </SummaryCard>
-        ) : null,
-        rightPanel: operational ? (
-          <DistributionCard title="Ticket status" emptyLabel="No scoped ticket data available" items={toStatusItems(operational.ticketsByStatus, ticketStatusColors)} />
-        ) : null,
-      }
-    }
-    case "it_admin": {
-      const admin = stats.itAdmin ?? emptyStats.itAdmin
-      return {
-        title: "IT admin dashboard",
-        badge: tierLabels.it_admin,
-        summary:
-          "System health, ticket backlog, role changes, and assignment pressure are grouped for admin triage and oversight.",
-        cards: [
-          { label: "Total Tickets", value: admin?.totalTickets ?? 0, icon: Ticket, accent: "text-cyan-300", description: "All ICT requests on record" },
-          { label: "Unassigned", value: admin?.unassignedTickets ?? 0, icon: ClipboardList, accent: "text-amber-300", description: "Tickets still waiting for an owner" },
-          { label: "Active IT Staff", value: admin?.activeItStaff ?? 0, icon: School, accent: "text-emerald-300", description: "Active support staff with IT roles" },
-          { label: "Open Incidents", value: admin?.openIncidents ?? 0, icon: ShieldCheck, accent: "text-rose-300", description: "Incidents still open or under review" },
-          { label: "Role Updates", value: admin?.pendingRoleUpdates ?? 0, icon: SlidersHorizontal, accent: "text-violet-300", description: "Inactive or queued user role rows" },
-        ],
-        leftPanel: admin ? (
-          <SummaryCard title="Admin summary">
-            <p>{admin.unassignedTickets} unassigned tickets are waiting for assignment.</p>
-            <p>{admin.activeItStaff} active IT staff and {admin.openIncidents} open incidents are visible in the admin view.</p>
-            <p>{admin.pendingRoleUpdates} role rows are currently inactive.</p>
-          </SummaryCard>
-        ) : null,
-        rightPanel: admin ? (
-          <SummaryCard title="Role distribution">
-            {Object.entries(admin.roleDistribution).length > 0 ? (
-              <div className="space-y-2">
-                {Object.entries(admin.roleDistribution)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([role, count]) => (
-                    <div key={role} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2">
-                      <span>{labelize(role)}</span>
-                      <TableBadge tone="slate">{count}</TableBadge>
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <p className="text-slate-400">No role distribution data available.</p>
-            )}
-          </SummaryCard>
-        ) : null,
-      }
-    }
-    default:
-      return {
-        title: "Limited access dashboard",
-        badge: tierLabels.minimal_access,
-        summary: "This account does not currently have a role mapped to a presentation tier.",
-        cards: [
-          { label: "Access", value: "Limited", icon: ShieldCheck, accent: "text-slate-300", description: "Only the dashboard landing page is available" },
-        ],
-        leftPanel: (
-          <SummaryCard title="Access note">
-            <p>No presentation tier could be resolved for this account.</p>
-            <p>Ask leadership or IT admin to add an active role in `user_roles`.</p>
-          </SummaryCard>
-        ),
-        rightPanel: null,
-      }
+async function loadDashboardSnapshot(userId: string | null, rawRoles: string[], role: AppRole | null): Promise<DashboardSnapshot> {
+  const roles = toAppRoles(rawRoles)
+  const hasFinanceAccess = can(rawRoles, "finance.view")
+
+  const [statsResult, studentsResult, staffResult, assetsResult, ticketsResult, rmTicketsResult, attendanceResult, incidentsResult, financeResult] = await Promise.allSettled([
+    fetchDashboardStatsForRole(role),
+    fetchStudents(),
+    fetchStaff(),
+    fetchAssets(),
+    fetchTickets(),
+    fetchRmTickets(),
+    fetchAttendanceRecords(),
+    fetchIncidents(),
+    hasFinanceAccess ? fetchFinanceDashboardData() : Promise.resolve(null),
+  ])
+
+  const stats = statsResult.status === "fulfilled" ? statsResult.value : null
+  const students = studentsResult.status === "fulfilled" ? studentsResult.value : []
+  const staff = staffResult.status === "fulfilled" ? staffResult.value : []
+  const assets = assetsResult.status === "fulfilled" ? assetsResult.value : []
+  const tickets = ticketsResult.status === "fulfilled" ? ticketsResult.value : []
+  const rmTickets = rmTicketsResult.status === "fulfilled" ? rmTicketsResult.value : []
+  const attendance = attendanceResult.status === "fulfilled" ? attendanceResult.value : []
+  const incidents = incidentsResult.status === "fulfilled" ? incidentsResult.value : []
+  const financeData = financeResult.status === "fulfilled" ? financeResult.value : null
+
+  if (statsResult.status === "rejected") {
+    logError("Dashboard stats failed to load", statsResult.reason)
   }
+
+  const primaryTickets = getPrimaryTicketRoute(roles) === "/rm-tickets" ? rmTickets : tickets
+
+  return buildSnapshot(
+    {
+      students,
+      staff,
+      assets,
+      tickets: primaryTickets,
+      rmTickets,
+      attendance,
+      incidents,
+    },
+    stats,
+    role,
+    userId,
+    roles,
+    financeData
+  )
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStatsForTier | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const { user } = useAuth()
-  const { loading, run } = useAsyncTask()
+  const { user, activeRole } = useAuth()
+  const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
-    if (!user) return
+    let cancelled = false
 
-    void run(async () => {
-      const data = await fetchDashboardStatsForTier()
-      setStats(data)
-      setLastUpdated(new Date())
-    }, {
-      onError: (error) => {
-        logError("Failed to load dashboard stats", error)
-        setStats(emptyStats)
-      },
-    })
-  }, [run, user])
-
-  const config = useMemo(() => getCardConfig(stats ?? emptyStats), [stats])
-  const actions = useMemo(() => buildActionItems((stats ?? emptyStats).tier), [stats])
-
-  if (loading || !stats) {
-    return (
-      <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-white/10 bg-slate-900/40">
-        <Spinner size="xl" className="text-cyan-400" />
-      </div>
-    )
-  }
-
-  const roleTier = stats.tier
-  const operationalSubtype = stats.operationalSubtype
-
-  return (
-    <div className="space-y-6 xl:space-y-8">
-      <section className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)] sm:p-6 xl:p-8">
-        <div className="pointer-events-none absolute -right-14 -top-16 h-52 w-52 rounded-full bg-cyan-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 left-16 h-52 w-52 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,360px)] xl:items-start">
-          <div className="min-w-0">
-            <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-cyan-200">
-              <ShieldCheck className="size-3.5" />
-              Tiered overview
-            </p>
-            <h1 className="text-2xl font-semibold text-white sm:text-3xl">{config.title}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">{config.summary}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-300 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.6)]">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Last updated</p>
-            <p className="mt-1 font-medium text-white">{lastUpdated ? format(lastUpdated, "dd MMM yyyy, HH:mm") : "Not available"}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <TableBadge tone={tierBadgeTones[roleTier]}>{config.badge}</TableBadge>
-              {roleTier === "operational_staff" ? <TableBadge tone="slate">{operationalSubtype}</TableBadge> : null}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <StatisticGrid>
-        {config.cards.map((card) => {
-          const Icon = card.icon
-          return (
-            <StatisticCard
-              key={card.label}
-              label={card.label}
-              value={card.value}
-              icon={Icon}
-              description={card.description}
-              accentClassName={card.accent}
-              glowClassName={
-                card.label.includes("Unassigned")
-                  ? "from-amber-400/25 via-amber-400/10 to-transparent"
-                  : card.label.includes("Incidents")
-                    ? "from-rose-400/25 via-rose-400/10 to-transparent"
-                    : card.label.includes("Tickets")
-                      ? "from-cyan-400/25 via-cyan-400/10 to-transparent"
-                      : "from-emerald-400/25 via-emerald-400/10 to-transparent"
-              }
-            />
+    void loadDashboardSnapshot(user?.id ?? null, user?.roles ?? [], activeRole)
+      .then((result) => {
+        if (!cancelled) {
+          setSnapshot(result)
+        }
+      })
+      .catch((error) => {
+        logError("Failed to load dashboard snapshot", error)
+        if (!cancelled) {
+          setSnapshot(
+            buildSnapshot({ students: [], staff: [], assets: [], tickets: [], rmTickets: [], attendance: [], incidents: [] }, null, activeRole, user?.id ?? null, toAppRoles(user?.roles), null)
           )
-        })}
-      </StatisticGrid>
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        {config.leftPanel}
-        {config.rightPanel}
-      </section>
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, user?.roles, activeRole, reloadToken])
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)]">
-        <Card className="p-0">
-          <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
-            <CardTitle className="text-base">Quick actions</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 px-5 py-5 sm:grid-cols-2">
-            {actions.length > 0 ? (
-              actions.map((action) => {
-                const Icon = actionIcons[action.label] ?? ArrowRight
-                return (
-                  <Button key={action.to} asChild variant="outline" className="w-full justify-between">
-                    <Link to={action.to}>
-                      {action.label}
-                      <Icon className="size-4" />
-                    </Link>
-                  </Button>
-                )
-              })
-            ) : (
-              <div className="col-span-full rounded-xl border border-dashed border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
-                No quick actions are available for this access level.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+  // The refresh control re-runs the same loader rather than refetching from a
+  // different path, so a manual refresh cannot diverge from the initial load.
+  const handleRefresh = useCallback(async () => {
+    setLoading(true)
+    setReloadToken((token) => token + 1)
+  }, [])
 
-        <Card className="p-0">
-          <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
-            <CardTitle className="text-base">Access context</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 px-5 py-5">
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Visible roles</p>
-              <p className="mt-1 text-white">{user?.roles.length ? user.roles.join(", ") : "None"}</p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Presentation tier</p>
-              <p className="mt-1 text-white">{tierLabels[roleTier]}</p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Focus</p>
-              <p className="mt-1 text-white">
-                {roleTier === "it_admin"
-                  ? "System health and administrative throughput"
-                  : roleTier === "leadership"
-                    ? "Oversight and school-wide review"
-                    : roleTier === "operational_staff"
-                      ? "Scoped day-to-day task completion"
-                      : "Sparse landing page only"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {roleTier === "minimal_access" ? (
-        <section className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-400">
-          <Sparkles className="mb-2 size-5 text-slate-500" />
-          This account has no active presentation tier. The dashboard stays sparse until a role is assigned.
-        </section>
-      ) : null}
-    </div>
-  )
+  return <DashboardOverview snapshot={snapshot} loading={loading} onRefresh={handleRefresh} />
 }

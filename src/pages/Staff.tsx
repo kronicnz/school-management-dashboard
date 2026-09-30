@@ -40,6 +40,10 @@ function getEmptyStaffForm(): StaffFormData {
   }
 }
 
+function normalizeStatValue(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase()
+}
+
 export default function StaffPage() {
   const toast = useToast()
   const [staff, setStaff] = useState<StaffDirectoryRow[]>([])
@@ -149,10 +153,24 @@ export default function StaffPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this staff member?")) return
+    // Removing a staff row does NOT revoke access: the auth account, its role
+    // grants, and its audit trail all survive. Revocation is an explicit action on
+    // the Admin page, so say this before the record disappears rather than letting
+    // an admin assume deleting a person signed them out.
+    const target = staff.find((member) => member.id === id)
+    const confirmed = window.confirm(
+      target
+        ? `Delete ${target.first_name} ${target.last_name}?\n\n`
+          + "This removes the staff record only. Any login, role grants, and account history "
+          + "are kept, and the person can still sign in. Revoke their access from the Admin "
+          + "page if that is what you intend."
+        : "Delete this staff member?\n\nThis removes the staff record only. Any login and role "
+          + "grants are kept."
+    )
+    if (!confirmed) return
     try {
       await deleteStaff(id)
-      toast.success("Staff deleted", "The staff record was removed.")
+      toast.success("Staff record deleted", "The login and any role grants were left untouched.")
       await loadStaff()
     } catch (error) {
       toast.error("Staff delete failed", getErrorMessage(error))
@@ -166,11 +184,21 @@ export default function StaffPage() {
   })
 
   const totalStaff = staff.length
-  const activeStaff = staff.filter((member) => member.status === "active").length
-  const inactiveStaff = staff.filter((member) => member.status === "inactive").length
-  const pendingStaff = staff.filter((member) => member.status === "pending").length
-  const teachers = staff.filter((member) => member.roles.some((role) => role.toLowerCase().includes("teacher"))).length
-  const departments = new Set(staff.map((member) => member.department).filter(Boolean)).size
+  const activeStaff = staff.filter((member) => normalizeStatValue(member.status) === "active").length
+  const inactiveStaff = staff.filter((member) => normalizeStatValue(member.status) === "inactive").length
+  // `staff.status` only ever holds active / inactive / on_leave. This used to count
+  // "pending", which the database check constraint rejects, so the tile was always
+  // zero - a metric that could not move is worse than no metric.
+  const onLeaveStaff = staff.filter((member) => normalizeStatValue(member.status) === "on_leave").length
+  // `teacher` is retired, so a `staff` grant is the teaching role now. Counting
+  // only the literal "teacher" string left this tile permanently at zero.
+  const teachingStaff = staff.filter((member) =>
+    member.roles.some((role) => {
+      const value = normalizeStatValue(role)
+      return value === "staff" || value.includes("teacher")
+    }),
+  ).length
+  const departments = new Set(staff.map((member) => member.department?.trim()).filter(Boolean)).size
 
   const staffColumns = [
     {
@@ -282,12 +310,12 @@ export default function StaffPage() {
           <p className="text-xs text-slate-400">Live roster counts and scope breakdown.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Staff" value={totalStaff} icon={Plus} description="All staff identity records" accentClassName="text-cyan-300" />
-          <StatisticCard label="Active" value={activeStaff} icon={RefreshCw} description="Staff currently marked active" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Inactive" value={inactiveStaff} icon={Trash2} description="Staff currently marked inactive" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Pending" value={pendingStaff} icon={Clock3} description="Records awaiting activation" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Teachers" value={teachers} icon={School} description="Records in teaching roles" accentClassName="text-cyan-300" />
-          <StatisticCard label="Departments" value={departments} icon={Layers3} description="Unique departments represented" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Staff" value={totalStaff} icon={Plus} description="All staff identity records" tone="information" />
+          <StatisticCard label="Active" value={activeStaff} icon={RefreshCw} description="Staff currently marked active" tone="success" />
+          <StatisticCard label="Inactive" value={inactiveStaff} icon={Trash2} description="Staff currently marked inactive" tone="destructive" />
+          <StatisticCard label="On Leave" value={onLeaveStaff} icon={Clock3} description="Records currently marked on leave" tone="warning" />
+          <StatisticCard label="Teaching Staff" value={teachingStaff} icon={School} description="Records in teaching roles" tone="primary" />
+          <StatisticCard label="Departments" value={departments} icon={Layers3} description="Unique departments represented" tone="pending" />
         </StatisticGrid>
       </section>
 

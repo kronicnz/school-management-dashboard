@@ -360,12 +360,12 @@ export default function AttendancePage() {
           <p className="text-xs text-[var(--color-muted)]">Live records for the selected date.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Records" value={summary.total} icon={CalendarClock} description="Entries captured for the selected date" accentClassName="text-cyan-300" />
-          <StatisticCard label="Present" value={summary.present} icon={CheckCircle2} description="Marked present in class" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Late" value={summary.late} icon={Clock3} description="Recorded after the start time" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Absent" value={summary.absent} icon={XCircle} description="Missing from the attendance list" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Excused" value={summary.excused} icon={RefreshCw} description="Absences approved or excused" accentClassName="text-cyan-300" />
-          <StatisticCard label="Attendance Rate" value={`${attendanceRate}%`} icon={Percent} description="Present rate for the selected date" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Records" value={summary.total} icon={CalendarClock} description="Entries captured for the selected date" tone="information" />
+          <StatisticCard label="Present" value={summary.present} icon={CheckCircle2} description="Marked present in class" tone="success" />
+          <StatisticCard label="Late" value={summary.late} icon={Clock3} description="Recorded after the start time" tone="warning" />
+          <StatisticCard label="Absent" value={summary.absent} icon={XCircle} description="Missing from the attendance list" tone="destructive" />
+          <StatisticCard label="Excused" value={summary.excused} icon={RefreshCw} description="Absences approved or excused" tone="pending" />
+          <StatisticCard label="Attendance Rate" value={`${attendanceRate}%`} icon={Percent} description="Present rate for the selected date" tone="completed" />
         </StatisticGrid>
       </section>
 
