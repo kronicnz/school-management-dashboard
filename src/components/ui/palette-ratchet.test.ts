@@ -102,7 +102,6 @@ export function paletteUsageByFile(): Record<string, number> {
  * entirely, so the ratchet also records which modules are done.
  */
 const BUDGETS: Record<string, number> = {
-  "pages/Admin.tsx": 218,
   "pages/Assets.tsx": 24,
   "pages/Sandbox.tsx": 20,
   "components/ui/Toast.tsx": 15,

@@ -439,7 +439,7 @@ export default function AdminPage() {
           <TableAvatar>{`${row.first_name?.[0] ?? ""}${row.last_name?.[0] ?? ""}`.trim() || "U"}</TableAvatar>
           <div>
             <div className="font-medium text-white">{row.first_name} {row.last_name}</div>
-            <div className="text-xs text-slate-400">{row.org_unit_path || "No org unit"}</div>
+            <div className="text-xs text-[var(--color-muted)]">{row.org_unit_path || "No org unit"}</div>
           </div>
         </div>
       ),
@@ -451,17 +451,17 @@ export default function AdminPage() {
       className: "min-w-[280px]",
       cell: (value: unknown) => (
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">{String(value ?? "-")}</span>
+          <span className="text-[var(--color-muted)]">{String(value ?? "-")}</span>
           {Boolean(value) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 handleCopyEmail(String(value))
               }}
-              className="text-slate-500 hover:text-cyan-400 transition-colors"
+              className="text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
               title="Copy email"
             >
-              {copiedEmail === String(value) ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+              {copiedEmail === String(value) ? <Check className="size-3.5 text-[var(--color-success)]" /> : <Copy className="size-3.5" />}
             </button>
           )}
         </div>
@@ -508,7 +508,7 @@ export default function AdminPage() {
       header: "Department",
       sortable: true,
       className: "whitespace-nowrap min-w-[180px]",
-      cell: (value: unknown) => <span className="text-slate-400">{String(value ?? "-")}</span>,
+      cell: (value: unknown) => <span className="text-[var(--color-muted)]">{String(value ?? "-")}</span>,
     },
     {
       accessor: "actions",
@@ -530,7 +530,7 @@ export default function AdminPage() {
               setActiveTab("assignments")
             }}
           >
-            <UserPlus className="size-4 text-cyan-400" />
+            <UserPlus className="size-4 text-[var(--color-information)]" />
           </Button>
         </div>
       ),
@@ -800,8 +800,8 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-white/10 bg-slate-900/40">
-        <Spinner size="xl" className="text-cyan-400" />
+      <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-white/10 bg-[var(--color-surface-muted)]/40">
+        <Spinner size="xl" className="text-[var(--color-information)]" />
       </div>
     )
   }
@@ -809,46 +809,46 @@ export default function AdminPage() {
   return (
     <div className="w-full max-w-full min-w-0 space-y-6">
       {/* 2-Column Asymmetric Hero Header */}
-      <section className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 p-6 sm:p-8 shadow-xl">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-cyan-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-12 h-52 w-52 rounded-full bg-indigo-500/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--color-information)_20%,transparent)] bg-[linear-gradient(to_right,var(--color-surface),var(--color-surface),color-mix(in_srgb,var(--color-information)_14%,var(--color-surface)))] p-6 sm:p-8 shadow-xl">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--color-information)_15%,transparent)] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-12 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--color-accent-strong)_10%,transparent)] blur-3xl" />
         
         <div className="relative grid gap-6 md:grid-cols-[1.6fr_1fr] items-center">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-cyan-200 backdrop-blur-md">
-              <ShieldCheck className="size-3.5 text-cyan-400" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--color-accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] px-3 py-1 text-xs font-medium uppercase tracking-wider text-[var(--color-information)] backdrop-blur-md">
+              <ShieldCheck className="size-3.5 text-[var(--color-information)]" />
               Admin Control Center
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
               User Directory & Scope Workspace
             </h1>
-            <p className="text-sm text-slate-300 sm:text-base leading-relaxed">
+            <p className="text-sm text-[var(--color-text)] sm:text-base leading-relaxed">
               Manage staff accounts, assign granular role permissions, establish teaching scope rules, and execute Google Workspace sync operations.
             </p>
-            <div className="flex flex-wrap gap-2 pt-1 text-xs text-slate-300">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/40 px-3 py-1">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> Live Directory
+            <div className="flex flex-wrap gap-2 pt-1 text-xs text-[var(--color-text)]">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_40%,transparent)] px-3 py-1">
+                <span className="size-2 rounded-full bg-[var(--color-success)] animate-pulse" /> Live Directory
               </span>
-              <span className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1">
+              <span className="rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_40%,transparent)] px-3 py-1">
                 {assignmentDrafts.length} Queued Drafts
               </span>
-              <span className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1">
+              <span className="rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_40%,transparent)] px-3 py-1">
                 {activeIncidents} Active Incidents
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-950/80 p-4 text-xs text-slate-300 backdrop-blur-md w-full">
+          <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,transparent)] p-4 text-xs text-[var(--color-text)] backdrop-blur-md w-full">
             <div className="flex items-center gap-2 font-medium text-white">
-              <BadgeCheck className="size-4 text-emerald-400" />
+              <BadgeCheck className="size-4 text-[var(--color-success)]" />
               {isAdmin ? "Administrative Access Granted" : "Read-Only Governance View"}
             </div>
-            <div className="truncate text-slate-400">User: <span className="text-slate-200">{user?.email}</span></div>
-            <div className="text-slate-400">Active Roles: <span className="text-cyan-300 font-medium">{roles.length > 0 ? roles.map(labelize).join(", ") : "None"}</span></div>
+            <div className="truncate text-[var(--color-muted)]">User: <span className="text-[var(--color-text)]">{user?.email}</span></div>
+            <div className="text-[var(--color-muted)]">Active Roles: <span className="text-[var(--color-information)] font-medium">{roles.length > 0 ? roles.map(labelize).join(", ") : "None"}</span></div>
             
             <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-slate-400">System Status</span>
-              <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
+              <span className="text-[var(--color-muted)]">System Status</span>
+              <span className="inline-flex items-center gap-1 text-[var(--color-success)] font-medium">
                 <CheckCircle2 className="size-3.5" /> Operational
               </span>
             </div>
@@ -861,7 +861,7 @@ export default function AdminPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-white">Live Metrics</h2>
-            <p className="text-xs text-slate-400">Six governance KPIs arranged for a three-column rhythm on larger screens.</p>
+            <p className="text-xs text-[var(--color-muted)]">Six governance KPIs arranged for a three-column rhythm on larger screens.</p>
           </div>
         </div>
         <StatisticGrid>
@@ -901,15 +901,15 @@ export default function AdminPage() {
               onClick={() => setActiveTab(tab.id as DashboardTab)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
                 isActive
-                  ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                  ? "bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-information)] border border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] shadow-sm"
+                  : "text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5"
               }`}
             >
-              <Icon className={`size-4 ${isActive ? "text-cyan-400" : "text-slate-500"}`} />
+              <Icon className={`size-4 ${isActive ? "text-[var(--color-information)]" : "text-[var(--color-muted)]"}`} />
               <span>{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
                 <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-                  isActive ? "bg-cyan-400/20 text-cyan-200" : "bg-white/10 text-slate-300"
+                  isActive ? "bg-[color-mix(in_srgb,var(--color-accent)_20%,transparent)] text-[var(--color-information)]" : "bg-white/10 text-[var(--color-text)]"
                 }`}>
                   {tab.badge}
                 </span>
@@ -926,10 +926,10 @@ export default function AdminPage() {
             <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="size-4 text-cyan-400" />
+                  <Users className="size-4 text-[var(--color-information)]" />
                   Staff Directory
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Search, filter, and inspect staff metadata and active assignments.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and inspect staff metadata and active assignments.</p>
               </div>
               <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
                 <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleRefreshAll}>
@@ -946,7 +946,7 @@ export default function AdminPage() {
             <CardContent className="min-w-0 space-y-4 px-0 py-0">
               <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="relative sm:col-span-2 lg:col-span-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
                   <Input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -978,8 +978,8 @@ export default function AdminPage() {
               </div>
 
               {(roleFilter || departmentFilter || statusFilter || search) && (
-                <div className="flex min-w-0 flex-col gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-400 sm:flex-row sm:items-center">
-                  <Filter className="size-3 text-cyan-400" />
+                <div className="flex min-w-0 flex-col gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-[var(--color-muted)] sm:flex-row sm:items-center">
+                  <Filter className="size-3 text-[var(--color-information)]" />
                   <span className="min-w-0 break-words sm:flex-1">Filters active: showing {filteredStaff.length} of {staff.length} users</span>
                   <button
                     onClick={() => {
@@ -988,7 +988,7 @@ export default function AdminPage() {
                       setDepartmentFilter("")
                       setStatusFilter("")
                     }}
-                    className="text-left font-medium text-cyan-400 hover:underline sm:ml-auto sm:text-right"
+                    className="text-left font-medium text-[var(--color-information)] hover:underline sm:ml-auto sm:text-right"
                   >
                     Reset filters
                   </button>
@@ -1013,26 +1013,26 @@ export default function AdminPage() {
               <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
                 <div>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <UserCheck className="size-4 text-emerald-400" />
+                    <UserCheck className="size-4 text-[var(--color-success)]" />
                     Account Overview
                   </CardTitle>
-                  <p className="mt-1 text-xs text-slate-400">Detailed parameters for the selected account.</p>
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">Detailed parameters for the selected account.</p>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 px-5 py-5">
                 {selectedStaff ? (
                   <>
-                    <div className="rounded-xl border border-white/10 bg-slate-950/60 p-4 space-y-3">
+                    <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-base font-bold text-white">
                             {selectedStaff.first_name} {selectedStaff.last_name}
                           </div>
-                          <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <div className="text-xs text-[var(--color-muted)] flex items-center gap-1.5 mt-0.5">
                             {selectedStaff.email}
                             <button
                               onClick={() => handleCopyEmail(selectedStaff.email)}
-                              className="text-slate-500 hover:text-cyan-400"
+                              className="text-[var(--color-muted)] hover:text-[var(--color-accent)]"
                               title="Copy email"
                             >
                               <Copy className="size-3" />
@@ -1049,12 +1049,12 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-white/10 grid gap-2 text-xs text-slate-300">
-                        <div className="flex justify-between"><span className="text-slate-500">Roles:</span> <span className="font-medium text-slate-200">{selectedStaff.roles.length > 0 ? selectedStaff.roles.map(labelize).join(", ") : "Unassigned"}</span></div>
+                      <div className="pt-2 border-t border-white/10 grid gap-2 text-xs text-[var(--color-text)]">
+                        <div className="flex justify-between"><span className="text-[var(--color-muted)]">Roles:</span> <span className="font-medium text-[var(--color-text)]">{selectedStaff.roles.length > 0 ? selectedStaff.roles.map(labelize).join(", ") : "Unassigned"}</span></div>
                         {selectedStaff.dated_roles.length > 0 && (
                           <div className="flex justify-between gap-3">
-                            <span className="text-slate-500 shrink-0">Not in force:</span>
-                            <span className="font-medium text-amber-300/90 text-right">
+                            <span className="text-[var(--color-muted)] shrink-0">Not in force:</span>
+                            <span className="font-medium text-[var(--color-warning)]/90 text-right">
                               {selectedStaff.dated_roles
                                 .map((grant) => {
                                   const from = grant.effective_from
@@ -1068,24 +1068,24 @@ export default function AdminPage() {
                             </span>
                           </div>
                         )}
-                        <div className="flex justify-between"><span className="text-slate-500">Department:</span> <span className="font-medium text-slate-200">{selectedStaff.department || "Unassigned"}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Phone:</span> <span className="font-medium text-slate-200">{selectedStaff.phone || "Not provided"}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Org Unit:</span> <span className="font-medium text-slate-200 truncate max-w-[180px]">{selectedStaff.org_unit_path || "Root"}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Invited:</span> <span className="font-medium text-slate-200">{selectedStaff.account_invited_at ? new Date(selectedStaff.account_invited_at).toLocaleDateString() : "Never"}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Drafted Queue:</span> <span className="font-medium text-cyan-400">{selectedDrafts.length} updates</span></div>
+                        <div className="flex justify-between"><span className="text-[var(--color-muted)]">Department:</span> <span className="font-medium text-[var(--color-text)]">{selectedStaff.department || "Unassigned"}</span></div>
+                        <div className="flex justify-between"><span className="text-[var(--color-muted)]">Phone:</span> <span className="font-medium text-[var(--color-text)]">{selectedStaff.phone || "Not provided"}</span></div>
+                        <div className="flex justify-between"><span className="text-[var(--color-muted)]">Org Unit:</span> <span className="font-medium text-[var(--color-text)] truncate max-w-[180px]">{selectedStaff.org_unit_path || "Root"}</span></div>
+                        <div className="flex justify-between"><span className="text-[var(--color-muted)]">Invited:</span> <span className="font-medium text-[var(--color-text)]">{selectedStaff.account_invited_at ? new Date(selectedStaff.account_invited_at).toLocaleDateString() : "Never"}</span></div>
+                        <div className="flex justify-between"><span className="text-[var(--color-muted)]">Drafted Queue:</span> <span className="font-medium text-[var(--color-information)]">{selectedDrafts.length} updates</span></div>
                       </div>
                     </div>
 
                     {isAdmin && (
-                      <div className="space-y-2 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                          <KeyRound className="size-3.5 text-cyan-400" />
+                      <div className="space-y-2 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-text)]">
+                          <KeyRound className="size-3.5 text-[var(--color-information)]" />
                           Login &amp; Access
                         </div>
 
                         {!selectedProfileId ? (
                           <div className="space-y-2">
-                            <p className="text-[11px] leading-relaxed text-slate-400">
+                            <p className="text-[11px] leading-relaxed text-[var(--color-muted)]">
                               Organisation staff sign in with Google, so no password login is needed. The roles
                               below are held on their staff record and applied automatically the first time
                               they sign in.
@@ -1096,7 +1096,7 @@ export default function AdminPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="justify-between w-full text-xs border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10"
+                              className="justify-between w-full text-xs border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] text-[var(--color-information)] hover:bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)]"
                               onClick={() => handleEditStaff(selectedStaff, { createAccount: true })}
                             >
                               <span>Create manual login (no Google)</span>
@@ -1121,7 +1121,7 @@ export default function AdminPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="justify-between text-xs border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
+                                  className="justify-between text-xs border-[color-mix(in_srgb,var(--color-success)_30%,transparent)] text-[var(--color-success)] hover:bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)]"
                                   disabled={accountAction !== null}
                                   onClick={handleRestoreAccess}
                                 >
@@ -1129,8 +1129,8 @@ export default function AdminPage() {
                                   {accountAction === "restore" ? <Spinner size="sm" /> : <RotateCcw className="size-3.5" />}
                                 </Button>
                               ) : confirmRevokeFor === selectedProfileId ? (
-                                <div className="space-y-2 rounded-lg border border-rose-500/30 bg-rose-950/20 p-2.5">
-                                  <p className="text-[11px] leading-relaxed text-rose-200">
+                                <div className="space-y-2 rounded-lg border border-[color-mix(in_srgb,var(--color-destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] p-2.5">
+                                  <p className="text-[11px] leading-relaxed text-[var(--color-destructive)]">
                                     Revoking deactivates every role grant and suspends the login. It is
                                     reversible, and roles are not restored automatically.
                                   </p>
@@ -1159,7 +1159,7 @@ export default function AdminPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="justify-between text-xs border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
+                                  className="justify-between text-xs border-[color-mix(in_srgb,var(--color-destructive)_30%,transparent)] text-[var(--color-destructive)] hover:bg-[color-mix(in_srgb,var(--color-destructive)_10%,transparent)]"
                                   onClick={() => setConfirmRevokeFor(selectedProfileId)}
                                 >
                                   <span>Revoke access</span>
@@ -1169,8 +1169,8 @@ export default function AdminPage() {
                             </div>
 
                             {selectedStaff.account_status === "revoked" && (
-                              <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2.5">
-                                <p className="text-[11px] leading-relaxed text-amber-200">
+                              <div className="rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] p-2.5">
+                                <p className="text-[11px] leading-relaxed text-[var(--color-warning)]">
                                   This account is suspended and every role grant is deactivated. Lifting the
                                   suspension does not bring the roles back &mdash; re-granting them is a
                                   separate decision.
@@ -1178,7 +1178,7 @@ export default function AdminPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="mt-2 w-full justify-between text-xs text-amber-200 hover:bg-amber-500/10"
+                                  className="mt-2 w-full justify-between text-xs text-[var(--color-warning)] hover:bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)]"
                                   onClick={() => handleEditStaff(selectedStaff)}
                                 >
                                   <span>Re-grant roles</span>
@@ -1188,27 +1188,27 @@ export default function AdminPage() {
                             )}
 
                             <div className="border-t border-white/10 pt-2">
-                              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                <History className="size-3 text-slate-500" />
+                              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                                <History className="size-3 text-[var(--color-muted)]" />
                                 Recent account activity
                               </div>
                               {auditLoading ? (
-                                <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
+                                <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
                                   <Spinner size="sm" /> Loading...
                                 </div>
                               ) : auditRows.length === 0 ? (
-                                <p className="mt-2 text-[11px] text-slate-500">No account changes recorded.</p>
+                                <p className="mt-2 text-[11px] text-[var(--color-muted)]">No account changes recorded.</p>
                               ) : (
                                 <ul className="mt-2 space-y-1.5">
                                   {auditRows.map((row) => (
                                     <li key={row.id} className="flex items-start justify-between gap-2 text-[11px]">
-                                      <span className="text-slate-300">
+                                      <span className="text-[var(--color-text)]">
                                         {labelize(row.action)}
                                         {row.actor_email ? (
-                                          <span className="text-slate-500"> by {row.actor_email}</span>
+                                          <span className="text-[var(--color-muted)]"> by {row.actor_email}</span>
                                         ) : null}
                                       </span>
-                                      <span className="shrink-0 text-slate-500">
+                                      <span className="shrink-0 text-[var(--color-muted)]">
                                         {new Date(row.created_at).toLocaleString()}
                                       </span>
                                     </li>
@@ -1233,7 +1233,7 @@ export default function AdminPage() {
                             setAssignmentForm((current) => ({ ...current, ownerId: selectedStaff.profile_id ?? "" }))
                           setActiveTab("assignments")
                         }}
-                        className="justify-between text-xs border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10"
+                        className="justify-between text-xs border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] text-[var(--color-information)] hover:bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)]"
                       >
                         <span>Queue New Scope Assignment</span>
                         <ClipboardList className="size-3.5" />
@@ -1242,21 +1242,21 @@ export default function AdminPage() {
 
                     {selectedDrafts.length > 0 && (
                       <div className="space-y-2 pt-2 border-t border-white/10">
-                        <span className="text-xs font-semibold text-slate-300">Pending Drafts for User:</span>
+                        <span className="text-xs font-semibold text-[var(--color-text)]">Pending Drafts for User:</span>
                         {selectedDrafts.map((draft) => (
-                          <div key={draft.id} className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-2.5 text-xs">
-                            <div className="flex items-center justify-between font-medium text-cyan-200">
+                          <div key={draft.id} className="rounded-lg border border-[color-mix(in_srgb,var(--color-information)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_20%,transparent)] p-2.5 text-xs">
+                            <div className="flex items-center justify-between font-medium text-[var(--color-information)]">
                               <span>{draft.targetName} ({labelize(draft.targetType)})</span>
-                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-400/10 border border-cyan-400/20">{draft.mode}</span>
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--color-accent)_20%,transparent)]">{draft.mode}</span>
                             </div>
-                            <div className="mt-1 text-slate-400 text-[11px]">{draft.notes || "No notes"}</div>
+                            <div className="mt-1 text-[var(--color-muted)] text-[11px]">{draft.notes || "No notes"}</div>
                           </div>
                         ))}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="py-8 text-center text-xs text-slate-400">
+                  <div className="py-8 text-center text-xs text-[var(--color-muted)]">
                     Select a row in the table to inspect individual user credentials and configuration.
                   </div>
                 )}
@@ -1273,21 +1273,21 @@ export default function AdminPage() {
             <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <SlidersHorizontal className="size-4 text-cyan-400" />
+                  <SlidersHorizontal className="size-4 text-[var(--color-information)]" />
                   Scope & Role Assignment Form
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Draft granular permission updates and teaching scope bindings.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Draft granular permission updates and teaching scope bindings.</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300 font-medium">
+                <span className="rounded-full border border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] px-3 py-1 text-xs text-[var(--color-information)] font-medium">
                   {assignmentDrafts.length} Pending
                 </span>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 px-5 py-5">
-              <form onSubmit={handleQueueAssignment} className="space-y-4 rounded-xl border border-white/10 bg-slate-950/60 p-4">
+              <form onSubmit={handleQueueAssignment} className="space-y-4 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
                 <div className="grid gap-3 md:grid-cols-2">
-                  <FormField label="Assignment Scope" htmlFor="assignment-scope" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Assignment Scope" htmlFor="assignment-scope" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
                       id="assignment-scope"
                       value={assignmentForm.scopeType}
@@ -1299,7 +1299,7 @@ export default function AdminPage() {
                     </Select>
                   </FormField>
 
-                  <FormField label="Target Staff Account" htmlFor="assignment-owner" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Target Staff Account" htmlFor="assignment-owner" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
                       id="assignment-owner"
                       value={assignmentForm.ownerId}
@@ -1316,7 +1316,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <FormField label="Target Object Type" htmlFor="assignment-target-type" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Target Object Type" htmlFor="assignment-target-type" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
                       id="assignment-target-type"
                       value={assignmentForm.targetType}
@@ -1327,7 +1327,7 @@ export default function AdminPage() {
                     </Select>
                   </FormField>
 
-                  <FormField label="Scope Inclusion Mode" htmlFor="assignment-mode" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Scope Inclusion Mode" htmlFor="assignment-mode" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
                       id="assignment-mode"
                       value={assignmentForm.mode}
@@ -1341,7 +1341,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <FormField label={`Select Target ${assignmentForm.targetType === "class" ? "Class" : "Student"}`} htmlFor="assignment-target" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label={`Select Target ${assignmentForm.targetType === "class" ? "Class" : "Student"}`} htmlFor="assignment-target" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
                       id="assignment-target"
                       value={assignmentForm.targetId}
@@ -1358,7 +1358,7 @@ export default function AdminPage() {
                     </Select>
                   </FormField>
 
-                  <FormField label="Source Provenance" htmlFor="assignment-source" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Source Provenance" htmlFor="assignment-source" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
                       id="assignment-source"
                       value={assignmentForm.source}
@@ -1372,15 +1372,15 @@ export default function AdminPage() {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <FormField label="Effective Start Date" htmlFor="assignment-effective-from" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Effective Start Date" htmlFor="assignment-effective-from" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Input id="assignment-effective-from" type="date" value={assignmentForm.effectiveFrom} onChange={(event) => setAssignmentForm((current) => ({ ...current, effectiveFrom: event.target.value }))} className="text-xs" />
                   </FormField>
-                  <FormField label="Effective Expiry Date" htmlFor="assignment-effective-to" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Effective Expiry Date" htmlFor="assignment-effective-to" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Input id="assignment-effective-to" type="date" value={assignmentForm.effectiveTo} onChange={(event) => setAssignmentForm((current) => ({ ...current, effectiveTo: event.target.value }))} className="text-xs" />
                   </FormField>
                 </div>
 
-                <FormField label="Audit Justification & Notes" htmlFor="assignment-notes" labelClassName="text-xs font-medium text-slate-300">
+                <FormField label="Audit Justification & Notes" htmlFor="assignment-notes" labelClassName="text-xs font-medium text-[var(--color-text)]">
                   <Textarea
                     id="assignment-notes"
                     value={assignmentForm.notes}
@@ -1412,36 +1412,36 @@ export default function AdminPage() {
                       <Button variant="ghost" size="sm" onClick={handleExportDrafts} title="Export JSON">
                         <Download className="size-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setAssignmentDrafts([])} className="text-rose-400 hover:text-rose-300">
+                      <Button variant="ghost" size="sm" onClick={() => setAssignmentDrafts([])} className="text-[var(--color-destructive)] hover:text-[var(--color-destructive)]">
                         Clear All
                       </Button>
                     </div>
                   )}
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Staged changes ready for governance review and deployment.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Staged changes ready for governance review and deployment.</p>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 px-5 py-5 max-h-[550px] overflow-y-auto">
               {assignmentDrafts.length > 0 ? (
                 assignmentDrafts.map((draft) => (
-                  <div key={draft.id} className="group relative rounded-xl border border-white/10 bg-slate-950/60 p-3.5 hover:border-cyan-500/30 transition-colors">
+                  <div key={draft.id} className="group relative rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5 hover:border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] transition-colors">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <div className="font-semibold text-xs text-white flex items-center gap-1.5">
                           <span>{draft.ownerName}</span>
-                          <ArrowRight className="size-3 text-slate-500" />
-                          <span className="text-cyan-300">{draft.targetName}</span>
+                          <ArrowRight className="size-3 text-[var(--color-muted)]" />
+                          <span className="text-[var(--color-information)]">{draft.targetName}</span>
                         </div>
-                        <div className="mt-1 text-[11px] text-slate-400">
-                          {labelize(draft.scopeType)} via <span className="text-slate-300">{labelize(draft.source)}</span>
+                        <div className="mt-1 text-[11px] text-[var(--color-muted)]">
+                          {labelize(draft.scopeType)} via <span className="text-[var(--color-text)]">{labelize(draft.source)}</span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleDeleteDraft(draft.id)}
-                        className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                        className="text-[var(--color-muted)] hover:text-[var(--color-destructive)] transition-colors p-1"
                         title="Remove draft"
                       >
-                        <Trash2 className="size-4 text-rose-400" />
+                        <Trash2 className="size-4 text-[var(--color-destructive)]" />
                       </button>
                     </div>
 
@@ -1449,24 +1449,24 @@ export default function AdminPage() {
                       <TableBadge tone={getModeBadgeTone(draft.mode)} className="px-2 py-0.5 text-[10px] font-medium">
                         {labelize(draft.mode)}
                       </TableBadge>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-slate-300">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[var(--color-text)]">
                         {draft.targetType.toUpperCase()}
                       </span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-slate-400">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[var(--color-muted)]">
                         {formatWindow(draft.effectiveFrom, draft.effectiveTo)}
                       </span>
                     </div>
 
                     {draft.notes && (
-                      <p className="mt-2 text-[11px] text-slate-400 italic bg-white/5 p-2 rounded">
+                      <p className="mt-2 text-[11px] text-[var(--color-muted)] italic bg-white/5 p-2 rounded">
                         "{draft.notes}"
                       </p>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-8 text-center text-xs text-slate-400">
-                  <Sparkles className="mx-auto size-6 text-slate-600 mb-2" />
+                <div className="rounded-xl border border-dashed border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_30%,transparent)] p-8 text-center text-xs text-[var(--color-muted)]">
+                  <Sparkles className="mx-auto size-6 text-[var(--color-muted)] mb-2" />
                   No changes queued. Fill out the scope form to stage updates before applying.
                 </div>
               )}
@@ -1482,18 +1482,18 @@ export default function AdminPage() {
             <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <RefreshCw className="size-4 text-cyan-400" />
+                  <RefreshCw className="size-4 text-[var(--color-information)]" />
                   Google Workspace Automated Synchronization
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Synchronize accounts and organizational units directly from Google Workspace.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Synchronize accounts and organizational units directly from Google Workspace.</p>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 px-5 py-5">
-              <div className="rounded-xl border border-white/10 bg-slate-950/60 p-4 space-y-3">
+              <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold text-white">Staff Organizational Unit</div>
-                    <div className="text-xs text-slate-400">/Accounts/Automated/Staff</div>
+                    <div className="text-xs text-[var(--color-muted)]">/Accounts/Automated/Staff</div>
                   </div>
                   <Button
                     variant="outline"
@@ -1501,17 +1501,17 @@ export default function AdminPage() {
                     onClick={handleSyncStaff}
                     disabled={syncing === "staff"}
                   >
-                    {syncing === "staff" ? <Spinner size="sm" className="mr-2" /> : <RefreshCw className="mr-2 size-3.5 text-cyan-400" />}
+                    {syncing === "staff" ? <Spinner size="sm" className="mr-2" /> : <RefreshCw className="mr-2 size-3.5 text-[var(--color-information)]" />}
                     Sync Staff OU
                   </Button>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-slate-950/60 p-4 space-y-3">
+              <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold text-white">Students Organizational Units</div>
-                    <div className="text-xs text-slate-400">Year 7 & Year 8 Active Cohorts</div>
+                    <div className="text-xs text-[var(--color-muted)]">Year 7 & Year 8 Active Cohorts</div>
                   </div>
                   <Button
                     variant="outline"
@@ -1519,15 +1519,15 @@ export default function AdminPage() {
                     onClick={handleSyncStudents}
                     disabled={syncing === "students"}
                   >
-                    {syncing === "students" ? <Spinner size="sm" className="mr-2" /> : <RefreshCw className="mr-2 size-3.5 text-amber-400" />}
+                    {syncing === "students" ? <Spinner size="sm" className="mr-2" /> : <RefreshCw className="mr-2 size-3.5 text-[var(--color-warning)]" />}
                     Sync Students OU
                   </Button>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-4 text-xs text-slate-300 space-y-2">
-                <div className="font-semibold text-cyan-200 flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-cyan-400" /> Sync Policy & Conflict Resolution
+              <div className="rounded-xl border border-[color-mix(in_srgb,var(--color-information)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_20%,transparent)] p-4 text-xs text-[var(--color-text)] space-y-2">
+                <div className="font-semibold text-[var(--color-information)] flex items-center gap-2">
+                  <ShieldCheck className="size-4 text-[var(--color-information)]" /> Sync Policy & Conflict Resolution
                 </div>
                 <p>
                   Automated sync actions reconcile user email addresses, full names, and group memberships. Manual overrides created in this dashboard take priority over incoming automated Google Workspace payload attributes.
@@ -1540,10 +1540,10 @@ export default function AdminPage() {
             <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Crown className="size-4 text-amber-400" />
+                  <Crown className="size-4 text-[var(--color-warning)]" />
                   Role Distribution Breakdown
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Live breakdown of privileged roles across active staff.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Live breakdown of privileged roles across active staff.</p>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 px-5 py-5">
@@ -1553,12 +1553,12 @@ export default function AdminPage() {
                   return (
                     <div key={role} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-slate-200">{labelize(role)}</span>
-                        <span className="text-slate-400">{count} accounts ({percentage}%)</span>
+                        <span className="font-medium text-[var(--color-text)]">{labelize(role)}</span>
+                        <span className="text-[var(--color-muted)]">{count} accounts ({percentage}%)</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-slate-950 overflow-hidden border border-white/5">
+                      <div className="h-2 w-full rounded-full bg-[var(--color-surface)] overflow-hidden border border-white/5">
                         <div
-                          className="h-full bg-cyan-400 rounded-full transition-all duration-500"
+                          className="h-full bg-[var(--color-accent)] rounded-full transition-all duration-500"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -1566,7 +1566,7 @@ export default function AdminPage() {
                   )
                 })
               ) : (
-                <p className="text-xs text-slate-400">No role metadata available.</p>
+                <p className="text-xs text-[var(--color-muted)]">No role metadata available.</p>
               )}
             </CardContent>
           </Card>
@@ -1580,10 +1580,10 @@ export default function AdminPage() {
             <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="size-4 text-rose-400" />
+                  <AlertTriangle className="size-4 text-[var(--color-destructive)]" />
                   Active Incident & Safeguarding Queue
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Real-time status of incidents requiring leadership action.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Real-time status of incidents requiring leadership action.</p>
               </div>
               <Button asChild variant="outline" size="sm" className="text-xs">
                 <Link to="/incidents">
@@ -1593,37 +1593,37 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="space-y-3 px-5 py-5">
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="text-xs text-slate-400">Open Incidents</div>
-                  <div className="mt-1 text-2xl font-bold text-rose-400">{activeIncidents}</div>
-                  <div className="mt-1 text-[11px] text-slate-500">Requires triage or delegate assignment</div>
+                <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
+                  <div className="text-xs text-[var(--color-muted)]">Open Incidents</div>
+                  <div className="mt-1 text-2xl font-bold text-[var(--color-destructive)]">{activeIncidents}</div>
+                  <div className="mt-1 text-[11px] text-[var(--color-muted)]">Requires triage or delegate assignment</div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="text-xs text-slate-400">Total Logged</div>
+                <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
+                  <div className="text-xs text-[var(--color-muted)]">Total Logged</div>
                   <div className="mt-1 text-2xl font-bold text-white">{incidents.length}</div>
-                  <div className="mt-1 text-[11px] text-slate-500">Lifetime system incident logs</div>
+                  <div className="mt-1 text-[11px] text-[var(--color-muted)]">Lifetime system incident logs</div>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-white/10 space-y-2">
-                <div className="text-xs font-semibold text-slate-300">Quick Navigation Shortcuts</div>
+                <div className="text-xs font-semibold text-[var(--color-text)]">Quick Navigation Shortcuts</div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <Button asChild variant="outline" size="sm" className="w-full justify-between text-xs">
                     <Link to="/staff">
                       <span>Staff Directory</span>
-                      <ArrowRight className="size-3 text-slate-500" />
+                      <ArrowRight className="size-3 text-[var(--color-muted)]" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="w-full justify-between text-xs">
                     <Link to="/classes">
                       <span>Class Management</span>
-                      <ArrowRight className="size-3 text-slate-500" />
+                      <ArrowRight className="size-3 text-[var(--color-muted)]" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="w-full justify-between text-xs">
                     <Link to="/incidents">
                       <span>Incidents</span>
-                      <ArrowRight className="size-3 text-slate-500" />
+                      <ArrowRight className="size-3 text-[var(--color-muted)]" />
                     </Link>
                   </Button>
                 </div>
@@ -1635,32 +1635,32 @@ export default function AdminPage() {
             <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Layers3 className="size-4 text-cyan-400" />
+                  <Layers3 className="size-4 text-[var(--color-information)]" />
                   Governance Guidelines
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-400">Key safeguards and audit principles for system operators.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Key safeguards and audit principles for system operators.</p>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3 px-5 py-5 text-xs text-slate-300">
-              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
-                <Layers3 className="mt-0.5 size-4 text-cyan-400 shrink-0" />
+            <CardContent className="space-y-3 px-5 py-5 text-xs text-[var(--color-text)]">
+              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+                <Layers3 className="mt-0.5 size-4 text-[var(--color-information)] shrink-0" />
                 <div>
                   <div className="font-semibold text-white">Explicit Role Grants</div>
-                  <div className="text-slate-400 mt-0.5">Always verify staff access rights before granting leadership or delegate role overrides.</div>
+                  <div className="text-[var(--color-muted)] mt-0.5">Always verify staff access rights before granting leadership or delegate role overrides.</div>
                 </div>
               </div>
-              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
-                <BookOpen className="mt-0.5 size-4 text-emerald-400 shrink-0" />
+              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+                <BookOpen className="mt-0.5 size-4 text-[var(--color-success)] shrink-0" />
                 <div>
                   <div className="font-semibold text-white">Teaching Scope Isolation</div>
-                  <div className="text-slate-400 mt-0.5">Scope follows explicit class assignments first, followed by manual inclusion/exclusion rules.</div>
+                  <div className="text-[var(--color-muted)] mt-0.5">Scope follows explicit class assignments first, followed by manual inclusion/exclusion rules.</div>
                 </div>
               </div>
-              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
-                <Clock3 className="mt-0.5 size-4 text-amber-400 shrink-0" />
+              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+                <Clock3 className="mt-0.5 size-4 text-[var(--color-warning)] shrink-0" />
                 <div>
                   <div className="font-semibold text-white">Audit Windowing</div>
-                  <div className="text-slate-400 mt-0.5">Temporary relief teachers should always have strict effective start and expiry date windows.</div>
+                  <div className="text-[var(--color-muted)] mt-0.5">Temporary relief teachers should always have strict effective start and expiry date windows.</div>
                 </div>
               </div>
             </CardContent>
@@ -1676,7 +1676,7 @@ export default function AdminPage() {
       >
         <form onSubmit={handleSubmitStaff} className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <FormField label="First Name *" htmlFor="admin-staff-first-name" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="First Name *" htmlFor="admin-staff-first-name" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Input
                 id="admin-staff-first-name"
                 value={staffForm.first_name}
@@ -1685,7 +1685,7 @@ export default function AdminPage() {
                 className="text-xs"
               />
             </FormField>
-            <FormField label="Last Name *" htmlFor="admin-staff-last-name" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="Last Name *" htmlFor="admin-staff-last-name" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Input
                 id="admin-staff-last-name"
                 value={staffForm.last_name}
@@ -1697,7 +1697,7 @@ export default function AdminPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <FormField label="Email Address *" htmlFor="admin-staff-email" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="Email Address *" htmlFor="admin-staff-email" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Input
                 id="admin-staff-email"
                 type="email"
@@ -1707,7 +1707,7 @@ export default function AdminPage() {
                 className="text-xs"
               />
             </FormField>
-            <FormField label="Phone Number" htmlFor="admin-staff-phone" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="Phone Number" htmlFor="admin-staff-phone" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Input
                 id="admin-staff-phone"
                 value={staffForm.phone}
@@ -1718,7 +1718,7 @@ export default function AdminPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <FormField label="Account Status" htmlFor="admin-staff-status" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="Account Status" htmlFor="admin-staff-status" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Select
                 id="admin-staff-status"
                 value={staffForm.status}
@@ -1732,12 +1732,12 @@ export default function AdminPage() {
           </div>
 
           {isAdmin && (
-            <div className="rounded-xl border border-cyan-500/25 bg-cyan-950/15 p-3.5">
+            <div className="rounded-xl border border-[color-mix(in_srgb,var(--color-information)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_15%,transparent)] p-3.5">
               <div className="flex items-start gap-3">
                 <input
                   id="admin-staff-create-account"
                   type="checkbox"
-                  className="mt-0.5 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                  className="mt-0.5 rounded border-white/20 bg-[var(--color-surface-muted)] text-[var(--color-information)] focus:ring-[var(--color-information)]"
                   checked={staffForm.createAccount}
                   onChange={(event) =>
                     setStaffForm((current) => ({ ...current, createAccount: event.target.checked }))
@@ -1747,7 +1747,7 @@ export default function AdminPage() {
                   <span className="block text-sm font-medium text-white">
                     Create a manual login (no Google account)
                   </span>
-                  <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-400">
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-[var(--color-muted)]">
                     Only for people outside the organisation, who cannot sign in with Google. Creates a
                     password sign-in for {staffForm.email || "this address"} and emails a one-time link so
                     they set their own password. No password is ever generated, emailed, or shown here.
@@ -1757,8 +1757,8 @@ export default function AdminPage() {
                 </label>
               </div>
 
-              <div className="mt-3 flex items-start gap-2 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-slate-400">
-                <MailWarning className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
+              <div className="mt-3 flex items-start gap-2 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-[var(--color-muted)]">
+                <MailWarning className="mt-0.5 size-3.5 shrink-0 text-[var(--color-information)]" />
                 <span>
                   {allowedEmailDomains.length === 0
                     ? "No email domain rule is configured, so any address is accepted."
@@ -1768,10 +1768,10 @@ export default function AdminPage() {
             </div>
           )}
 
-          <FormField label="Roles" htmlFor="admin-staff-roles" labelClassName="text-xs font-medium text-slate-300">
-            <div id="admin-staff-roles" className="space-y-3 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
+          <FormField label="Roles" htmlFor="admin-staff-roles" labelClassName="text-xs font-medium text-[var(--color-text)]">
+            <div id="admin-staff-roles" className="space-y-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--color-muted)]">
                   Manage all active roles for this staff member. Dates are optional; a role with no dates is
                   open-ended.
                 </p>
@@ -1793,13 +1793,13 @@ export default function AdminPage() {
                   return (
                     <div
                       key={role}
-                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-cyan-500/50 bg-cyan-500/10 text-white" : "border-white/10 bg-slate-900/50 text-slate-300 hover:border-white/20"}`}
+                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-[color-mix(in_srgb,var(--color-information)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-white" : "border-white/10 bg-[var(--color-surface-muted)]/50 text-[var(--color-text)] hover:border-white/20"}`}
                     >
                       <label className="flex cursor-pointer items-center justify-between gap-3">
                         <span>{labelize(role)}</span>
                         <input
                           type="checkbox"
-                          className="rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                          className="rounded border-white/20 bg-[var(--color-surface-muted)] text-[var(--color-information)] focus:ring-[var(--color-information)]"
                           checked={selected}
                           onChange={() => {
                             setStaffForm((current) => ({
@@ -1822,7 +1822,7 @@ export default function AdminPage() {
                           <div>
                             <label
                               htmlFor={`admin-staff-role-from-${role}`}
-                              className="block text-[10px] font-medium uppercase tracking-wider text-slate-500"
+                              className="block text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]"
                             >
                               From
                             </label>
@@ -1846,7 +1846,7 @@ export default function AdminPage() {
                           <div>
                             <label
                               htmlFor={`admin-staff-role-to-${role}`}
-                              className="block text-[10px] font-medium uppercase tracking-wider text-slate-500"
+                              className="block text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]"
                             >
                               To
                             </label>
@@ -1879,25 +1879,25 @@ export default function AdminPage() {
                   return (
                     <span
                       key={role}
-                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-200"
+                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-[var(--color-text)]"
                     >
                       {labelize(role)}
                       {window?.effective_from || window?.effective_to ? (
-                        <span className="ml-1 text-slate-400">
+                        <span className="ml-1 text-[var(--color-muted)]">
                           ({formatWindow(window.effective_from, window.effective_to)})
                         </span>
                       ) : null}
                     </span>
                   )
                 }) : (
-                  <span className="text-xs text-slate-500">No roles selected</span>
+                  <span className="text-xs text-[var(--color-muted)]">No roles selected</span>
                 )}
               </div>
             </div>
           </FormField>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <FormField label="Department" htmlFor="admin-staff-department" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="Department" htmlFor="admin-staff-department" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Input
                 id="admin-staff-department"
                 value={staffForm.department}
@@ -1905,7 +1905,7 @@ export default function AdminPage() {
                 className="text-xs"
               />
             </FormField>
-            <FormField label="Org Unit Path" htmlFor="admin-staff-org-unit" labelClassName="text-xs font-medium text-slate-300">
+            <FormField label="Org Unit Path" htmlFor="admin-staff-org-unit" labelClassName="text-xs font-medium text-[var(--color-text)]">
               <Input
                 id="admin-staff-org-unit"
                 value={staffForm.org_unit_path}
