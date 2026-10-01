@@ -1,0 +1,12 @@
+{
+  "name": "finance-extraction-worker",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.32.0"
+  }
+}
