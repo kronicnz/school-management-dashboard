@@ -12,7 +12,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "supabase:start": "node ./scripts/supabase-start.cjs",
-    "test": "deno test --allow-read=. src/lib/school-time.test.ts src/lib/access/permissions.test.ts src/lib/access/personas.test.ts src/lib/dashboard/profiles.test.ts supabase/functions/send-incident-email/send-incident-email.test.ts supabase/functions/google-workspace-sync/google-workspace-sync.test.ts supabase/functions/finance-intake/finance-intake.test.ts supabase/functions/finance-intake/finance-pipeline.test.ts supabase/functions/account-admin/account-admin.test.ts",
+    "test": "deno test --allow-read=. src/lib/school-time.test.ts src/lib/access/permissions.test.ts src/lib/access/personas.test.ts src/lib/dashboard/profiles.test.ts src/components/ui/contrast.test.ts src/components/ui/statistic-fit.test.ts supabase/functions/send-incident-email/send-incident-email.test.ts supabase/functions/google-workspace-sync/google-workspace-sync.test.ts supabase/functions/finance-intake/finance-intake.test.ts supabase/functions/finance-intake/finance-pipeline.test.ts supabase/functions/account-admin/account-admin.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

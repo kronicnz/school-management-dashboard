@@ -799,17 +799,28 @@ export function FinanceOverview({ snapshot, loading, canManage = false, onRefres
           <StatisticCard label="Cash on hand" value={formatNZD(summary.cashOnHand)} description="Latest forecast snapshot balance" tone="success" />
           <StatisticCard label="AP due 7 days" value={formatNZD(summary.apDue7Days)} description="Near-term payables" tone="warning" />
           <StatisticCard label="AP due 30 days" value={formatNZD(summary.apDue30Days)} description="Current liability window" tone="destructive" />
+          {/* Spend and budget are separate cards rather than one "a / b" value.
+              Two formatted amounts on one line cannot fit the narrowest grid
+              cell at a legible size, and forcing them to would mean shrinking
+              type below the 12px floor. See statistic-fit.test.ts. */}
           <StatisticCard
-            label="MTD spend vs budget"
-            value={`${formatNZD(summary.monthActual)} / ${formatNZD(summary.monthBudget)}`}
-            description={`Variance ${formatNZD(budgetVariance)} against active budget lines`}
+            label="MTD spend"
+            value={formatNZD(summary.monthActual)}
+            description={`Against ${formatNZD(summary.monthBudget)} budgeted`}
+            tone={budgetVariance > 0 ? "warning" : "completed"}
+          />
+          <StatisticCard
+            label="Budget variance"
+            value={formatNZD(budgetVariance)}
+            description={budgetVariance > 0 ? "Over the active budget lines" : "Within the active budget lines"}
             tone={budgetVariance > 0 ? "warning" : "completed"}
           />
           <StatisticCard label="Awaiting approval" value={formatCount(summary.awaitingApproval)} description="Bills routed for finance review" tone="pending" />
+          <StatisticCard label="Draft bills" value={formatCount(summary.draftBills)} description="Written but not yet approved" tone="neutral" />
           <StatisticCard
-            label="Draft / exceptions"
-            value={`${formatCount(summary.draftBills)} / ${formatCount(summary.exceptions)}`}
-            description="Bills needing follow-up"
+            label="Exceptions"
+            value={formatCount(summary.exceptions)}
+            description="Bills held back for a decision"
             tone={summary.exceptions > 0 ? "destructive" : "neutral"}
           />
         </StatisticGrid>

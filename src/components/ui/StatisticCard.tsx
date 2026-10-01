@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import type { LucideIcon } from "lucide-react"
 import { Card } from "./Card"
 import { cn } from "../../utils/cn"
+import { valueClasses, valueSizeFor, type StatisticCardVariant } from "./statistic-scale"
 
 /**
  * The single KPI primitive. Every module KPI header and every dashboard stat
@@ -37,15 +38,6 @@ const toneIconClasses: Record<StatisticTone, string> = {
   inactive: "text-[var(--color-inactive)]",
 }
 
-/** One value scale, three weights of emphasis. */
-const valueClasses = {
-  primary: "text-[clamp(1.25rem,1.05rem+0.7vw,1.75rem)]",
-  secondary: "text-xl",
-  compact: "text-base",
-} as const
-
-export type StatisticCardVariant = keyof typeof valueClasses
-
 type StatisticCardProps = {
   label: string
   value: string | number
@@ -77,7 +69,9 @@ export function StatisticCard({
           {Icon ? <Icon className={cn("size-4 shrink-0", toneIconClasses[tone])} aria-hidden="true" /> : null}
           <span className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">{label}</span>
         </div>
-        <span className={cn("shrink-0 font-semibold tabular-nums leading-none text-[var(--color-text)]", valueClasses[variant])}>{value}</span>
+          <span className={cn("shrink-0 whitespace-nowrap font-semibold tabular-nums leading-none text-[var(--color-text)]", valueClasses[variant])}>
+            {value}
+          </span>
       </div>
     ) : (
       <div
@@ -99,7 +93,12 @@ export function StatisticCard({
             </span>
           ) : null}
         </div>
-        <p className={cn("font-semibold tabular-nums leading-none tracking-tight text-[var(--color-text)]", valueClasses[variant])}>{value}</p>
+        {/* whitespace-nowrap is deliberate: a number must never break across
+            lines, so an over-long value steps its size down instead of
+            wrapping. See statistic-scale.ts. */}
+        <p className={cn("whitespace-nowrap font-semibold tabular-nums leading-none tracking-tight text-[var(--color-text)]", valueClasses[variant], valueSizeFor(value, variant))}>
+          {value}
+        </p>
         {description ? <p className="text-xs leading-5 text-[var(--color-muted)]">{description}</p> : null}
       </div>
     )
