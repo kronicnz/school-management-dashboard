@@ -239,10 +239,17 @@ function IngestPanel({
     )
   }
 
+  // The panel is a drop target, not a control. It used to carry role="button"
+  // with a tabIndex and keydown handler, which nested three real buttons and a
+  // file input inside a button role: an ARIA violation that also put a phantom
+  // stop in the tab order. Activation is now carried by the visible buttons, and
+  // the panel itself is a plain region that only handles drag events. The
+  // heading is a <label> for the hidden input, so clicking the large target still
+  // opens the picker natively.
   return (
     <div
       className={cn(
-        "flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-4 py-6 text-center transition-colors",
+        "flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed px-4 py-6 text-center transition-colors",
         isDragging
           ? "border-[color-mix(in_srgb,var(--color-primary)_45%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-primary)_12%,var(--color-secondary))]"
           : "border-[color-mix(in_srgb,var(--color-primary)_25%,var(--color-border))] bg-[var(--color-secondary)]",
@@ -251,18 +258,10 @@ function IngestPanel({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onClick={onBrowse}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault()
-          onBrowse()
-        }
-      }}
-      aria-label="Upload finance invoice files"
     >
       <input
+        id="finance-intake-files"
+        aria-label="Choose invoice files to upload"
         ref={inputRef}
         type="file"
         className="hidden"
@@ -272,25 +271,31 @@ function IngestPanel({
           if (event.target.files) onFiles(event.target.files)
         }}
       />
-      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)]">
-        <FileUp className="size-4" />
-        Drop invoice files here
-      </div>
+      <label
+        htmlFor="finance-intake-files"
+        className={cn(
+          "flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)]",
+          canManage && "cursor-pointer",
+        )}
+      >
+        <FileUp className="size-4" aria-hidden="true" />
+        Drop invoice files here, or choose them below
+      </label>
       <p className="mt-1 max-w-lg text-sm text-[var(--color-muted-foreground)]">
         {queueDepth > 0
           ? `${formatCount(queueDepth)} item${queueDepth === 1 ? "" : "s"} already waiting in the intake lane.`
           : "The intake lane is clear. Manual uploads and Gmail invoices share the same queue, duplicate fingerprinting, and review path."}
       </p>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-        <Button type="button" size="sm" variant="outline" onClick={(event) => { event.stopPropagation(); onBrowse() }}>
+        <Button type="button" size="sm" variant="outline" className="min-h-11" onClick={onBrowse}>
           Choose files
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={(event) => { event.stopPropagation(); onGmailPull() }} disabled={isPulling}>
-          <CloudDownload className="size-4" />
+        <Button type="button" size="sm" variant="outline" className="min-h-11" onClick={onGmailPull} disabled={isPulling}>
+          <CloudDownload className="size-4" aria-hidden="true" />
           {isPulling ? "Pulling Gmail..." : "Pull Gmail invoices"}
         </Button>
-        <Button type="button" size="sm" onClick={(event) => { event.stopPropagation(); onPost() }} disabled={isPosting}>
-          <Send className="size-4" />
+        <Button type="button" size="sm" className="min-h-11" onClick={onPost} disabled={isPosting}>
+          <Send className="size-4" aria-hidden="true" />
           {isPosting ? "Posting to Xero..." : "Send to Xero"}
         </Button>
       </div>
