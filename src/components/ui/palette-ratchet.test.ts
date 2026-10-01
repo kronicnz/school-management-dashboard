@@ -103,7 +103,6 @@ export function paletteUsageByFile(): Record<string, number> {
  */
 const BUDGETS: Record<string, number> = {
   "pages/Admin.tsx": 218,
-  "pages/Incidents.tsx": 134,
   "pages/Assets.tsx": 24,
   "pages/Sandbox.tsx": 20,
   "components/ui/Toast.tsx": 15,

@@ -82,7 +82,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ className = "
   return (
     <textarea
       ref={ref}
-      className={`w-full rounded-md border border-white/15 bg-slate-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-colors no-scrollbar ${className}`}
+      className={`w-full rounded-md border border-white/15 bg-[color-mix(in_srgb,var(--color-surface)_70%,var(--color-canvas))] px-3.5 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-subtle)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-information)_50%,transparent)] focus:border-[var(--color-information)] transition-colors no-scrollbar ${className}`}
       {...props}
     />
   )
@@ -707,7 +707,7 @@ export default function IncidentsPage() {
             <TableAvatar>{name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "S"}</TableAvatar>
             <div className="min-w-0">
               <div className="font-medium text-white">{name}</div>
-              <div className="text-xs text-slate-400">Student linked to incident</div>
+              <div className="text-xs text-[var(--color-muted)]">Student linked to incident</div>
             </div>
           </div>
         )
@@ -718,7 +718,7 @@ export default function IncidentsPage() {
       header: "Category",
       sortable: true,
       className: "min-w-[220px]",
-      cell: (value: string) => <span className="text-slate-400">{categoryNameMap.get(value) ?? "Unknown"}</span>,
+      cell: (value: string) => <span className="text-[var(--color-muted)]">{categoryNameMap.get(value) ?? "Unknown"}</span>,
     },
     {
       accessor: "severity",
@@ -754,7 +754,7 @@ export default function IncidentsPage() {
       className: "min-w-[240px]",
       cell: (value: string | null) => {
         const name = value ? assigneeNameMap.get(value) ?? value : "Unassigned"
-        return <span className="text-slate-400">{name}</span>
+        return <span className="text-[var(--color-muted)]">{name}</span>
       },
     },
     {
@@ -764,8 +764,8 @@ export default function IncidentsPage() {
       cell: (_: unknown, row: Incident) => {
         const tagged = incidentStudentsByIncident.get(row.id) ?? []
         return (
-          <span className="inline-flex items-center gap-1 text-slate-300">
-            <Users className="size-3.5 text-slate-400" />
+          <span className="inline-flex items-center gap-1 text-[var(--color-text)]">
+            <Users className="size-3.5 text-[var(--color-muted)]" />
             {tagged.length}
           </span>
         )
@@ -779,7 +779,7 @@ export default function IncidentsPage() {
         const rows = incidentFollowUpsByIncident.get(row.id) ?? []
         const overdue = rows.filter((followUp) => followUp.due_at && followUp.status !== "done" && new Date(followUp.due_at).getTime() < currentTime).length
         return (
-          <span className={`inline-flex items-center gap-1 ${overdue > 0 ? "text-amber-300 font-medium" : "text-slate-400"}`}>
+          <span className={`inline-flex items-center gap-1 ${overdue > 0 ? "text-[var(--color-warning)] font-medium" : "text-[var(--color-muted)]"}`}>
             <CalendarClock className="size-3.5" />
             {rows.length}{overdue > 0 ? ` (${overdue} overdue)` : ""}
           </span>
@@ -824,11 +824,11 @@ export default function IncidentsPage() {
               </Button>
             ) : (
               <Button variant="ghost" size="sm" onClick={() => void handleSoftDelete(row.id)} title="Soft delete incident">
-                <Trash2 className="size-4 text-rose-400" />
+                <Trash2 className="size-4 text-[var(--color-destructive)]" />
               </Button>
             )
           ) : (
-            <span className="text-xs text-slate-400">{value ? "archived" : "active"}</span>
+            <span className="text-xs text-[var(--color-muted)]">{value ? "archived" : "active"}</span>
           )}
         </div>
       ),
@@ -878,7 +878,7 @@ export default function IncidentsPage() {
         <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Incident Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and inspect the incident log.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and inspect the incident log.</p>
           </div>
         </CardHeader>
 
@@ -891,7 +891,7 @@ export default function IncidentsPage() {
                 onChange={(event) => setSearch(event.target.value)}
                 className="pl-9"
               />
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
             </div>
             <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full lg:w-52 lg:flex-none">
               <option value="">All Statuses</option>
@@ -914,7 +914,7 @@ export default function IncidentsPage() {
                   setStatusFilter("")
                   setVisibilityFilter("")
                 }}
-                className="text-xs text-slate-400 hover:text-white"
+                className="text-xs text-[var(--color-muted)] hover:text-white"
               >
                 Reset Filters
               </Button>
@@ -942,10 +942,10 @@ export default function IncidentsPage() {
                   data={retentionRows.slice(0, 8)}
                   columns={[
                 { accessor: "incident_id", header: "Incident", sortable: true, cell: (value: string) => <span className="font-medium text-white">{value}</span> },
-                { accessor: "severity", header: "Severity", sortable: true, cell: (value: string) => <span className="text-slate-400">{value}</span> },
-                { accessor: "archive_due_at", header: "Archive Due", sortable: true, cell: (value: string) => <span className="text-slate-400">{formatDate(value)}</span> },
-                { accessor: "dispose_due_at", header: "Dispose Due", sortable: true, cell: (value: string) => <span className="text-slate-400">{formatDate(value)}</span> },
-                { accessor: "flags", header: "Flags", searchable: false, cell: (_: unknown, row: RetentionRow) => <span className="text-slate-400">{[row.should_archive ? "archive" : null, row.should_dispose ? "dispose" : null].filter(Boolean).join(", ") || "-"}</span> },
+                { accessor: "severity", header: "Severity", sortable: true, cell: (value: string) => <span className="text-[var(--color-muted)]">{value}</span> },
+                { accessor: "archive_due_at", header: "Archive Due", sortable: true, cell: (value: string) => <span className="text-[var(--color-muted)]">{formatDate(value)}</span> },
+                { accessor: "dispose_due_at", header: "Dispose Due", sortable: true, cell: (value: string) => <span className="text-[var(--color-muted)]">{formatDate(value)}</span> },
+                { accessor: "flags", header: "Flags", searchable: false, cell: (_: unknown, row: RetentionRow) => <span className="text-[var(--color-muted)]">{[row.should_archive ? "archive" : null, row.should_dispose ? "dispose" : null].filter(Boolean).join(", ") || "-"}</span> },
                   ]}
                   initialSort={{ id: "archive_due_at", desc: false }}
                   itemsPerPageOptions={[5, 8]}
@@ -969,7 +969,7 @@ export default function IncidentsPage() {
                 label="Primary Student"
                 htmlFor="incident-primary-student"
                 required
-                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]"
               >
                 <Select id="incident-primary-student" value={createForm.student_id} onChange={(event) => setCreateForm({ ...createForm, student_id: event.target.value })} required>
                   <option value="">Select primary student</option>
@@ -985,7 +985,7 @@ export default function IncidentsPage() {
                 label="Category"
                 htmlFor="incident-category"
                 required
-                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]"
               >
                 <Select id="incident-category" value={createForm.category_id} onChange={(event) => setCreateForm({ ...createForm, category_id: event.target.value })} required>
                   <option value="">Select category</option>
@@ -1003,11 +1003,11 @@ export default function IncidentsPage() {
                 label="Occurred At"
                 htmlFor="incident-occurred-at"
                 required
-                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]"
               >
                 <Input id="incident-occurred-at" type="datetime-local" value={createForm.occurred_at} onChange={(event) => setCreateForm({ ...createForm, occurred_at: event.target.value })} required />
               </FormField>
-              <FormField label="Severity" htmlFor="incident-severity" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <FormField label="Severity" htmlFor="incident-severity" labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                 <Select id="incident-severity" value={createForm.severity} onChange={(event) => setCreateForm({ ...createForm, severity: event.target.value })}>
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -1018,7 +1018,7 @@ export default function IncidentsPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField label="Status" htmlFor="incident-status" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <FormField label="Status" htmlFor="incident-status" labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                 <Select id="incident-status" value={createForm.status} onChange={(event) => setCreateForm({ ...createForm, status: event.target.value })}>
                   <option value="open">Open</option>
                   <option value="in_review">In Review</option>
@@ -1026,7 +1026,7 @@ export default function IncidentsPage() {
                   <option value="closed">Closed</option>
                 </Select>
               </FormField>
-              <FormField label="Visibility" htmlFor="incident-visibility" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <FormField label="Visibility" htmlFor="incident-visibility" labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                 <Select
                   id="incident-visibility"
                   value={isRaiseOnly ? "standard" : createForm.visibility}
@@ -1040,7 +1040,7 @@ export default function IncidentsPage() {
             </div>
 
             {canManageSensitive ? (
-              <FormField label="Assigned Counselor" htmlFor="incident-assigned-counselor" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <FormField label="Assigned Counselor" htmlFor="incident-assigned-counselor" labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                 <Select id="incident-assigned-counselor" value={createForm.assigned_to} onChange={(event) => setCreateForm({ ...createForm, assigned_to: event.target.value })}>
                   <option value="">Unassigned</option>
                   {assignees.map((assignee) => (
@@ -1054,7 +1054,7 @@ export default function IncidentsPage() {
 
             <FormField
               label={`Tagged Students (${createForm.tagged_student_ids.length})`}
-              labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300"
+              labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]"
               contentClassName="space-y-3"
             >
               <div className="flex items-center justify-between">
@@ -1062,7 +1062,7 @@ export default function IncidentsPage() {
                   <button
                     type="button"
                     onClick={() => setCreateForm((prev) => ({ ...prev, tagged_student_ids: [] }))}
-                    className="text-xs text-slate-400 hover:text-rose-300 transition-colors"
+                    className="text-xs text-[var(--color-muted)] hover:text-[var(--color-destructive)] transition-colors"
                   >
                     Clear all
                   </button>
@@ -1085,20 +1085,20 @@ export default function IncidentsPage() {
                   ))}
               </Select>
 
-              <div className="mt-2 min-h-[44px] rounded-lg border border-white/10 bg-slate-900/60 p-2.5 no-scrollbar">
+              <div className="mt-2 min-h-[44px] rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-2.5 no-scrollbar">
                 {createForm.tagged_student_ids.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {createForm.tagged_student_ids.map((id) => (
                       <span
                         key={id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 text-xs font-medium text-cyan-200 shadow-sm"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-information)_15%,transparent)] border border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] px-3 py-1 text-xs font-medium text-[var(--color-information)] shadow-sm"
                       >
-                        <Users className="size-3 text-cyan-400" />
+                        <Users className="size-3 text-[var(--color-information)]" />
                         <span>{studentNameMap.get(id) ?? "Unknown Student"}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveTaggedStudentFromCreate(id)}
-                          className="ml-0.5 rounded-full p-0.5 hover:bg-rose-500/20 hover:text-rose-300 transition-colors focus:outline-none focus:ring-1 focus:ring-rose-400"
+                          className="ml-0.5 rounded-full p-0.5 hover:bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] hover:text-[var(--color-destructive)] transition-colors focus:outline-none focus:ring-1 focus:focus:ring-[var(--color-destructive)]"
                           title="Remove student"
                         >
                           <X className="size-3" />
@@ -1107,8 +1107,8 @@ export default function IncidentsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-xs text-slate-500 italic py-0.5">
-                    <UserPlus className="size-3.5 text-slate-500" />
+                  <div className="flex items-center gap-2 text-xs text-[var(--color-muted)] italic py-0.5">
+                    <UserPlus className="size-3.5 text-[var(--color-muted)]" />
                     No tagged students selected. Choose a student from the list above to tag them.
                   </div>
                 )}
@@ -1119,7 +1119,7 @@ export default function IncidentsPage() {
               label="Description"
               htmlFor="incident-description"
               required
-              labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300"
+              labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]"
             >
               <Textarea
                 id="incident-description"
@@ -1132,7 +1132,7 @@ export default function IncidentsPage() {
             </FormField>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField label="Action Taken" htmlFor="incident-action-taken" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <FormField label="Action Taken" htmlFor="incident-action-taken" labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                 <Textarea
                   id="incident-action-taken"
                   rows={3}
@@ -1142,7 +1142,7 @@ export default function IncidentsPage() {
                 />
               </FormField>
 
-              <FormField label="Resolution Summary" htmlFor="incident-resolution-summary" labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <FormField label="Resolution Summary" htmlFor="incident-resolution-summary" labelClassName="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                 <Textarea
                   id="incident-resolution-summary"
                   rows={3}
@@ -1155,19 +1155,19 @@ export default function IncidentsPage() {
 
             {canManageSensitive ? (
               <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-3">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-information)] flex items-center gap-1.5">
                   <CalendarClock className="size-3.5" />
                   Initial Follow-up Plan
                 </h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <FormField label="Due Date & Time" htmlFor="incident-follow-up-due-at" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Due Date & Time" htmlFor="incident-follow-up-due-at" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Input id="incident-follow-up-due-at" type="datetime-local" value={createForm.follow_up_due_at} onChange={(event) => setCreateForm({ ...createForm, follow_up_due_at: event.target.value })} />
                   </FormField>
-                  <FormField label="Next Action" htmlFor="incident-follow-up-next-action" labelClassName="text-xs font-medium text-slate-300">
+                  <FormField label="Next Action" htmlFor="incident-follow-up-next-action" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Input id="incident-follow-up-next-action" value={createForm.follow_up_next_action} onChange={(event) => setCreateForm({ ...createForm, follow_up_next_action: event.target.value })} placeholder="e.g. Parent phone call, Counselor check-in" />
                   </FormField>
                 </div>
-                <FormField label="Follow-up Notes" htmlFor="incident-follow-up-notes" labelClassName="text-xs font-medium text-slate-300">
+                <FormField label="Follow-up Notes" htmlFor="incident-follow-up-notes" labelClassName="text-xs font-medium text-[var(--color-text)]">
                   <Textarea
                     id="incident-follow-up-notes"
                     rows={2.5}
@@ -1198,23 +1198,23 @@ export default function IncidentsPage() {
         {selectedIncident && detailDraft ? (
           <div className="w-full max-w-6xl mx-auto space-y-5">
             {/* COMPACT OVERVIEW SUMMARY STRIP */}
-            <div className="rounded-lg border border-white/10 bg-slate-900/80 p-4 text-xs text-slate-300 shadow-inner">
+            <div className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] shadow-inner">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <span className="text-slate-500 block uppercase font-medium text-[10px]">Primary Student</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Primary Student</span>
                   <span className="font-semibold text-white text-sm">{studentNameMap.get(selectedIncident.student_id) ?? "Unknown"}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block uppercase font-medium text-[10px]">Category</span>
-                  <span className="font-semibold text-slate-200">{categoryNameMap.get(selectedIncident.category_id) ?? "Unknown"}</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Category</span>
+                  <span className="font-semibold text-[var(--color-text)]">{categoryNameMap.get(selectedIncident.category_id) ?? "Unknown"}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block uppercase font-medium text-[10px]">Counselor</span>
-                  <span className="font-semibold text-slate-200">{selectedIncidentAssigneeName}</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Counselor</span>
+                  <span className="font-semibold text-[var(--color-text)]">{selectedIncidentAssigneeName}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block uppercase font-medium text-[10px]">Occurred At</span>
-                  <span className="font-semibold text-slate-200">{formatDate(selectedIncident.occurred_at)}</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Occurred At</span>
+                  <span className="font-semibold text-[var(--color-text)]">{formatDate(selectedIncident.occurred_at)}</span>
                 </div>
               </div>
             </div>
@@ -1226,8 +1226,8 @@ export default function IncidentsPage() {
                 onClick={() => setDetailActiveTab("details")}
                 className={`flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
                   detailActiveTab === "details"
-                    ? "border-cyan-400 text-cyan-300 bg-white/[0.04]"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]"
+                    ? "border-[var(--color-information)] text-[var(--color-information)] bg-white/[0.04]"
+                    : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.02]"
                 }`}
               >
                 <FileText className="size-3.5" />
@@ -1238,13 +1238,13 @@ export default function IncidentsPage() {
                 onClick={() => setDetailActiveTab("activity")}
                 className={`flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
                   detailActiveTab === "activity"
-                    ? "border-cyan-400 text-cyan-300 bg-white/[0.04]"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]"
+                    ? "border-[var(--color-information)] text-[var(--color-information)] bg-white/[0.04]"
+                    : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.02]"
                 }`}
               >
                 <MessageSquare className="size-3.5" />
                 Follow-ups & Comments
-                <span className="ml-1 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300 border border-white/10">
+                <span className="ml-1 rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] text-[var(--color-text)] border border-white/10">
                   {comments.length + selectedIncidentFollowUps.length}
                 </span>
               </button>
@@ -1253,13 +1253,13 @@ export default function IncidentsPage() {
                 onClick={() => setDetailActiveTab("communication")}
                 className={`flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
                   detailActiveTab === "communication"
-                    ? "border-cyan-400 text-cyan-300 bg-white/[0.04]"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]"
+                    ? "border-[var(--color-information)] text-[var(--color-information)] bg-white/[0.04]"
+                    : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.02]"
                 }`}
               >
                 <Mail className="size-3.5" />
                 Communication & Audit
-                <span className="ml-1 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300 border border-white/10">
+                <span className="ml-1 rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] text-[var(--color-text)] border border-white/10">
                   {auditLog.length + emailLogs.length}
                 </span>
               </button>
@@ -1270,7 +1270,7 @@ export default function IncidentsPage() {
               <div className="space-y-4 pt-1">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Status</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Status</label>
                     <Select value={detailDraft.status} onChange={(event) => setDetailDraft({ ...detailDraft, status: event.target.value })}>
                       <option value="open">Open</option>
                       <option value="in_review">In Review</option>
@@ -1280,7 +1280,7 @@ export default function IncidentsPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Severity</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Severity</label>
                     <Select value={detailDraft.severity} onChange={(event) => setDetailDraft({ ...detailDraft, severity: event.target.value })}>
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -1292,7 +1292,7 @@ export default function IncidentsPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Visibility</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Visibility</label>
                     <Select
                       value={detailDraft.visibility}
                       onChange={(event) => setDetailDraft({ ...detailDraft, visibility: event.target.value as "standard" | "sensitive" })}
@@ -1304,7 +1304,7 @@ export default function IncidentsPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Assigned Counselor</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Assigned Counselor</label>
                     <Select
                       value={detailDraft.assigned_to}
                       onChange={(event) => setDetailDraft({ ...detailDraft, assigned_to: event.target.value })}
@@ -1322,14 +1322,14 @@ export default function IncidentsPage() {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
                       Tagged Students ({detailDraft.tagged_student_ids.length})
                     </label>
                     {detailDraft.tagged_student_ids.length > 0 && (
                       <button
                         type="button"
                         onClick={() => setDetailDraft((prev) => (prev ? { ...prev, tagged_student_ids: [] } : null))}
-                        className="text-xs text-slate-400 hover:text-rose-300 transition-colors"
+                        className="text-xs text-[var(--color-muted)] hover:text-[var(--color-destructive)] transition-colors"
                       >
                         Clear all
                       </button>
@@ -1352,20 +1352,20 @@ export default function IncidentsPage() {
                       ))}
                   </Select>
 
-                  <div className="mt-2 min-h-[44px] rounded-lg border border-white/10 bg-slate-900/60 p-2.5 no-scrollbar">
+                  <div className="mt-2 min-h-[44px] rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-2.5 no-scrollbar">
                     {detailDraft.tagged_student_ids.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {detailDraft.tagged_student_ids.map((id) => (
                           <span
                             key={id}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 text-xs font-medium text-cyan-200 shadow-sm"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-information)_15%,transparent)] border border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] px-3 py-1 text-xs font-medium text-[var(--color-information)] shadow-sm"
                           >
-                            <Users className="size-3 text-cyan-400" />
+                            <Users className="size-3 text-[var(--color-information)]" />
                             <span>{studentNameMap.get(id) ?? "Unknown Student"}</span>
                             <button
                               type="button"
                               onClick={() => handleRemoveTaggedStudentFromDetail(id)}
-                              className="ml-0.5 rounded-full p-0.5 hover:bg-rose-500/20 hover:text-rose-300 transition-colors focus:outline-none focus:ring-1 focus:ring-rose-400"
+                              className="ml-0.5 rounded-full p-0.5 hover:bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] hover:text-[var(--color-destructive)] transition-colors focus:outline-none focus:ring-1 focus:focus:ring-[var(--color-destructive)]"
                               title="Remove student"
                             >
                               <X className="size-3" />
@@ -1374,8 +1374,8 @@ export default function IncidentsPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 text-xs text-slate-500 italic py-0.5">
-                        <UserPlus className="size-3.5 text-slate-500" />
+                      <div className="flex items-center gap-2 text-xs text-[var(--color-muted)] italic py-0.5">
+                        <UserPlus className="size-3.5 text-[var(--color-muted)]" />
                         No tagged students selected.
                       </div>
                     )}
@@ -1383,7 +1383,7 @@ export default function IncidentsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Incident Description</label>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Incident Description</label>
                   <Textarea
                     rows={4}
                     value={detailDraft.description}
@@ -1391,12 +1391,12 @@ export default function IncidentsPage() {
                     title="Incident description cannot be edited after creation."
                     aria-readonly="true"
                   />
-                  <p className="text-xs text-slate-400">Incident descriptions are locked after creation.</p>
+                  <p className="text-xs text-[var(--color-muted)]">Incident descriptions are locked after creation.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Action Taken</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Action Taken</label>
                     <Textarea
                       rows={3}
                       value={detailDraft.action_taken}
@@ -1406,7 +1406,7 @@ export default function IncidentsPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Resolution Summary</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Resolution Summary</label>
                     <Textarea
                       rows={3}
                       value={detailDraft.resolution_summary}
@@ -1417,10 +1417,10 @@ export default function IncidentsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-[var(--color-text)] cursor-pointer">
                     <input
                       type="checkbox"
-                      className="rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                      className="rounded border-white/20 bg-[var(--color-surface)] text-[var(--color-information)] focus:focus:ring-[var(--color-information)]"
                       checked={detailDraft.sensitivity_review_requested}
                       disabled={!canManageSensitive}
                       onChange={(event) => setDetailDraft({ ...detailDraft, sensitivity_review_requested: event.target.checked })}
@@ -1459,22 +1459,22 @@ export default function IncidentsPage() {
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                        <MessageSquare className="size-4 text-cyan-300" />
+                        <MessageSquare className="size-4 text-[var(--color-information)]" />
                         Discussion Comments
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">{comments.length} comment(s)</span>
+                      <span className="text-xs text-[var(--color-muted)] font-medium">{comments.length} comment(s)</span>
                     </div>
 
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-2 no-scrollbar">
                       {comments.length > 0 ? (
                         comments.map((comment) => (
-                          <div key={comment.id} className="rounded-lg border border-white/10 bg-slate-900/60 p-3.5 text-xs text-slate-300">
-                            <div className="mb-1 text-[10px] text-slate-500 font-medium">{formatDate(comment.created_at)}</div>
+                          <div key={comment.id} className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)]">
+                            <div className="mb-1 text-[10px] text-[var(--color-muted)] font-medium">{formatDate(comment.created_at)}</div>
                             <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-slate-400 py-4 text-center italic">No comments added yet.</p>
+                        <p className="text-xs text-[var(--color-muted)] py-4 text-center italic">No comments added yet.</p>
                       )}
                     </div>
 
@@ -1500,16 +1500,16 @@ export default function IncidentsPage() {
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                        <CalendarClock className="size-4 text-cyan-300" />
+                        <CalendarClock className="size-4 text-[var(--color-information)]" />
                         Follow-up Tasks
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">{selectedIncidentFollowUps.length} item(s)</span>
+                      <span className="text-xs text-[var(--color-muted)] font-medium">{selectedIncidentFollowUps.length} item(s)</span>
                     </div>
 
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-2 no-scrollbar">
                       {selectedIncidentFollowUps.length > 0 ? (
                         selectedIncidentFollowUps.map((followUp) => (
-                          <div key={followUp.id} className="rounded-lg border border-white/10 bg-slate-900/60 p-3.5 text-xs text-slate-300 space-y-2">
+                          <div key={followUp.id} className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)] space-y-2">
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-semibold text-white uppercase text-[10px] tracking-wider">{followUp.status}</span>
                               <Select
@@ -1523,21 +1523,21 @@ export default function IncidentsPage() {
                                 <option value="cancelled">cancelled</option>
                               </Select>
                             </div>
-                            <p className="whitespace-pre-wrap text-slate-200 leading-relaxed">{followUp.notes}</p>
-                            <div className="text-[10px] text-slate-500 pt-1 border-t border-white/5 flex flex-wrap gap-3">
+                            <p className="whitespace-pre-wrap text-[var(--color-text)] leading-relaxed">{followUp.notes}</p>
+                            <div className="text-[10px] text-[var(--color-muted)] pt-1 border-t border-white/5 flex flex-wrap gap-3">
                               <span>Due: {formatDate(followUp.due_at)}</span>
                               <span>Completed: {formatDate(followUp.completed_at)}</span>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-slate-400 py-4 text-center italic">No follow-ups recorded.</p>
+                        <p className="text-xs text-[var(--color-muted)] py-4 text-center italic">No follow-ups recorded.</p>
                       )}
                     </div>
 
                     {canManageSensitive ? (
                       <div className="pt-3 border-t border-white/10 space-y-3">
-                        <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Add New Follow-up</div>
+                        <div className="text-xs font-semibold text-[var(--color-text)] uppercase tracking-wider">Add New Follow-up</div>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <Input
                             type="datetime-local"
@@ -1566,7 +1566,7 @@ export default function IncidentsPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[11px] text-slate-500 italic">Follow-up management requires leadership/counseling permissions.</p>
+                      <p className="text-[11px] text-[var(--color-muted)] italic">Follow-up management requires leadership/counseling permissions.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -1580,11 +1580,11 @@ export default function IncidentsPage() {
                   <Card className="border-white/10 bg-white/[0.02]">
                     <CardContent className="space-y-3 p-5">
                       <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                        <Mail className="size-4 text-cyan-300" />
+                        <Mail className="size-4 text-[var(--color-information)]" />
                         Merged Email Dispatch
                       </div>
-                      <div className="text-xs text-slate-400">
-                        <span className="font-semibold text-slate-300">Recipients:</span> {selectedIncidentRecipientEmails.join(", ") || "None"}
+                      <div className="text-xs text-[var(--color-muted)]">
+                        <span className="font-semibold text-[var(--color-text)]">Recipients:</span> {selectedIncidentRecipientEmails.join(", ") || "None"}
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <Input
@@ -1611,9 +1611,9 @@ export default function IncidentsPage() {
                       </div>
 
                       {emailPreview ? (
-                        <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4 text-xs text-slate-300 space-y-2 mt-2">
+                        <div className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] space-y-2 mt-2">
                           <div className="font-semibold text-white">Subject: {emailPreview.subject}</div>
-                          <pre className="max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-slate-300 font-mono bg-slate-900/90 p-3 rounded border border-white/5 no-scrollbar">
+                          <pre className="max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-[var(--color-text)] font-mono bg-[color-mix(in_srgb,var(--color-surface)_90%,var(--color-canvas))] p-3 rounded border border-white/5 no-scrollbar">
                             {emailPreview.body}
                           </pre>
                         </div>
@@ -1625,44 +1625,44 @@ export default function IncidentsPage() {
                 <Card className="border-white/10 bg-white/[0.02]">
                   <CardContent className="space-y-3 p-5">
                     <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                      <History className="size-4 text-emerald-300" />
+                      <History className="size-4 text-[var(--color-success)]" />
                       Audit & Email Logs
                     </div>
-                    {detailLoading ? <p className="text-xs text-slate-400">Loading history logs...</p> : null}
+                    {detailLoading ? <p className="text-xs text-[var(--color-muted)]">Loading history logs...</p> : null}
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Audit History</div>
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">Audit History</div>
                         <div className="space-y-2 max-h-56 overflow-y-auto pr-2 no-scrollbar">
                           {auditLog.length > 0 ? (
                             auditLog.slice(0, 10).map((row) => (
-                              <div key={row.id} className="rounded-md border border-white/10 bg-slate-900/60 p-3 text-xs text-slate-300">
+                              <div key={row.id} className="rounded-md border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)]">
                                 <div className="font-medium text-white">{row.action}</div>
-                                <div className="text-[10px] text-slate-500">{formatDate(row.changed_at)}</div>
+                                <div className="text-[10px] text-[var(--color-muted)]">{formatDate(row.changed_at)}</div>
                               </div>
                             ))
                           ) : (
-                            <p className="text-xs text-slate-400 italic">No audit records.</p>
+                            <p className="text-xs text-[var(--color-muted)] italic">No audit records.</p>
                           )}
                         </div>
                       </div>
 
                       <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Dispatch Log</div>
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">Dispatch Log</div>
                         <div className="space-y-2 max-h-56 overflow-y-auto pr-2 no-scrollbar">
                           {emailLogs.length > 0 ? (
                             emailLogs.map((row) => (
-                              <div key={row.id} className="rounded-md border border-white/10 bg-slate-900/60 p-3 text-xs text-slate-300 space-y-0.5">
+                              <div key={row.id} className="rounded-md border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)] space-y-0.5">
                                 <div className="font-medium text-white flex items-center justify-between">
                                   <span>{row.template_key}</span>
-                                  <span className="text-[10px] uppercase font-semibold text-cyan-300">{row.status}</span>
+                                  <span className="text-[10px] uppercase font-semibold text-[var(--color-information)]">{row.status}</span>
                                 </div>
-                                <div className="text-[11px] text-slate-400">{row.subject}</div>
-                                <div className="text-[10px] text-slate-500">{formatDate(row.created_at)}</div>
-                                {row.error ? <div className="text-rose-300 text-[10px]">{row.error}</div> : null}
+                                <div className="text-[11px] text-[var(--color-muted)]">{row.subject}</div>
+                                <div className="text-[10px] text-[var(--color-muted)]">{formatDate(row.created_at)}</div>
+                                {row.error ? <div className="text-[var(--color-destructive)] text-[10px]">{row.error}</div> : null}
                               </div>
                             ))
                           ) : (
-                            <p className="text-xs text-slate-400 italic">No emails dispatched.</p>
+                            <p className="text-xs text-[var(--color-muted)] italic">No emails dispatched.</p>
                           )}
                         </div>
                       </div>
