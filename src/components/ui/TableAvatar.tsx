@@ -10,7 +10,7 @@ export function TableAvatar({ children, className }: TableAvatarProps) {
   return (
     <div
       className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full bg-cyan-500/10 text-xs font-semibold text-cyan-300 ring-1 ring-cyan-500/20",
+        "flex size-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-xs font-semibold text-[var(--color-information)] ring-1 ring-[color-mix(in_srgb,var(--color-information)_20%,transparent)]",
         className
       )}
     >

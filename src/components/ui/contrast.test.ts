@@ -157,24 +157,34 @@ Deno.test("the surfaces used for nesting are distinguishable from each other", (
   }
 })
 
-Deno.test("the primary button label clears AA against its own fill", () => {
-  // Button renders `--color-button-text` on `--color-accent-strong`. Judged as a
-  // text-on-fill pair rather than a text-on-surface one, because a fill is
-  // opaque and the surface underneath never shows through.
+Deno.test("every button label clears AA against its own fill", () => {
+  // Button renders `--color-button-text` on a solid fill, so each is judged as a
+  // text-on-fill pair rather than a text-on-surface one: a fill is opaque and the
+  // surface underneath never shows through.
+  //
+  // The danger pair is here because `--color-destructive` is tuned to be legible
+  // as text on a light surface, which is much too pale to carry a white label.
+  // Without a separate fill token the danger button would pass the text checks
+  // and still be unreadable.
   const css = Deno.readTextFileSync(new URL("../../index.css", import.meta.url))
+
+  const FILLS = ["--color-accent-strong", "--color-danger-fill", "--color-danger-fill-hover"]
 
   for (const [theme, selector] of [["dark", ":root"], ["light", 'html[data-theme="light"]']] as const) {
     const tokens = readTheme(css, selector)
-
     const label = tokens.get("--color-button-text")
-    const fill = tokens.get("--color-accent-strong")
-    assert(label && fill, `${theme}: missing --color-button-text or --color-accent-strong`)
+    assert(label, `${theme}: missing --color-button-text`)
 
-    const ratio = contrastRatio(parseRgb(label!), parseRgb(fill!))
-    assert(
-      ratio >= AA_BODY_TEXT,
-      `${theme}: the default button label is ${ratio.toFixed(2)}:1 on --color-accent-strong, below ${AA_BODY_TEXT}:1.`,
-    )
+    for (const fill of FILLS) {
+      const value = tokens.get(fill)
+      assert(value, `${theme}: missing ${fill}`)
+
+      const ratio = contrastRatio(parseRgb(label!), parseRgb(value!))
+      assert(
+        ratio >= AA_BODY_TEXT,
+        `${theme}: the button label is ${ratio.toFixed(2)}:1 on ${fill}, below ${AA_BODY_TEXT}:1.`,
+      )
+    }
   }
 })
 

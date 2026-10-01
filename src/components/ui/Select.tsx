@@ -461,7 +461,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 "absolute z-10 pointer-events-none flex items-center justify-center text-[var(--color-muted)] transition-colors duration-200",
                 currentSize.iconLeft,
                 isOpen && "text-[var(--color-accent)]",
-                isError && "text-rose-400"
+                isError && "text-[var(--color-destructive)]"
               )}
             >
               <span className={currentSize.iconSize}>{startIcon}</span>
@@ -487,7 +487,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 isOpen
                   ? "border-[var(--color-accent)] ring-2 ring-[var(--color-ring)] bg-[var(--color-surface-elevated)]"
                   : "focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-ring)]",
-                isError && "border-rose-500/60 hover:border-rose-500 focus:border-rose-500 focus:ring-rose-500/20",
+                isError && "border-[color-mix(in_srgb,var(--color-destructive)_60%,transparent)] hover:border-[var(--color-destructive)] focus:border-[var(--color-destructive)] focus:ring-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)]",
                 "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--color-border)]"
               )}
             {...props}
@@ -510,7 +510,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
               className={cn(
                 "absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center text-[var(--color-muted)] transition-transform duration-200",
                 isOpen && "rotate-180 text-[var(--color-accent)]",
-                isError && "text-rose-400"
+                isError && "text-[var(--color-destructive)]"
               )}
             >
               <svg
@@ -660,7 +660,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
           <p
             className={cn(
               "text-xs transition-opacity duration-150",
-              isError ? "text-rose-400 font-medium" : "text-[var(--color-muted)]"
+              isError ? "text-[var(--color-destructive)] font-medium" : "text-[var(--color-muted)]"
             )}
           >
             {error || helperText}

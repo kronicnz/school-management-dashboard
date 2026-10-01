@@ -45,6 +45,11 @@
     --color-accent: rgb(34 211 238);
     --color-accent-strong: rgb(37 99 235);
     --color-button-text: rgb(255 255 255);
+    /* Solid fills behind a button label. --color-destructive is tuned to sit
+       on white surfaces as text, which makes it far too light to carry white
+       text itself, so the button needs its own darker pair. */
+    --color-danger-fill: rgb(190 18 60);
+    --color-danger-fill-hover: rgb(159 18 57);
     --color-ring: rgb(34 211 238 / 0.35);
     --color-overlay: rgb(2 6 23 / 0.62);
   }
@@ -96,6 +101,8 @@
        declaration above, which previously left line 91 silently winning. */
     --color-accent-strong: rgb(37 99 235);
     --color-button-text: rgb(255 255 255);
+    --color-danger-fill: rgb(190 18 60);
+    --color-danger-fill-hover: rgb(159 18 57);
     --color-ring: rgb(37 99 235 / 0.28);
     --color-overlay: rgb(15 23 42 / 0.36);
   }
@@ -150,27 +157,11 @@
     color: var(--color-text);
   }
 
-  html[data-theme="light"] [class*="text-white"] {
-    color: var(--color-text) !important;
-  }
-
-  html[data-theme="light"] [class*="text-slate-100"],
-  html[data-theme="light"] [class*="text-slate-200"],
-  html[data-theme="light"] [class*="text-slate-300"] {
-    color: var(--color-text) !important;
-  }
-
-  html[data-theme="light"] [class*="text-slate-400"],
-  html[data-theme="light"] [class*="text-slate-500"],
-  html[data-theme="light"] [class*="text-slate-600"] {
-    color: var(--color-muted) !important;
-  }
-
-  html[data-theme="light"] [class*="bg-slate-950"],
-  html[data-theme="light"] [class*="bg-slate-900"] {
-    background-color: var(--color-surface) !important;
-  }
-
+  /* Legacy backstop for the translucent overlay utilities.
+     These are still used for hairline borders and subtle fills, and they carry no
+     theme of their own, so they are remapped here rather than at 118 call sites.
+     A colour that needs to mean something should be a token instead; the
+     palette-ratchet test is what keeps new ones honest. */
   html[data-theme="light"] [class*="bg-white/"] {
     background-color: var(--color-surface-soft) !important;
   }

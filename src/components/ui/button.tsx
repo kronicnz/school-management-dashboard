@@ -15,10 +15,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       "relative inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 ease-out cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:pointer-events-none disabled:opacity-50 active:scale-95 active:brightness-95 hover:brightness-105"
 
     const variants = {
-      default: "bg-[var(--color-accent-strong)] text-[var(--color-button-text)] shadow-md shadow-sky-500/20 hover:shadow-sky-500/30 active:bg-blue-700",
+      default:
+        "bg-[var(--color-accent-strong)] text-[var(--color-button-text)] shadow-md shadow-[color-mix(in_srgb,var(--color-accent-strong)_20%,transparent)] hover:shadow-[color-mix(in_srgb,var(--color-accent-strong)_30%,transparent)] active:brightness-90",
       outline: "border border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text)] hover:bg-[var(--color-row-hover)] backdrop-blur-sm active:bg-[var(--color-row-hover)]",
       ghost: "text-[var(--color-muted)] hover:bg-[var(--color-row-hover)] hover:text-[var(--color-text)] active:bg-[var(--color-row-hover)]",
-      danger: "bg-rose-600 text-[var(--color-button-text)] shadow-md shadow-rose-600/20 hover:bg-rose-500 hover:shadow-rose-500/30 active:bg-rose-700",
+      danger:
+        "bg-[var(--color-danger-fill)] text-[var(--color-button-text)] shadow-md shadow-[color-mix(in_srgb,var(--color-danger-fill)_20%,transparent)] hover:bg-[var(--color-danger-fill-hover)] hover:shadow-[color-mix(in_srgb,var(--color-danger-fill)_30%,transparent)] active:brightness-90",
     }
 
     const sizes = {

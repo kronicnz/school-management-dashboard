@@ -6,9 +6,9 @@ import { getSnapshot, removeToast, subscribe, type ToastVariant } from "./toastS
 function getVariantStyles(variant: ToastVariant) {
   if (variant === "success") {
     return {
-      wrapper: "border-emerald-400/20 bg-emerald-500/10 text-emerald-50 shadow-2xl shadow-emerald-950/30",
-      icon: "text-emerald-300",
-      accent: "bg-emerald-400",
+      wrapper: "border-[color-mix(in_srgb,var(--color-success)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] text-[var(--color-text)] shadow-2xl",
+      icon: "text-[var(--color-success)]",
+      accent: "bg-[var(--color-success)]",
     }
   }
 
@@ -16,16 +16,16 @@ function getVariantStyles(variant: ToastVariant) {
   // instead of being reported with the wrong tone.
   if (variant === "warning") {
     return {
-      wrapper: "border-amber-400/20 bg-amber-500/10 text-amber-50 shadow-2xl shadow-amber-950/30",
-      icon: "text-amber-300",
-      accent: "bg-amber-400",
+      wrapper: "border-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)] text-[var(--color-text)] shadow-2xl",
+      icon: "text-[var(--color-warning)]",
+      accent: "bg-[var(--color-warning)]",
     }
   }
 
   return {
-    wrapper: "border-rose-400/20 bg-rose-500/10 text-rose-50 shadow-2xl shadow-rose-950/30",
-    icon: "text-rose-300",
-    accent: "bg-rose-400",
+    wrapper: "border-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-destructive)_10%,transparent)] text-[var(--color-text)] shadow-2xl",
+    icon: "text-[var(--color-destructive)]",
+    accent: "bg-[var(--color-destructive)]",
   }
 }
 
