@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 
 /**
- * Raw palette ratchet.
+ * Raw palette gate.
  *
  * The design system defines the colour scale in src/index.css and every status
  * colour is verified against both themes in contrast.test.ts. This file guards
@@ -9,18 +9,16 @@
  * instead of hardcoded Tailwind palette classes.
  *
  * The classes are not merely untidy. The light-theme override block in
- * index.css remaps `text-slate-*` and `bg-white/*` but knows nothing about the
- * accent families, so `text-cyan-400` renders at 1.80:1 on a white surface and
+ * index.css used to remap `text-slate-*` while knowing nothing about the accent
+ * families, so `text-cyan-400` rendered at 1.80:1 on a white surface and
  * `text-amber-400` at 1.66:1. That is unreadable, and it is invisible in dark
  * mode where the same class measures 10:1.
  *
- * This is a ratchet, not a gate. `BUDGETS` below pins the current count per
- * file. Converting a file lowers its number and the budget lowers with it, so
- * the suite fails if raw palette usage ever goes back up, and a partially
- * converted codebase is normal rather than a failing build.
+ * This was a ratchet with a per-file budget for 352 occurrences across 17
+ * files. All of them are now converted, so it is a plain gate: any raw palette
+ * class in src/ is a failure. If a token is genuinely missing, add the token
+ * and a contrast assertion for it rather than reaching for a palette class.
  */
-
-const SRC_ROOT = new URL("../../", import.meta.url)
 
 /** Palette families that have a semantic token equivalent. */
 const PALETTE = [
@@ -49,13 +47,41 @@ const PALETTE = [
 ] as const
 
 /**
- * Classes matching `(text|bg|border|from|to|ring|fill|stroke)-<family>-<step>`
- * plus their opacity-suffixed forms, e.g. `bg-cyan-400/10`.
+ * Classes matching `<property>-<family>-<step>` for any colour-capable utility
+ * property, plus their opacity-suffixed forms, e.g. `bg-cyan-400/10`.
+ *
+ * The property list is deliberately wider than the original seven. It has to
+ * cover the modifier forms too, so `hover:bg-rose-500/20` and
+ * `focus:ring-cyan-500` are both caught.
  */
+const PROPERTIES = [
+  "text",
+  "bg",
+  "border",
+  "ring",
+  "from",
+  "via",
+  "to",
+  "fill",
+  "stroke",
+  "shadow",
+  "outline",
+  "divide",
+  "accent",
+  "decoration",
+  "caret",
+] as const
+
 const RAW_PALETTE = new RegExp(
-  `\\b(?:text|bg|border|from|to|ring|fill|stroke)-(${PALETTE.join("|")})-\\d{2,3}(?:/\\d{1,3})?\\b`,
+  // Optional variant prefixes, e.g. the `hover:` in `hover:bg-rose-500/20`.
+  `(?:[a-z-]+:)*(?:${PROPERTIES.join("|")})-(${PALETTE.join("|")})-\\d{2,3}(?:/\\d{1,3})?\\b`,
   "g",
 )
+
+const SRC_ROOT = new URL("../../", import.meta.url)
+
+/** This file names the classes it bans, so it excludes itself from the walk. */
+const SELF = "components/ui/palette-ratchet.test.ts"
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
@@ -80,87 +106,61 @@ function collectSourceFiles(directory: URL, prefix = ""): string[] {
   return found
 }
 
-/** Counts raw palette class usages per file, relative to src/. */
-export function paletteUsageByFile(): Record<string, number> {
-  const counts: Record<string, number> = {}
+/** Reports each raw palette class found, with its line number. */
+export function findRawPaletteUsage(): string[] {
+  const found: string[] = []
 
   for (const file of collectSourceFiles(SRC_ROOT)) {
-    // The probe string in the self-test names banned classes deliberately.
-    if (file === SELF) continue
+    // Both tests name the classes they ban, so they exclude themselves.
+    if (file === SELF || file === "components/ui/contrast.test.ts") continue
 
     const source = stripComments(Deno.readTextFileSync(new URL(file, SRC_ROOT)))
-    const matches = source.match(RAW_PALETTE)
-    if (matches && matches.length > 0) counts[file] = matches.length
-  }
-
-  return counts
-}
-
-/**
- * The per-file budget, as measured by this file's own pattern. Lower it as each
- * file is converted. A file that reaches zero should be deleted from this map
- * entirely, so the ratchet also records which modules are done.
- */
-const BUDGETS: Record<string, number> = {
-  "pages/Assets.tsx": 24,
-  "pages/Sandbox.tsx": 20,
-  "components/ui/Toast.tsx": 15,
-  "pages/Staff.tsx": 10,
-  "pages/Classes.tsx": 9,
-  "pages/Students.tsx": 7,
-  "components/ui/Select.tsx": 7,
-  "pages/Login.tsx": 6,
-  "pages/Tickets.tsx": 5,
-  "components/ui/button.tsx": 4,
-  "pages/Attendance.tsx": 4,
-  "components/ui/TableAvatar.tsx": 3,
-  "pages/SetPassword.tsx": 3,
-  "components/ui/FormField.tsx": 2,
-  "components/ui/Input.tsx": 2,
-}
-
-/** This file names the classes it bans, so it excludes itself from the walk. */
-const SELF = "components/ui/palette-ratchet.test.ts"
-
-Deno.test("raw palette usage stays within its per-file budget", () => {
-  const actual = paletteUsageByFile()
-  const regressions: string[] = []
-
-  for (const [file, budget] of Object.entries(BUDGETS)) {
-    const count = actual[file] ?? 0
-    if (count > budget) {
-      regressions.push(`${file}: ${count} raw palette classes, budget is ${budget} (+${count - budget})`)
+    for (const [index, line] of source.split("\n").entries()) {
+      for (const match of line.matchAll(RAW_PALETTE)) {
+        found.push(`${file}:${index + 1}  ${match[0]}`)
+      }
     }
   }
 
-  // A new file using raw palette is as much a regression as an existing one
-  // going over its budget, so unlisted files are pinned at zero.
-  for (const [file, count] of Object.entries(actual)) {
-    if (!(file in BUDGETS)) regressions.push(`${file}: ${count} raw palette classes in a file with no budget entry`)
+  return found
+}
+
+Deno.test("no component reaches for a raw palette class", () => {
+  const found = findRawPaletteUsage()
+
+  // Grouped by file so the message reads as a worklist rather than a wall.
+  const byFile = new Map<string, string[]>()
+  for (const entry of found) {
+    const [location] = entry.split("  ")
+    const file = location.split(":")[0]
+    if (!byFile.has(file)) byFile.set(file, [])
+    byFile.get(file)!.push(entry)
   }
 
-  // A budgeted file that has been fully converted should be removed from the
-  // map, otherwise the entry rots and hides a later regression.
-  const stale = Object.entries(BUDGETS)
-    .filter(([file, budget]) => budget > 0 && (actual[file] ?? 0) === 0)
-    .map(([file]) => `${file}: budgeted at ${BUDGETS[file]} but now uses none. Remove the entry.`)
+  const report = [...byFile.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([file, entries]) => `${file} (${entries.length})\n    ${entries.join("\n    ")}`)
+    .join("\n  ")
 
-  assert(regressions.length === 0, `Raw palette usage regressed:\n  ${regressions.join("\n  ")}`)
-  assert(stale.length === 0, `Stale budget entries:\n  ${stale.join("\n  ")}`)
+  assert(
+    found.length === 0,
+    `Raw palette classes found. Use a semantic token from index.css:\n  ${report}`,
+  )
 })
 
-Deno.test("the ratchet has budgeted every file that still uses raw palette", () => {
-  // A guard on the guard: if this file's own regex stopped matching the palette
-  // the counts would silently fall to zero and the budget would look satisfied
-  // while the classes were all still there.
-  const source = stripComments(Deno.readTextFileSync(new URL("./contrast.test.ts", import.meta.url)))
-  const probe = `className="text-cyan-400 bg-amber-500/10 border-rose-300"`
-  assert(source.length > 0, "could not read the probe source")
-
+Deno.test("the gate matches the classes it bans and ignores token usage", () => {
+  // A guard on the guard: if this regex stopped matching the palette the test
+  // above would pass vacuously while the classes were all still there.
+  const probe = `className="text-violet-400 bg-teal-500/10 border-fuchsia-300 hover:bg-lime-800/50"`
   const matches = probe.match(RAW_PALETTE)
-  assert(matches !== null && matches.length === 3, `the palette regex should match 3 classes in "${probe}", matched ${matches ? matches.length : 0}`)
+  assert(matches !== null && matches.length === 4, `the palette regex should match 4 classes in the probe, matched ${matches ? matches.length : 0}`)
 
   // And confirm the pattern does not fire on legitimate token usage.
-  const tokens = `className="text-[var(--color-success)] bg-[var(--color-surface-soft)]"`
+  const tokens = `className="text-[var(--color-success)] bg-[var(--color-surface-soft)] focus:ring-[var(--color-information)]"`
   assert(tokens.match(RAW_PALETTE) === null, "the palette regex should not match semantic token classes")
+
+  // shadow- and accent- utilities take a colour too, and are easy to forget.
+  for (const utility of ["shadow-emerald-500/20", "accent-indigo-500", "from-sky-400", "to-violet-600"]) {
+    assert(utility.match(RAW_PALETTE) !== null, `the palette regex should match ${utility}`)
+  }
 })
