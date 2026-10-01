@@ -1,8 +1,7 @@
-import { useEffect, useSyncExternalStore, type ReactNode } from "react"
-import { createPortal } from "react-dom"
-import { AlertCircle, CheckCircle2, X } from "lucide-react"
+import { useSyncExternalStore, type ReactNode } from "react"
+import { AlertCircle, AlertTriangle, CheckCircle2, X } from "lucide-react"
 import { cn } from "../../utils/cn"
-import { clearToasts, getSnapshot, removeToast, subscribe, type ToastVariant } from "./toastStore"
+import { getSnapshot, removeToast, subscribe, type ToastVariant } from "./toastStore"
 
 function getVariantStyles(variant: ToastVariant) {
   if (variant === "success") {
@@ -10,6 +9,16 @@ function getVariantStyles(variant: ToastVariant) {
       wrapper: "border-emerald-400/20 bg-emerald-500/10 text-emerald-50 shadow-2xl shadow-emerald-950/30",
       icon: "text-emerald-300",
       accent: "bg-emerald-400",
+    }
+  }
+
+  // A partial result is neither a success nor a failure, so it gets its own treatment
+  // instead of being reported with the wrong tone.
+  if (variant === "warning") {
+    return {
+      wrapper: "border-amber-400/20 bg-amber-500/10 text-amber-50 shadow-2xl shadow-amber-950/30",
+      icon: "text-amber-300",
+      accent: "bg-amber-400",
     }
   }
 
@@ -21,12 +30,6 @@ function getVariantStyles(variant: ToastVariant) {
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    return () => {
-      clearToasts()
-    }
-  }, [])
-
   return <>{children}</>
 }
 
@@ -35,11 +38,11 @@ export function ToastViewport() {
 
   if (toasts.length === 0) return null
 
-  return createPortal(
+  return (
     <div className="pointer-events-none fixed right-4 top-4 z-[9999] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3 sm:right-6 sm:top-6">
       {toasts.map((toast) => {
         const styles = getVariantStyles(toast.variant)
-        const Icon = toast.variant === "success" ? CheckCircle2 : AlertCircle
+        const Icon = toast.variant === "success" ? CheckCircle2 : toast.variant === "warning" ? AlertTriangle : AlertCircle
 
         return (
           <div
@@ -70,7 +73,6 @@ export function ToastViewport() {
           </div>
         )
       })}
-    </div>,
-    document.body
+    </div>
   )
 }

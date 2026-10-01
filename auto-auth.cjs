@@ -1,10 +1,13 @@
 const { OAuth2Client } = require("google-auth-library");
 const http = require("http");
 const fs = require("fs");
+const path = require("path");
 const { spawn } = require("child_process");
 
 const CREDENTIALS_PATH = "C:/Users/Shane/Downloads/client_secret_1004047589689-3o0rm2l1mue4adcvnf6aoh086eu4c7i6.apps.googleusercontent.com.json";
 const TOKEN_PATH = "C:/Users/Shane/Downloads/google-workspace-token.json";
+const ROOT_ENV_PATH = path.join(__dirname, ".env.local");
+const EDGE_RUNTIME_ENV_PATH = path.join(__dirname, "supabase", ".temp", "start-secrets", "supabase_edge_runtime_school-management-system", "env", "docker.env");
 const ADMIN_EMAIL = "shaneb@ris.school.nz";
 const SCOPES = ["https://www.googleapis.com/auth/admin.directory.user.readonly"];
 
@@ -98,11 +101,69 @@ async function exchangeCode(client, code) {
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2));
     console.log(`✓ Token saved to: ${TOKEN_PATH}\n`);
 
+    persistSyncEnv(getCredentials(), tokens);
+
     await testSync(client, tokens.access_token);
   } catch (error) {
     console.error("✗ Error exchanging code:", error.message);
     process.exit(1);
   }
+}
+
+function persistSyncEnv(credentials, tokens) {
+  const lines = [
+    `GOOGLE_CLIENT_ID=${credentials.client_id}`,
+    `GOOGLE_CLIENT_SECRET=${credentials.client_secret}`,
+    `GOOGLE_REFRESH_TOKEN=${tokens.refresh_token || ""}`,
+    `GOOGLE_ACCESS_TOKEN=${tokens.access_token || ""}`,
+  ]
+
+  fs.writeFileSync(ROOT_ENV_PATH, `${lines.join("\n")}\n`)
+  updateEnvFile(EDGE_RUNTIME_ENV_PATH, lines)
+  console.log(`✓ Root env updated: ${ROOT_ENV_PATH}`)
+  console.log(`✓ Edge runtime env updated: ${EDGE_RUNTIME_ENV_PATH}`)
+}
+
+function updateEnvFile(filePath, newLines) {
+  if (!fs.existsSync(filePath)) return
+
+  const existing = fs.readFileSync(filePath, "utf8")
+  const entries = new Map()
+
+  for (const line of existing.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) continue
+
+    const equalsIndex = trimmed.indexOf("=")
+    if (equalsIndex < 0) continue
+
+    entries.set(trimmed.slice(0, equalsIndex).trim(), trimmed.slice(equalsIndex + 1))
+  }
+
+  for (const line of newLines) {
+    const equalsIndex = line.indexOf("=")
+    if (equalsIndex < 0) continue
+    entries.set(line.slice(0, equalsIndex), line.slice(equalsIndex + 1))
+  }
+
+  const preserved = existing.split(/\r?\n/).map((line) => {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) return line
+    const equalsIndex = trimmed.indexOf("=")
+    if (equalsIndex < 0) return line
+
+    const key = trimmed.slice(0, equalsIndex).trim()
+    if (!entries.has(key)) return line
+    return `${key}=${entries.get(key)}`
+  })
+
+  for (const [key, value] of entries) {
+    if (!preserved.some((line) => line.trim().startsWith(`${key}=`))) {
+      preserved.push(`${key}=${value}`)
+    }
+  }
+
+  fs.writeFileSync(filePath, `${preserved.join("\n")}\n`)
 }
 
 async function testSync(client, accessToken) {

@@ -10,49 +10,123 @@ export type MockAuthPersona = {
 }
 
 const MOCK_AUTH_PERSONA_STORAGE_KEY = "school-management-system-mock-auth-persona"
+const ACTIVE_ROLE_STORAGE_KEY = "school-management-system-active-role"
 
+/**
+ * The active role only picks the dashboard view and badge. It never gates
+ * access, so a stale or unknown stored value is simply ignored.
+ */
+export function getStoredActiveRole() {
+  if (typeof window === "undefined") return null
+
+  const stored = window.localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
+  return stored?.trim() || null
+}
+
+export function setStoredActiveRole(role: string) {
+  if (typeof window === "undefined") return
+  window.localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role)
+}
+
+export function clearStoredActiveRole() {
+  if (typeof window === "undefined") return
+  window.localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY)
+}
+
+// One persona per role, plus the multi-role combinations that matter: a role
+// switcher, additive capability resolution, and the base role held alongside a
+// reduced one. `teacher` is retired and replaced by `staff`.
 export const mockAuthPersonas: MockAuthPersona[] = [
   {
-    id: "principal",
-    email: "principal.mock@school.local",
-    full_name: "Mock Principal",
-    roles: ["principal"],
-    description: "Leadership access for school-wide review and oversight.",
+    id: "site_admin",
+    email: "site.admin.mock@school.local",
+    full_name: "Mock Site Admin",
+    roles: ["site_admin"],
+    description: "Full application access for platform-wide administration.",
   },
   {
-    id: "deputy_principal",
-    email: "deputy.principal.mock@school.local",
-    full_name: "Mock Deputy Principal",
-    roles: ["deputy_principal"],
-    description: "Leadership access without IT admin privileges.",
+    id: "finance_admin",
+    email: "finance.admin.mock@school.local",
+    full_name: "Mock Finance Admin",
+    roles: ["finance_admin"],
+    description: "Finance write access for payment and review workflows.",
   },
   {
-    id: "teacher",
-    email: "teacher.mock@school.local",
-    full_name: "Mock Teacher",
-    roles: ["teacher"],
-    description: "Teacher-scoped access for classroom and incident testing.",
+    id: "finance_read_only",
+    email: "finance.readonly.mock@school.local",
+    full_name: "Mock Finance Reader",
+    roles: ["finance_read_only"],
+    description: "Read-only finance access for reporting and review.",
+  },
+  {
+    id: "board_member",
+    email: "board.member.mock@school.local",
+    full_name: "Mock Board Member",
+    roles: ["board_member"],
+    description: "Read-only board oversight for finance reports and statistics.",
+  },
+  {
+    id: "staff",
+    email: "staff.mock@school.local",
+    full_name: "Mock Staff",
+    roles: ["staff"],
+    description: "Base role: assigned students, own incidents, and self-service tickets.",
   },
   {
     id: "counsellor",
     email: "counsellor.mock@school.local",
     full_name: "Mock Counsellor",
     roles: ["counsellor"],
-    description: "Student-support access with broader incident permissions.",
+    description: "Pastoral support with full incident permissions including sensitive cases.",
   },
   {
-    id: "staff",
-    email: "staff.mock@school.local",
-    full_name: "Mock Staff",
+    id: "property_manager",
+    email: "property.manager.mock@school.local",
+    full_name: "Mock Property Manager",
+    roles: ["property_manager"],
+    description: "Owns R&M tickets end to end and can assign them.",
+  },
+  {
+    id: "property_staff",
+    email: "property.staff.mock@school.local",
+    full_name: "Mock Property Staff",
+    roles: ["property_staff"],
+    description: "Reduced role for facilities staff who only need assigned-scope records.",
+  },
+  {
+    id: "it_staff",
+    email: "it.staff.mock@school.local",
+    full_name: "Mock IT Staff",
     roles: ["it_staff"],
-    description: "Staff-level access for non-leadership UI checks.",
+    description: "Works ICT tickets assigned to them and raises their own.",
   },
   {
     id: "it_admin",
     email: "it.admin.mock@school.local",
     full_name: "Mock IT Admin",
     roles: ["it_admin"],
-    description: "IT admin access for tickets, assets, and access management.",
+    description: "Full ICT and R&M ticket administration, without staff or admin screens.",
+  },
+  {
+    id: "staff_finance_admin",
+    email: "staff.finance.mock@school.local",
+    full_name: "Mock Staff Finance",
+    roles: ["staff", "finance_admin"],
+    description: "Base role plus finance, to verify the role switcher and additive capabilities.",
+  },
+  {
+    id: "staff_property_staff",
+    email: "staff.property.mock@school.local",
+    full_name: "Mock Staff Property",
+    roles: ["staff", "property_staff"],
+    description: "Base role plus a reduced role, to verify capabilities union rather than override.",
+  },
+  {
+    id: "it_staff_staff",
+    email: "technical.staff.mock@school.local",
+    full_name: "Mock Technical Staff",
+    roles: ["it_staff", "staff"],
+    description: "Technical desk plus the base role, to verify the role switcher default ordering.",
   },
 ]
 

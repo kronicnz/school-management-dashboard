@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { getAppUrl } from "../lib/app-url"
 import type { AuthUser, AuthContextType } from "../lib/api/database.types"
@@ -13,6 +13,13 @@ import {
   mockAuthPersonas,
   setStoredMockPersonaId,
 } from "../lib/mock-auth"
+import {
+  clearStoredActiveRole,
+  getStoredActiveRole,
+  setStoredActiveRole,
+} from "../lib/mock-auth"
+import { defaultActiveRole, normalizeRoles } from "../lib/access/permissions"
+import { isAppRole, type AppRole } from "../lib/access/registry"
 
 function normalizeAuthUser(
   user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null
@@ -62,12 +69,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
   const [loading, setLoading] = useState(!initialMockPersona)
   const [mockPersonaId, setMockPersonaId] = useState<string | null>(initialMockPersonaId)
+  const [activeRoleOverride, setActiveRoleOverride] = useState<AppRole | null>(() => {
+    const stored = getStoredActiveRole()
+    return stored && isAppRole(stored) ? stored : null
+  })
+
+  // The override is only honoured while the user still holds the role, so
+  // dropping a grant never leaves a stale badge on screen.
+  const activeRole = useMemo(() => {
+    const roles = normalizeRoles(user?.roles)
+    if (activeRoleOverride && roles.includes(activeRoleOverride)) {
+      return activeRoleOverride
+    }
+    return defaultActiveRole(roles)
+  }, [activeRoleOverride, user?.roles])
+
+  const setActiveRole = useCallback((role: AppRole) => {
+    setActiveRoleOverride(role)
+    setStoredActiveRole(role)
+  }, [])
 
   const syncMockPersona = useCallback((personaId: string | null) => {
     setMockPersonaId(personaId)
 
     if (!personaId) {
       clearStoredMockPersonaId()
+      clearStoredActiveRole()
+      setActiveRoleOverride(null)
       setUser(null)
       setSession(null)
       setLoading(true)
@@ -173,6 +201,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!client) return
     const { error } = await client.auth.signOut()
     if (error) throw error
+    clearStoredActiveRole()
+    setActiveRoleOverride(null)
     setUser(null)
     setSession(null)
   }, [mockPersonaId, syncMockPersona])
@@ -216,6 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     activeMockPersona,
     setMockPersona,
     clearMockPersona,
+    activeRole,
+    setActiveRole,
   }
 
   return (

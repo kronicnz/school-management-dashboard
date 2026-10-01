@@ -68,7 +68,7 @@ serve(async (req: Request) => {
       .filter((row) => row.active && (!row.effective_from || new Date(row.effective_from).getTime() <= Date.now()) && (!row.effective_to || new Date(row.effective_to).getTime() >= Date.now()))
       .map((row) => row.role)
 
-    const allowedRoles = new Set(["counsellor", "principal", "deputy_principal", "counsellor_delegate", "leadership_delegate"])
+    const allowedRoles = new Set(["site_admin", "it_admin", "counsellor"])
     if (!activeRoles.some((role) => allowedRoles.has(role))) {
       return jsonResponse({ error: "insufficient_privilege" }, 403)
     }

@@ -78,7 +78,7 @@ begin
   from public.profiles p
   join public.user_roles ur on ur.profile_id = p.id
   where ur.active = true
-    and ur.role = any(array['counsellor', 'principal', 'deputy_principal', 'counsellor_delegate', 'leadership_delegate']::text[])
+    and ur.role = any(array['site_admin', 'it_admin', 'counsellor']::text[])
     and (ur.effective_from is null or ur.effective_from <= current_date)
     and (ur.effective_to is null or ur.effective_to >= current_date)
   group by p.id, p.email, p.full_name, p.org_unit_path

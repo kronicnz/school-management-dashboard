@@ -7,14 +7,22 @@ import { ToastProvider, ToastViewport } from './components/ui/Toast'
 import './index.css'
 import App from './App.tsx'
 
-createRoot(document.getElementById('root')!).render(
+const appRoot = document.getElementById('root')!
+const toastRoot = document.getElementById('toast-root') ?? Object.assign(document.createElement('div'), { id: 'toast-root' })
+
+if (!toastRoot.isConnected) {
+  document.body.appendChild(toastRoot)
+}
+
+createRoot(toastRoot).render(<ToastViewport />)
+
+createRoot(appRoot).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ThemeProvider>
         <AuthProvider>
           <ToastProvider>
             <App />
-            <ToastViewport />
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>

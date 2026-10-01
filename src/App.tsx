@@ -1,11 +1,12 @@
 import { Suspense, lazy, useEffect, useRef, type ReactNode } from "react"
-import { Navigate, Outlet, useLocation, useRoutes } from "react-router-dom"
+import { Navigate, Outlet, useLocation, useRoutes, useSearchParams } from "react-router-dom"
 import { useAuth } from "./context/useAuth"
 import { DashboardLayout } from "./components/layout/DashboardLayout"
 import { useToast } from "./components/ui/useToast"
-import { getResolvedRoleTier, isRouteAllowedForTier, type RoleTier } from "./lib/role-tier"
+import { canAccessRoute } from "./lib/access/routes"
 
 const LoginPage = lazy(() => import("./pages/Login"))
+const SetPasswordPage = lazy(() => import("./pages/SetPassword"))
 const DashboardPage = lazy(() => import("./pages/Dashboard"))
 const StudentsPage = lazy(() => import("./pages/Students"))
 const ClassesPage = lazy(() => import("./pages/Classes"))
@@ -15,7 +16,15 @@ const AssetsPage = lazy(() => import("./pages/Assets"))
 const AttendancePage = lazy(() => import("./pages/Attendance"))
 const IncidentsPage = lazy(() => import("./pages/Incidents"))
 const TicketsPage = lazy(() => import("./pages/Tickets"))
+const FinancePage = lazy(() => import("./pages/Finance"))
 const SandboxPage = lazy(() => import("./pages/Sandbox"))
+
+function TicketsRedirectRoute() {
+  const [searchParams] = useSearchParams()
+  const category = searchParams.get("category")?.trim().toLowerCase()
+
+  return <Navigate to={category === "property_rm" ? "/rm-tickets" : "/ict-tickets"} replace />
+}
 
 function ProtectedRoute() {
   const { user, loading } = useAuth()
@@ -53,13 +62,12 @@ function PublicRoute() {
   return <Outlet />
 }
 
-function TierRouteGuard({ allowedTiers, children }: { allowedTiers: RoleTier[]; children: ReactNode }) {
+function RouteGuard({ path, children }: { path: string; children: ReactNode }) {
   const { user } = useAuth()
   const location = useLocation()
   const toast = useToast()
   const blockedPathRef = useRef<string | null>(null)
-  const tier = getResolvedRoleTier(user?.roles)
-  const allowed = isRouteAllowedForTier(location.pathname, tier) && allowedTiers.includes(tier)
+  const allowed = canAccessRoute(path, user?.roles)
 
   useEffect(() => {
     if (allowed) {
@@ -98,6 +106,15 @@ function AppLayout() {
 
 const routes = [
   {
+    // Deliberately outside PublicRoute. PublicRoute bounces any signed-in user to
+    // the dashboard, and someone who has just followed an invitation or reset link
+    // is signed in by the time this renders - they would never see the form.
+    // It also sits outside RouteGuard, because a brand new login has no roles yet
+    // and would be redirected away before it could set a password.
+    path: "/set-password",
+    element: <SetPasswordPage />,
+  },
+  {
     element: <PublicRoute />,
     children: [
       { path: "/login", element: <LoginPage /> },
@@ -110,15 +127,21 @@ const routes = [
         path: "/",
         element: <AppLayout />,
         children: [
-          { index: true, element: <TierRouteGuard allowedTiers={["minimal_access", "operational_staff", "leadership", "it_admin"]}><DashboardPage /></TierRouteGuard> },
-          { path: "students", element: <TierRouteGuard allowedTiers={["operational_staff", "leadership", "it_admin"]}><StudentsPage /></TierRouteGuard> },
-          { path: "classes", element: <TierRouteGuard allowedTiers={["operational_staff", "leadership", "it_admin"]}><ClassesPage /></TierRouteGuard> },
-          { path: "staff", element: <TierRouteGuard allowedTiers={["leadership", "it_admin"]}><StaffPage /></TierRouteGuard> },
-          { path: "admin", element: <TierRouteGuard allowedTiers={["it_admin"]}><AdminPage /></TierRouteGuard> },
-          { path: "assets", element: <TierRouteGuard allowedTiers={["it_admin"]}><AssetsPage /></TierRouteGuard> },
-          { path: "attendance", element: <TierRouteGuard allowedTiers={["operational_staff", "leadership", "it_admin"]}><AttendancePage /></TierRouteGuard> },
-          { path: "incidents", element: <TierRouteGuard allowedTiers={["operational_staff", "leadership", "it_admin"]}><IncidentsPage /></TierRouteGuard> },
-          { path: "tickets", element: <TierRouteGuard allowedTiers={["operational_staff", "leadership", "it_admin"]}><TicketsPage /></TierRouteGuard> },
+          { index: true, element: <RouteGuard path="/"><DashboardPage /></RouteGuard> },
+          { path: "students", element: <RouteGuard path="/students"><StudentsPage /></RouteGuard> },
+          { path: "classes", element: <RouteGuard path="/classes"><ClassesPage /></RouteGuard> },
+          { path: "staff", element: <RouteGuard path="/staff"><StaffPage /></RouteGuard> },
+          { path: "admin", element: <RouteGuard path="/admin"><AdminPage /></RouteGuard> },
+          { path: "assets", element: <RouteGuard path="/assets"><AssetsPage /></RouteGuard> },
+          { path: "attendance", element: <RouteGuard path="/attendance"><AttendancePage /></RouteGuard> },
+          { path: "incidents", element: <RouteGuard path="/incidents"><IncidentsPage /></RouteGuard> },
+          // Guarded for consistency: the old canAccessRoute default let this
+          // through undeclared, but the route still needs a ticket capability
+          // to be worth showing at all.
+          { path: "tickets", element: <RouteGuard path="/tickets"><TicketsRedirectRoute /></RouteGuard> },
+          { path: "ict-tickets", element: <RouteGuard path="/ict-tickets"><TicketsPage /></RouteGuard> },
+          { path: "rm-tickets", element: <RouteGuard path="/rm-tickets"><TicketsPage /></RouteGuard> },
+          { path: "finance", element: <RouteGuard path="/finance"><FinancePage /></RouteGuard> },
         ],
       },
       { path: "sandbox", element: <SandboxPage /> },

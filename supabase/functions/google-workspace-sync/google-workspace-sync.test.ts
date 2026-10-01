@@ -1,3 +1,5 @@
+declare const Deno: any;
+
 import { strict as assert } from "node:assert"
 import { dedupeById, matchesOrgUnitPath, normalizeOrgUnitPath } from "./shared.ts"
 
