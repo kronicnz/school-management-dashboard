@@ -1,7 +1,9 @@
 {
 	"unstable": ["sloppy-imports"],
 	"compilerOptions": {
-		"lib": ["deno.ns", "esnext", "dom", "dom.iterable"]
+		"lib": ["deno.ns", "esnext", "dom", "dom.iterable"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "react"
 	},
 	"fmt": {
 		"useTabs": true,

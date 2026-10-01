@@ -104,7 +104,14 @@ function AppLayout() {
   )
 }
 
-const routes = [
+/**
+ * Exported so src/lib/access/routes.test.ts can resolve deep links with
+ * react-router's own matcher rather than comparing path strings. Exporting a
+ * non-component from a module that declares components costs one
+ * only-export-components warning, which is the trade for verifying that every
+ * nav link actually resolves rather than only looking declared.
+ */
+export const routes = [
   {
     // Deliberately outside PublicRoute. PublicRoute bounces any signed-in user to
     // the dashboard, and someone who has just followed an invitation or reset link
