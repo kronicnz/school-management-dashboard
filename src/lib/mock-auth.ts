@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js"
 import type { AuthUser } from "./api/database.types"
+import { isAuthSandboxEnabled } from "./auth-sandbox"
 
 export type MockAuthPersona = {
   id: string
@@ -130,8 +131,26 @@ export const mockAuthPersonas: MockAuthPersona[] = [
   },
 ]
 
+/**
+ * The personas this build is allowed to impersonate.
+ *
+ * Empty unless the auth sandbox is enabled, so a production bundle has no way to
+ * fabricate an identity even if something calls setMockPersona.
+ */
+export function getAvailableMockPersonas(): MockAuthPersona[] {
+  return isAuthSandboxEnabled() ? mockAuthPersonas : []
+}
+
 export function getStoredMockPersonaId() {
   if (typeof window === "undefined") return null
+
+  // A persona id left in localStorage by an earlier dev session must not carry
+  // into a build that has the sandbox switched off, so it is dropped on read
+  // rather than merely ignored.
+  if (!isAuthSandboxEnabled()) {
+    clearStoredMockPersonaId()
+    return null
+  }
 
   const stored = window.localStorage.getItem(MOCK_AUTH_PERSONA_STORAGE_KEY)
   return stored && mockAuthPersonas.some((persona) => persona.id === stored) ? stored : null
@@ -139,6 +158,7 @@ export function getStoredMockPersonaId() {
 
 export function setStoredMockPersonaId(personaId: string) {
   if (typeof window === "undefined") return
+  if (!isAuthSandboxEnabled()) return
   window.localStorage.setItem(MOCK_AUTH_PERSONA_STORAGE_KEY, personaId)
 }
 
@@ -148,9 +168,10 @@ export function clearStoredMockPersonaId() {
 }
 
 export function getMockPersona(personaId: string | null | undefined) {
-  const fallbackPersona = mockAuthPersonas[0]
+  const available = getAvailableMockPersonas()
+  if (available.length === 0) return null
   if (!personaId) return null
-  return mockAuthPersonas.find((persona) => persona.id === personaId) ?? fallbackPersona
+  return available.find((persona) => persona.id === personaId) ?? available[0]
 }
 
 export function createMockUser(persona: MockAuthPersona): AuthUser {

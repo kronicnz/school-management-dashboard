@@ -78,6 +78,25 @@ export default function SandboxPage() {
                 <Users className="size-4 text-[var(--color-success)]" />
                 Mock personas
               </div>
+              {mockPersonas.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-row-hover)] p-4">
+                  <div className="font-medium text-[var(--color-text)]">
+                    Persona switching is off in this build
+                  </div>
+                  <p className="mt-1 text-sm text-[var(--color-muted)]">
+                    Mock personas replace your own identity with any of the ten roles, which takes
+                    every client-side capability check out of the picture. They are always available on
+                    the dev server, and on a built preview or staging bundle when
+                    {" "}
+                    <code className="rounded bg-[var(--color-secondary)] px-1 py-0.5 text-xs">
+                      VITE_ENABLE_AUTH_SANDBOX=true
+                    </code>{" "}
+                    is set at build time. This route stays mounted either way so the page can say so
+                    rather than look broken.
+                  </p>
+                </div>
+              ) : (
+                <>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {mockPersonas.map((persona) => {
                   const isActive = persona.id === mockPersonaId
@@ -111,6 +130,8 @@ export default function SandboxPage() {
                   Real auth remains the default; mock personas are local-only and do not write to Supabase auth.
                 </div>
               </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
