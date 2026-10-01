@@ -65,7 +65,7 @@ export function ToastViewport() {
             <button
               type="button"
               onClick={() => removeToast(toast.id)}
-              className="absolute right-2 top-2 rounded-md p-1 text-inherit/70 transition hover:bg-white/10 hover:text-inherit"
+              className="absolute right-2 top-2 rounded-md p-1 text-inherit/70 transition hover:bg-[var(--color-row-hover)] hover:text-inherit"
               aria-label="Dismiss notification"
             >
               <X className="size-4" />

@@ -3,6 +3,8 @@ import { Activity, Sparkles } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Button } from "../ui/button"
 import { StatisticCard, StatisticGrid, type StatisticTone } from "../ui/StatisticCard"
+import { SkeletonHeading, SkeletonPanel, SkeletonStats } from "../ui/Skeleton"
+import { EmptyState } from "../ui/EmptyState"
 import { TableBadge, type TableBadgeTone } from "../ui/TableBadge"
 import { cn } from "../../utils/cn"
 import { labelize } from "../../utils/labelize"
@@ -288,7 +290,7 @@ function ActivityPanel({ copy, recentActivity }: { copy: DashboardCopy; recentAc
 
 function ActivityFeed({ items }: { items: DashboardActivityItem[] }) {
   if (items.length === 0) {
-    return <p className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-6 text-center text-sm text-[var(--color-muted)]">No recorded activity yet.</p>
+    return <EmptyState description="No recorded activity yet." />
   }
 
   return (
@@ -360,22 +362,18 @@ export function DashboardLoadingState() {
     <div className="space-y-6" role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">Loading dashboard metrics</span>
       <section className="space-y-3">
-        <div className="h-7 w-48 animate-pulse rounded-lg bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-        <StatisticGrid>
-          {[0, 1, 2, 3].map((slot) => (
-            <div key={slot} className="h-[7.5rem] animate-pulse rounded-2xl bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-          ))}
-        </StatisticGrid>
+        <SkeletonHeading className="w-48" />
+        <SkeletonStats count={4} />
       </section>
       <section className="space-y-3">
-        <div className="h-7 w-56 animate-pulse rounded-lg bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-        <div className="h-72 animate-pulse rounded-2xl bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
+        <SkeletonHeading className="w-56" />
+        <SkeletonPanel />
       </section>
       <section className="space-y-3">
-        <div className="h-7 w-40 animate-pulse rounded-lg bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
+        <SkeletonHeading className="w-40" />
         <div className="grid gap-4 xl:grid-cols-2">
           {[0, 1, 2, 3].map((slot) => (
-            <div key={slot} className="h-72 animate-pulse rounded-2xl bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
+            <SkeletonPanel key={slot} />
           ))}
         </div>
       </section>

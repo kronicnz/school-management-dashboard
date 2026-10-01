@@ -66,7 +66,7 @@ export function Sheet({
         aria-modal="true"
         aria-label={ariaLabel}
         className={cn(
-          "relative flex h-full w-[min(86vw,20rem)] flex-col border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-transform duration-200",
+          "relative flex h-full w-[min(86vw,20rem)] flex-col border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-transform duration-200 motion-reduce:transition-none",
           side === "left"
             ? "border-r"
             : "ml-auto border-l",

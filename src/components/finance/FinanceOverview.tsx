@@ -9,6 +9,8 @@ import { enqueueFinanceIntakeItem, processFinanceIntakeQueue, reprocessFinanceIn
 import type { DashboardTrendPoint, DashboardWorkItem, FinanceSnapshot } from "../dashboard/types"
 import { BarChart, LineChart, PanelHeading, RefreshControl, SectionCard, WorkList } from "../dashboard/blocks"
 import { StatisticCard, StatisticGrid } from "../ui/StatisticCard"
+import { SkeletonHeading, SkeletonPanel, SkeletonStats } from "../ui/Skeleton"
+import { EmptyState } from "../ui/EmptyState"
 import { freshnessFrom } from "../dashboard/freshness"
 import { formatCount, formatNZD } from "../../lib/format"
 import { extractErrorMessage } from "../../utils/errorMessage"
@@ -692,21 +694,18 @@ export function FinanceOverview({ snapshot, loading, canManage = false, onRefres
   return (
     <div className="space-y-6">
       {!hasReporting ? (
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-card)_92%,var(--color-secondary))] px-6 py-14 text-center">
-          <Wallet className="size-6 text-[var(--color-muted-foreground)]" />
-          <div>
-            <p className="text-sm font-semibold text-[var(--color-foreground)]">No finance records mirrored yet</p>
-            <p className="mt-1 max-w-xl text-sm text-[var(--color-muted-foreground)]">
-              Position, review, billing, exposure, and budget appear here once invoices land in the intake lane and the extraction pipeline writes to the finance mirror. No placeholder values are shown in the meantime.
-            </p>
-          </div>
-          {canManage ? (
+        <EmptyState
+          size="section"
+          icon={Wallet}
+          title="No finance records mirrored yet"
+          description="Position, review, billing, exposure, and budget appear here once invoices land in the intake lane and the extraction pipeline writes to the finance mirror. No placeholder values are shown in the meantime."
+          action={canManage ? (
             <Button type="button" size="sm" variant="outline" onClick={() => void handleGmailPull()} disabled={isPulling}>
               <CloudDownload className="size-4" />
               {isPulling ? "Pulling Gmail..." : "Pull Gmail invoices"}
             </Button>
-          ) : null}
-        </div>
+          ) : undefined}
+        />
       ) : null}
 
       <section className="space-y-3">
@@ -1019,20 +1018,16 @@ function FinanceLoadingState() {
     <div className="space-y-6" role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">Loading the finance mirror</span>
       <section className="space-y-3">
-        <div className="h-7 w-56 animate-pulse rounded-lg bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-        <div className="h-40 animate-pulse rounded-2xl bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
+        <SkeletonHeading className="w-56" />
+        <SkeletonPanel className="h-40" />
       </section>
       <section className="space-y-3">
-        <div className="h-7 w-40 animate-pulse rounded-lg bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-        <StatisticGrid>
-          {[0, 1, 2, 3, 4, 5].map((slot) => (
-            <div key={slot} className="h-[7.5rem] animate-pulse rounded-2xl bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-          ))}
-        </StatisticGrid>
+        <SkeletonHeading className="w-40" />
+        <SkeletonStats count={6} />
       </section>
       <section className="space-y-3">
-        <div className="h-7 w-48 animate-pulse rounded-lg bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
-        <div className="h-64 animate-pulse rounded-2xl bg-[var(--color-surface-soft)] motion-reduce:animate-none" />
+        <SkeletonHeading className="w-48" />
+        <SkeletonPanel className="h-64" />
       </section>
     </div>
   )

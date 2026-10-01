@@ -479,15 +479,15 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
             onClick={handleButtonClick}
             onKeyDown={handleKeyDown}
               className={cn(
-                "relative flex items-center justify-between w-full font-medium transition-all duration-200 text-left outline-none cursor-pointer",
+                "relative flex w-full cursor-pointer items-center justify-between text-left font-medium transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none",
                 currentSize.button,
                 startIcon ? currentSize.buttonWithIcon : undefined,
-                "bg-[var(--color-surface-soft)] text-[var(--color-text)] border border-[var(--color-border)] shadow-sm backdrop-blur-sm",
+                "bg-[var(--color-surface-soft)] text-[var(--color-text)] border border-[var(--color-border)]",
                 "hover:border-[var(--color-border-muted)] hover:bg-[var(--color-row-hover)]",
                 isOpen
                   ? "border-[var(--color-accent)] ring-2 ring-[var(--color-ring)] bg-[var(--color-surface-elevated)]"
-                  : "focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-ring)]",
-                isError && "border-[color-mix(in_srgb,var(--color-destructive)_60%,transparent)] hover:border-[var(--color-destructive)] focus:border-[var(--color-destructive)] focus:ring-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)]",
+                  : "focus-visible:border-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
+                isError && "border-[color-mix(in_srgb,var(--color-destructive)_60%,transparent)] hover:border-[var(--color-destructive)] focus-visible:border-[var(--color-destructive)] focus-visible:ring-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)]",
                 "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--color-border)]"
               )}
             {...props}
@@ -534,7 +534,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
             role="listbox"
             aria-labelledby={selectId}
             className={cn(
-              "fixed z-50 flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] shadow-xl backdrop-blur-xl",
+              "fixed z-50 flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] shadow-xl",
               "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
               menuClassName
             )}

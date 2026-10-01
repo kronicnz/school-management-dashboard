@@ -11,16 +11,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "md", isLoading = false, disabled, asChild = false, type, children, ...props }, ref) => {
+    // One effect per state, on a property list rather than `transition-all`, so a
+    // button cannot pick up an unrelated animation from a later class. No scale
+    // on press: it moves the label out from under the pointer, which reads as
+    // a glitch on dense toolbars where buttons sit shoulder to shoulder.
     const baseStyles =
-      "relative inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 ease-out cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:pointer-events-none disabled:opacity-50 active:scale-95 active:brightness-95 hover:brightness-105"
+      "relative inline-flex cursor-pointer select-none items-center justify-center rounded-lg font-medium transition-[color,background-color,border-color,box-shadow,filter] duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:pointer-events-none disabled:opacity-50"
 
     const variants = {
       default:
-        "bg-[var(--color-accent-strong)] text-[var(--color-button-text)] shadow-md shadow-[color-mix(in_srgb,var(--color-accent-strong)_20%,transparent)] hover:shadow-[color-mix(in_srgb,var(--color-accent-strong)_30%,transparent)] active:brightness-90",
-      outline: "border border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text)] hover:bg-[var(--color-row-hover)] backdrop-blur-sm active:bg-[var(--color-row-hover)]",
-      ghost: "text-[var(--color-muted)] hover:bg-[var(--color-row-hover)] hover:text-[var(--color-text)] active:bg-[var(--color-row-hover)]",
+        "bg-[var(--color-accent-strong)] text-[var(--color-button-text)] shadow-sm hover:brightness-95",
+      outline:
+        "border border-[var(--color-border)] bg-[var(--color-surface-soft)] text-[var(--color-text)] hover:border-[color-mix(in_srgb,var(--color-text)_18%,var(--color-border))] hover:bg-[var(--color-row-hover)]",
+      ghost:
+        "text-[var(--color-muted)] hover:bg-[var(--color-row-hover)] hover:text-[var(--color-text)]",
       danger:
-        "bg-[var(--color-danger-fill)] text-[var(--color-button-text)] shadow-md shadow-[color-mix(in_srgb,var(--color-danger-fill)_20%,transparent)] hover:bg-[var(--color-danger-fill-hover)] hover:shadow-[color-mix(in_srgb,var(--color-danger-fill)_30%,transparent)] active:brightness-90",
+        "bg-[var(--color-danger-fill)] text-[var(--color-button-text)] shadow-sm hover:bg-[var(--color-danger-fill-hover)]",
     }
 
     const sizes = {

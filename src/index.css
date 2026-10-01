@@ -52,6 +52,11 @@
     --color-danger-fill-hover: rgb(159 18 57);
     --color-ring: rgb(34 211 238 / 0.35);
     --color-overlay: rgb(2 6 23 / 0.62);
+    /* Elevation is a themed token, not a baked-in dark shadow. A near-black shadow at
+       the strength the dark theme needs reads as a grey smudge on a white card, so
+       each theme carries its own. */
+    --shadow-card: 0 24px 60px -36px rgb(2 6 23 / 0.55);
+    --shadow-table: 0 20px 45px -30px rgb(2 6 23 / 0.45);
   }
 
   html[data-theme="light"] {
@@ -105,6 +110,8 @@
     --color-danger-fill-hover: rgb(159 18 57);
     --color-ring: rgb(37 99 235 / 0.28);
     --color-overlay: rgb(15 23 42 / 0.36);
+    --shadow-card: 0 24px 60px -40px rgb(15 23 42 / 0.16);
+    --shadow-table: 0 20px 45px -34px rgb(15 23 42 / 0.12);
   }
 
   * {
@@ -155,18 +162,5 @@
   .theme-surface {
     background: var(--color-surface);
     color: var(--color-text);
-  }
-
-  /* Legacy backstop for the translucent overlay utilities.
-     These are still used for hairline borders and subtle fills, and they carry no
-     theme of their own, so they are remapped here rather than at 118 call sites.
-     A colour that needs to mean something should be a token instead; the
-     palette-ratchet test is what keeps new ones honest. */
-  html[data-theme="light"] [class*="bg-white/"] {
-    background-color: var(--color-surface-soft) !important;
-  }
-
-  html[data-theme="light"] [class*="border-white/"] {
-    border-color: var(--color-border) !important;
   }
 }

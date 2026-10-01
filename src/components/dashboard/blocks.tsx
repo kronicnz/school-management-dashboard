@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Button } from "../ui/button"
 import type { StatisticTone } from "../ui/StatisticCard"
 import { TableBadge } from "../ui/TableBadge"
+import { EmptyState } from "../ui/EmptyState"
 import { cn } from "../../utils/cn"
 import type { DashboardTrendPoint, DashboardWorkItem } from "./types"
 
@@ -119,12 +120,7 @@ function ChartFrame({
 }
 
 function ChartEmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex min-h-[9.5rem] w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4 text-center">
-      <BarChart3 className="size-5 text-[var(--color-subtle)]" aria-hidden="true" />
-      <p className="text-sm text-[var(--color-muted)]">{message}</p>
-    </div>
-  )
+  return <EmptyState icon={BarChart3} description={message} className="min-h-[9.5rem]" />
 }
 
 function buildLinePath(points: DashboardTrendPoint[], width: number, height: number, padding = 8) {
@@ -343,7 +339,7 @@ export function SectionCard({ title, description, action, children }: { title: s
 
 export function WorkList({ items, onEdit, onReview, canEdit = true, emptyMessage = "Nothing to show here yet." }: { items: DashboardWorkItem[]; onEdit?: (item: DashboardWorkItem) => void; onReview?: (item: DashboardWorkItem) => void; canEdit?: boolean; emptyMessage?: string }) {
   if (items.length === 0) {
-    return <p className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-6 text-center text-sm text-[var(--color-muted)]">{emptyMessage}</p>
+    return <EmptyState description={emptyMessage} />
   }
 
   return (

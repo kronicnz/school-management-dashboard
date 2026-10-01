@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useMemo, useState, type FormEvent, type TextareaHTMLAttributes } from "react"
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
 import {
   CalendarClock,
   CheckCircle2,
@@ -66,6 +66,7 @@ import { Button } from "../components/ui/button"
 import { Dialog } from "../components/ui/Dialog"
 import { FormField } from "../components/ui/FormField"
 import { Input } from "../components/ui/Input"
+import { Textarea } from "../components/ui/Textarea"
 import { Select } from "../components/ui/Select"
 import { DataTable } from "../components/ui/DataTable"
 import { StatisticCard, StatisticGrid } from "../components/ui/StatisticCard"
@@ -75,19 +76,6 @@ import { useToast } from "../components/ui/useToast"
 import { getErrorMessage } from "../utils/getErrorMessage"
 import type { CreateDraft, DetailDraft, EmailPreview, RetentionRow } from "./incidents/types"
 import { csvEscape, downloadTextFile, formatDate, severityBadgeTone, visibilityBadgeTone } from "./incidents/utils"
-
-interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {}
-
-const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ className = "", ...props }, ref) => {
-  return (
-    <textarea
-      ref={ref}
-      className={`w-full rounded-md border border-white/15 bg-[color-mix(in_srgb,var(--color-surface)_70%,var(--color-canvas))] px-3.5 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-subtle)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-information)_50%,transparent)] focus:border-[var(--color-information)] transition-colors no-scrollbar ${className}`}
-      {...props}
-    />
-  )
-})
-Textarea.displayName = "Textarea"
 
 export default function IncidentsPage() {
   const toast = useToast()
@@ -837,26 +825,25 @@ export default function IncidentsPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">Behaviour Incidents</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => void loadData()}>
-            <RefreshCw className="mr-1 size-4" />
-            Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => exportIncidents("csv")}>
-            <FileDown className="mr-1 size-4" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => exportIncidents("json")}>
-            <FileJson className="mr-1 size-4" />
-            JSON
-          </Button>
-          <Button size="sm" onClick={() => setShowForm(true)}>
-            <Plus className="mr-1 size-4" />
-            Add Incident
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => void loadData()}>
+          <RefreshCw className="mr-1 size-4" />
+          Refresh
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => exportIncidents("csv")}>
+          <FileDown className="mr-1 size-4" />
+          CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => exportIncidents("json")}>
+          <FileJson className="mr-1 size-4" />
+          JSON
+        </Button>
+        <Button size="sm" onClick={() => setShowForm(true)}>
+          <Plus className="mr-1 size-4" />
+          Add Incident
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
@@ -874,8 +861,8 @@ export default function IncidentsPage() {
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Incident Directory</CardTitle>
             <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and inspect the incident log.</p>
@@ -1085,7 +1072,7 @@ export default function IncidentsPage() {
                   ))}
               </Select>
 
-              <div className="mt-2 min-h-[44px] rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-2.5 no-scrollbar">
+              <div className="mt-2 min-h-[44px] rounded-lg border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-2.5 no-scrollbar">
                 {createForm.tagged_student_ids.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {createForm.tagged_student_ids.map((id) => (
@@ -1098,7 +1085,7 @@ export default function IncidentsPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveTaggedStudentFromCreate(id)}
-                          className="ml-0.5 rounded-full p-0.5 hover:bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] hover:text-[var(--color-destructive)] transition-colors focus:outline-none focus:ring-1 focus:focus:ring-[var(--color-destructive)]"
+                              className="ml-0.5 rounded-full p-0.5 transition-colors motion-reduce:transition-none hover:bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] hover:text-[var(--color-destructive)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                           title="Remove student"
                         >
                           <X className="size-3" />
@@ -1154,7 +1141,7 @@ export default function IncidentsPage() {
             </div>
 
             {canManageSensitive ? (
-              <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-3">
+              <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-row)] p-4 space-y-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-information)] flex items-center gap-1.5">
                   <CalendarClock className="size-3.5" />
                   Initial Follow-up Plan
@@ -1179,7 +1166,7 @@ export default function IncidentsPage() {
               </div>
             ) : null}
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                 Cancel
               </Button>
@@ -1198,76 +1185,67 @@ export default function IncidentsPage() {
         {selectedIncident && detailDraft ? (
           <div className="w-full max-w-6xl mx-auto space-y-5">
             {/* COMPACT OVERVIEW SUMMARY STRIP */}
-            <div className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] shadow-inner">
+            <div className="rounded-lg border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] shadow-inner">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Primary Student</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-xs">Primary Student</span>
                   <span className="font-semibold text-[var(--color-text)] text-sm">{studentNameMap.get(selectedIncident.student_id) ?? "Unknown"}</span>
                 </div>
                 <div>
-                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Category</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-xs">Category</span>
                   <span className="font-semibold text-[var(--color-text)]">{categoryNameMap.get(selectedIncident.category_id) ?? "Unknown"}</span>
                 </div>
                 <div>
-                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Counselor</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-xs">Counselor</span>
                   <span className="font-semibold text-[var(--color-text)]">{selectedIncidentAssigneeName}</span>
                 </div>
                 <div>
-                  <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Occurred At</span>
+                  <span className="text-[var(--color-muted)] block uppercase font-medium text-xs">Occurred At</span>
                   <span className="font-semibold text-[var(--color-text)]">{formatDate(selectedIncident.occurred_at)}</span>
                 </div>
               </div>
             </div>
 
             {/* MODAL TABS */}
-            <div className="flex border-b border-white/10 space-x-1">
-              <button
-                type="button"
-                onClick={() => setDetailActiveTab("details")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
-                  detailActiveTab === "details"
-                    ? "border-[var(--color-information)] text-[var(--color-information)] bg-white/[0.04]"
-                    : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.02]"
-                }`}
-              >
-                <FileText className="size-3.5" />
-                Details & Form
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailActiveTab("activity")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
-                  detailActiveTab === "activity"
-                    ? "border-[var(--color-information)] text-[var(--color-information)] bg-white/[0.04]"
-                    : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.02]"
-                }`}
-              >
-                <MessageSquare className="size-3.5" />
-                Follow-ups & Comments
-                <span className="ml-1 rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] text-[var(--color-text)] border border-white/10">
-                  {comments.length + selectedIncidentFollowUps.length}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailActiveTab("communication")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
-                  detailActiveTab === "communication"
-                    ? "border-[var(--color-information)] text-[var(--color-information)] bg-white/[0.04]"
-                    : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.02]"
-                }`}
-              >
-                <Mail className="size-3.5" />
-                Communication & Audit
-                <span className="ml-1 rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] text-[var(--color-text)] border border-white/10">
-                  {auditLog.length + emailLogs.length}
-                </span>
-              </button>
+            <div role="tablist" aria-label="Incident detail sections" className="flex gap-1 overflow-x-auto border-b border-[var(--color-border)] pb-px">
+              {[
+                { id: "details", label: "Details & Form", icon: FileText, badge: undefined as number | undefined },
+                { id: "activity", label: "Follow-ups & Comments", icon: MessageSquare, badge: comments.length + selectedIncidentFollowUps.length },
+                { id: "communication", label: "Communication & Audit", icon: Mail, badge: auditLog.length + emailLogs.length },
+              ].map((tab) => {
+                const Icon = tab.icon
+                const isActive = detailActiveTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    id={`incident-detail-tab-${tab.id}`}
+                    aria-selected={isActive}
+                    aria-controls={`incident-detail-panel-${tab.id}`}
+                    tabIndex={isActive ? 0 : -1}
+                    onClick={() => setDetailActiveTab(tab.id as typeof detailActiveTab)}
+                    className={`flex min-h-11 items-center gap-2 whitespace-nowrap rounded-t-lg border-b-2 px-5 py-2.5 text-xs font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
+                      isActive
+                        ? "border-[var(--color-information)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-information)]"
+                        : "border-transparent text-[var(--color-muted)] hover:bg-[var(--color-row-hover)] hover:text-[var(--color-text)]"
+                    }`}
+                  >
+                    <Icon className="size-3.5" aria-hidden="true" />
+                    {tab.label}
+                    {tab.badge !== undefined && tab.badge > 0 ? (
+                      <span className="ml-1 rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-xs tabular-nums text-[var(--color-text)]">
+                        {tab.badge}
+                      </span>
+                    ) : null}
+                  </button>
+                )
+              })}
             </div>
 
             {/* TAB 1: EDIT FORM & DETAILS */}
             {detailActiveTab === "details" && (
-              <div className="space-y-4 pt-1">
+              <div role="tabpanel" id="incident-detail-panel-details" aria-labelledby="incident-detail-tab-details" className="space-y-4 pt-1">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-4">
                     <label className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">Status</label>
@@ -1352,7 +1330,7 @@ export default function IncidentsPage() {
                       ))}
                   </Select>
 
-                  <div className="mt-2 min-h-[44px] rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-2.5 no-scrollbar">
+                  <div className="mt-2 min-h-[44px] rounded-lg border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-2.5 no-scrollbar">
                     {detailDraft.tagged_student_ids.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {detailDraft.tagged_student_ids.map((id) => (
@@ -1365,7 +1343,7 @@ export default function IncidentsPage() {
                             <button
                               type="button"
                               onClick={() => handleRemoveTaggedStudentFromDetail(id)}
-                              className="ml-0.5 rounded-full p-0.5 hover:bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] hover:text-[var(--color-destructive)] transition-colors focus:outline-none focus:ring-1 focus:focus:ring-[var(--color-destructive)]"
+                          className="ml-0.5 rounded-full p-0.5 transition-colors motion-reduce:transition-none hover:bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] hover:text-[var(--color-destructive)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                               title="Remove student"
                             >
                               <X className="size-3" />
@@ -1416,11 +1394,11 @@ export default function IncidentsPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--color-border)]">
                   <label className="flex items-center gap-2 text-xs text-[var(--color-text)] cursor-pointer">
                     <input
                       type="checkbox"
-                      className="rounded border-white/20 bg-[var(--color-surface)] text-[var(--color-information)] focus:focus:ring-[var(--color-information)]"
+                      className="rounded border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))] bg-[var(--color-surface)] text-[var(--color-information)] accent-[var(--color-information)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                       checked={detailDraft.sensitivity_review_requested}
                       disabled={!canManageSensitive}
                       onChange={(event) => setDetailDraft({ ...detailDraft, sensitivity_review_requested: event.target.checked })}
@@ -1453,9 +1431,9 @@ export default function IncidentsPage() {
 
             {/* TAB 2: FOLLOW-UPS & COMMENTS */}
             {detailActiveTab === "activity" && (
-              <div className="flex flex-col gap-5 pt-1">
+              <div role="tabpanel" id="incident-detail-panel-activity" aria-labelledby="incident-detail-tab-activity" className="flex flex-col gap-5 pt-1">
                 {/* 1. DISCUSSION COMMENTS BLOCK */}
-                <Card className="border-white/10 bg-white/[0.02]">
+                <Card className="border-[var(--color-border)] bg-[var(--color-row)]">
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
@@ -1468,8 +1446,8 @@ export default function IncidentsPage() {
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-2 no-scrollbar">
                       {comments.length > 0 ? (
                         comments.map((comment) => (
-                          <div key={comment.id} className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)]">
-                            <div className="mb-1 text-[10px] text-[var(--color-muted)] font-medium">{formatDate(comment.created_at)}</div>
+                          <div key={comment.id} className="rounded-lg border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)]">
+                            <div className="mb-1 text-xs text-[var(--color-muted)] font-medium">{formatDate(comment.created_at)}</div>
                             <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
                           </div>
                         ))
@@ -1478,7 +1456,7 @@ export default function IncidentsPage() {
                       )}
                     </div>
 
-                    <div className="pt-3 border-t border-white/10 space-y-2.5">
+                    <div className="pt-3 border-t border-[var(--color-border)] space-y-2.5">
                       <Textarea
                         rows={3}
                         value={commentDraft}
@@ -1496,7 +1474,7 @@ export default function IncidentsPage() {
                 </Card>
 
                 {/* 2. FOLLOW-UP TASKS BLOCK */}
-                <Card className="border-white/10 bg-white/[0.02]">
+                <Card className="border-[var(--color-border)] bg-[var(--color-row)]">
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
@@ -1509,9 +1487,9 @@ export default function IncidentsPage() {
                     <div className="space-y-3 max-h-64 overflow-y-auto pr-2 no-scrollbar">
                       {selectedIncidentFollowUps.length > 0 ? (
                         selectedIncidentFollowUps.map((followUp) => (
-                          <div key={followUp.id} className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)] space-y-2">
+                          <div key={followUp.id} className="rounded-lg border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)] space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-semibold text-[var(--color-text)] uppercase text-[10px] tracking-wider">{followUp.status}</span>
+                              <span className="font-semibold text-[var(--color-text)] uppercase text-xs tracking-wider">{followUp.status}</span>
                               <Select
                                 value={followUp.status}
                                 onChange={(event) => void handleFollowUpStatusChange(followUp, event.target.value)}
@@ -1524,7 +1502,7 @@ export default function IncidentsPage() {
                               </Select>
                             </div>
                             <p className="whitespace-pre-wrap text-[var(--color-text)] leading-relaxed">{followUp.notes}</p>
-                            <div className="text-[10px] text-[var(--color-muted)] pt-1 border-t border-white/5 flex flex-wrap gap-3">
+                            <div className="text-xs text-[var(--color-muted)] pt-1 border-t border-[var(--color-border-muted)] flex flex-wrap gap-3">
                               <span>Due: {formatDate(followUp.due_at)}</span>
                               <span>Completed: {formatDate(followUp.completed_at)}</span>
                             </div>
@@ -1536,7 +1514,7 @@ export default function IncidentsPage() {
                     </div>
 
                     {canManageSensitive ? (
-                      <div className="pt-3 border-t border-white/10 space-y-3">
+                      <div className="pt-3 border-t border-[var(--color-border)] space-y-3">
                         <div className="text-xs font-semibold text-[var(--color-text)] uppercase tracking-wider">Add New Follow-up</div>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <Input
@@ -1566,7 +1544,7 @@ export default function IncidentsPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[11px] text-[var(--color-muted)] italic">Follow-up management requires leadership/counseling permissions.</p>
+                      <p className="text-xs text-[var(--color-muted)] italic">Follow-up management requires leadership/counseling permissions.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -1575,9 +1553,9 @@ export default function IncidentsPage() {
 
             {/* TAB 3: COMMUNICATION & AUDIT */}
             {detailActiveTab === "communication" && (
-              <div className="space-y-4 pt-1">
+              <div role="tabpanel" id="incident-detail-panel-communication" aria-labelledby="incident-detail-tab-communication" className="space-y-4 pt-1">
                 {canManageSensitive ? (
-                  <Card className="border-white/10 bg-white/[0.02]">
+                  <Card className="border-[var(--color-border)] bg-[var(--color-row)]">
                     <CardContent className="space-y-3 p-5">
                       <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
                         <Mail className="size-4 text-[var(--color-information)]" />
@@ -1611,9 +1589,9 @@ export default function IncidentsPage() {
                       </div>
 
                       {emailPreview ? (
-                        <div className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] space-y-2 mt-2">
+                        <div className="rounded-lg border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] space-y-2 mt-2">
                           <div className="font-semibold text-[var(--color-text)]">Subject: {emailPreview.subject}</div>
-                          <pre className="max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-[var(--color-text)] font-mono bg-[color-mix(in_srgb,var(--color-surface)_90%,var(--color-canvas))] p-3 rounded border border-white/5 no-scrollbar">
+                          <pre className="max-h-56 overflow-auto whitespace-pre-wrap text-xs text-[var(--color-text)] font-mono bg-[color-mix(in_srgb,var(--color-surface)_90%,var(--color-canvas))] p-3 rounded border border-[var(--color-border-muted)] no-scrollbar">
                             {emailPreview.body}
                           </pre>
                         </div>
@@ -1622,7 +1600,7 @@ export default function IncidentsPage() {
                   </Card>
                 ) : null}
 
-                <Card className="border-white/10 bg-white/[0.02]">
+                <Card className="border-[var(--color-border)] bg-[var(--color-row)]">
                   <CardContent className="space-y-3 p-5">
                     <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
                       <History className="size-4 text-[var(--color-success)]" />
@@ -1635,9 +1613,9 @@ export default function IncidentsPage() {
                         <div className="space-y-2 max-h-56 overflow-y-auto pr-2 no-scrollbar">
                           {auditLog.length > 0 ? (
                             auditLog.slice(0, 10).map((row) => (
-                              <div key={row.id} className="rounded-md border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)]">
+                              <div key={row.id} className="rounded-md border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)]">
                                 <div className="font-medium text-[var(--color-text)]">{row.action}</div>
-                                <div className="text-[10px] text-[var(--color-muted)]">{formatDate(row.changed_at)}</div>
+                                <div className="text-xs text-[var(--color-muted)]">{formatDate(row.changed_at)}</div>
                               </div>
                             ))
                           ) : (
@@ -1651,14 +1629,14 @@ export default function IncidentsPage() {
                         <div className="space-y-2 max-h-56 overflow-y-auto pr-2 no-scrollbar">
                           {emailLogs.length > 0 ? (
                             emailLogs.map((row) => (
-                              <div key={row.id} className="rounded-md border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)] space-y-0.5">
+                              <div key={row.id} className="rounded-md border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)] space-y-0.5">
                                 <div className="font-medium text-[var(--color-text)] flex items-center justify-between">
                                   <span>{row.template_key}</span>
-                                  <span className="text-[10px] uppercase font-semibold text-[var(--color-information)]">{row.status}</span>
+                                  <span className="text-xs uppercase font-semibold text-[var(--color-information)]">{row.status}</span>
                                 </div>
-                                <div className="text-[11px] text-[var(--color-muted)]">{row.subject}</div>
-                                <div className="text-[10px] text-[var(--color-muted)]">{formatDate(row.created_at)}</div>
-                                {row.error ? <div className="text-[var(--color-destructive)] text-[10px]">{row.error}</div> : null}
+                                <div className="text-xs text-[var(--color-muted)]">{row.subject}</div>
+                                <div className="text-xs text-[var(--color-muted)]">{formatDate(row.created_at)}</div>
+                                {row.error ? <div className="text-[var(--color-destructive)] text-xs">{row.error}</div> : null}
                               </div>
                             ))
                           ) : (

@@ -115,18 +115,17 @@ export default function ClassesPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">Classes</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadClasses()}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => { setEditingClass(null); setFormData(getEmptyClassForm()); setShowForm(true) }}>
-            <Plus className="size-4 mr-1" />
-            Add Class
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => loadClasses()}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => { setEditingClass(null); setFormData(getEmptyClassForm()); setShowForm(true) }}>
+          <Plus className="size-4 mr-1" />
+          Add Class
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
@@ -144,8 +143,8 @@ export default function ClassesPage() {
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Class Directory</CardTitle>
             <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage classes and capacity.</p>

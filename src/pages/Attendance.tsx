@@ -327,31 +327,27 @@ export default function AttendancePage() {
 
   return (
     <div className="w-full max-w-full min-w-0 space-y-6">
-      <section className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]">School management</p>
-          <h1 className="mt-2 text-3xl font-bold text-[var(--color-text)]">Attendance Overview</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value)}
-            className="w-auto"
-          />
-          <Button variant="outline" size="sm" onClick={() => void loadData()}>
-            <RefreshCw className="mr-1 size-4" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-            <Plus className="mr-1 size-4" />
-            Add Record
-          </Button>
-          <Button size="sm" onClick={() => void handleSaveAll()} isLoading={saving} disabled={saving}>
-            <Save className="mr-1 size-4" />
-            Save Attendance
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's controls and actions only. */}
+      <section className="flex flex-wrap items-center justify-end gap-2">
+        <Input
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+          className="w-auto"
+        />
+        <Button variant="outline" size="sm" onClick={() => void loadData()}>
+          <RefreshCw className="mr-1 size-4" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+          <Plus className="mr-1 size-4" />
+          Add Record
+        </Button>
+        <Button size="sm" onClick={() => void handleSaveAll()} isLoading={saving} disabled={saving}>
+          <Save className="mr-1 size-4" />
+          Save Attendance
+        </Button>
       </section>
 
       <section className="space-y-3">

@@ -243,7 +243,7 @@ export default function StaffPage() {
         <div className="flex flex-wrap gap-1.5">
           {row.roles.length > 0 ? (
             row.roles.map((role) => (
-              <span key={role} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-[var(--color-text)]">
+              <span key={role} className="rounded-full border border-[var(--color-border)] bg-[var(--color-row-hover)] px-2 py-0.5 text-xs text-[var(--color-text)]">
                 {labelize(role)}
               </span>
             ))
@@ -286,22 +286,21 @@ export default function StaffPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">Staff</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadStaff()}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={handleAddStaff}>
-            <Plus className="size-4 mr-1" />
-            Add Staff
-          </Button>
-          <Button variant="default" size="sm" onClick={handleSync}>
-            <CloudDownload className="size-4 mr-1" />
-            Sync Google
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => loadStaff()}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={handleAddStaff}>
+          <Plus className="size-4 mr-1" />
+          Add Staff
+        </Button>
+        <Button variant="default" size="sm" onClick={handleSync}>
+          <CloudDownload className="size-4 mr-1" />
+          Sync Google
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
@@ -319,8 +318,8 @@ export default function StaffPage() {
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Staff Directory</CardTitle>
             <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage staff identity records. Role editing lives in Admin.</p>
@@ -372,7 +371,7 @@ export default function StaffPage() {
             <FormField label="Department" htmlFor="staff-department">
               <Input id="staff-department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
             </FormField>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-[var(--color-muted)]">
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-row-hover)] px-3 py-2 text-xs text-[var(--color-muted)]">
               The staff record links to the matching profile automatically on save.
             </div>
           </div>

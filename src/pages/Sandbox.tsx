@@ -1,7 +1,8 @@
-import { ShieldCheck, Users } from "lucide-react"
+import { Users } from "lucide-react"
 import { useAuth } from "../context/useAuth"
 import { Card, CardContent } from "../components/ui/Card"
 import { Button } from "../components/ui/button"
+import { TableBadge } from "../components/ui/TableBadge"
 import { useToast } from "../components/ui/useToast"
 
 export default function SandboxPage() {
@@ -9,15 +10,12 @@ export default function SandboxPage() {
   const toast = useToast()
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] px-4 py-8 text-[var(--color-text)] sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--color-canvas)] px-4 py-8 text-[var(--color-text)] sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col gap-6">
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/30 backdrop-blur">
+        <header className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--color-success)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] px-3 py-1 text-xs font-medium text-[var(--color-success)]">
-                <ShieldCheck className="size-3.5" />
-                Auth sandbox
-              </div>
+              <TableBadge tone="emerald">Auth sandbox</TableBadge>
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-text)] sm:text-4xl">
                   Supabase Auth sandbox
@@ -57,7 +55,7 @@ export default function SandboxPage() {
               </Button>
             </div>
 
-            <div className="mt-4 rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-[var(--color-text)]">
+            <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-row-hover)] p-4 text-sm text-[var(--color-text)]">
               <div className="font-medium text-[var(--color-text)]">Current auth state</div>
               <div className="mt-1 text-[var(--color-muted)]">
                 {loading
@@ -89,14 +87,14 @@ export default function SandboxPage() {
                       key={persona.id}
                       type="button"
                       onClick={() => setMockPersona(persona.id)}
-                      className={`rounded-xl border p-4 text-left transition ${isActive ? "border-[color-mix(in_srgb,var(--color-success)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] ring-1 ring-[color-mix(in_srgb,var(--color-success)_30%,transparent)]" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"}`}
+                      className={`rounded-xl border p-4 text-left transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${isActive ? "border-[color-mix(in_srgb,var(--color-success)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)]" : "border-[var(--color-border)] bg-[var(--color-row-hover)] hover:border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))] hover:bg-[var(--color-surface-muted)]"}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-medium text-[var(--color-text)]">{persona.full_name}</div>
                           <div className="mt-1 text-xs text-[var(--color-muted)]">{persona.email}</div>
                         </div>
-                        {isActive && <span className="rounded-full bg-[color-mix(in_srgb,var(--color-success)_15%,transparent)] px-2 py-1 text-[11px] font-medium text-[var(--color-success)]">Active</span>}
+                        {isActive ? <TableBadge tone="emerald">Active</TableBadge> : null}
                       </div>
                       <div className="mt-3 text-sm text-[var(--color-text)]">{persona.description}</div>
                       <div className="mt-3 text-xs text-[var(--color-muted)]">{persona.roles.join(", ")}</div>

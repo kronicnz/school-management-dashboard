@@ -208,22 +208,21 @@ export default function StudentsPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">Students</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadStudents()}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => { setEditingStudent(null); setFormData(getEmptyStudentForm()); setShowForm(true) }}>
-            <Plus className="size-4 mr-1" />
-            Add Student
-          </Button>
-          <Button variant="default" size="sm" onClick={handleSync}>
-            <CloudDownload className="size-4 mr-1" />
-            Sync Google
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => loadStudents()}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => { setEditingStudent(null); setFormData(getEmptyStudentForm()); setShowForm(true) }}>
+          <Plus className="size-4 mr-1" />
+          Add Student
+        </Button>
+        <Button variant="default" size="sm" onClick={handleSync}>
+          <CloudDownload className="size-4 mr-1" />
+          Sync Google
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
@@ -241,8 +240,8 @@ export default function StudentsPage() {
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Student Directory</CardTitle>
             <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage the student roster.</p>

@@ -3,8 +3,11 @@ import { cn } from "../../utils/cn"
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {}
 
+// No backdrop blur: the card surface is a translucent layer over a flat canvas, so
+// frosting it adds cost without adding depth. Depth comes from the border and the
+// themed --shadow-card, which is light enough not to smudge a white card.
 const Card = forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => {
-  return <div ref={ref} className={cn("rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)] backdrop-blur-sm", className)} {...props} />
+  return <div ref={ref} className={cn("rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]", className)} {...props} />
 })
 Card.displayName = "Card"
 

@@ -25,6 +25,7 @@ import type { Asset, Student, Staff } from "../lib/api/database.types"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/Input"
+import { Textarea } from "../components/ui/Textarea"
 import { Select } from "../components/ui/Select"
 import { Dialog } from "../components/ui/Dialog"
 import { DataTable } from "../components/ui/DataTable"
@@ -412,7 +413,7 @@ export default function AssetsPage() {
             <div className="text-xs font-medium text-[var(--color-accent)]">
               {assignedName || "Allocated User"}
             </div>
-            <div className="text-[10px] capitalize text-[var(--color-muted)]">{row.assigned_to_type || "User"}</div>
+            <div className="text-xs capitalize text-[var(--color-muted)]">{row.assigned_to_type || "User"}</div>
           </div>
         )
       },
@@ -458,29 +459,28 @@ export default function AssetsPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">Assets & Devices</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => void loadData()} isLoading={loading && !isSyncing}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingAsset(null)
-              resetForm()
-              setShowForm(true)
-            }}
-          >
-            <Plus className="size-4 mr-1" />
-            Add Asset
-          </Button>
-          <Button variant="default" size="sm" onClick={handleGoogleSync} isLoading={isSyncing}>
-            <CloudDownload className="size-4 mr-1" />
-            Sync Google
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => void loadData()} isLoading={loading && !isSyncing}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditingAsset(null)
+            resetForm()
+            setShowForm(true)
+          }}
+        >
+          <Plus className="size-4 mr-1" />
+          Add Asset
+        </Button>
+        <Button variant="default" size="sm" onClick={handleGoogleSync} isLoading={isSyncing}>
+          <CloudDownload className="size-4 mr-1" />
+          Sync Google
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
@@ -499,8 +499,8 @@ export default function AssetsPage() {
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Asset Directory</CardTitle>
             <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage the asset inventory.</p>
@@ -657,11 +657,10 @@ export default function AssetsPage() {
             </FormField>
           </div>
           <FormField label="Notes" htmlFor="asset-notes">
-            <textarea
+            <Textarea
               id="asset-notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full rounded-lg border border-white/10 bg-[var(--color-surface-muted)]/50 px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-accent)_50%,transparent)]"
               rows={2}
             />
           </FormField>

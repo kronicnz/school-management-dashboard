@@ -11,7 +11,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  ShieldCheck,
   Ticket,
 } from "lucide-react"
 import { useAuth } from "../context/useAuth"
@@ -892,7 +891,7 @@ export default function TicketsPage() {
     return (
       <fieldset
         key={step.id}
-        className={`flex min-h-[9rem] flex-col justify-start gap-3 rounded-3xl border p-3.5 transition ${fieldSpanClass} ${isComplete ? `border-[color-mix(in_srgb,var(--color-accent)_40%,var(--color-border))] ${moduleTheme.surface}` : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}
+        className={`flex min-h-[9rem] flex-col justify-start gap-3 rounded-2xl border p-3.5 transition-colors motion-reduce:transition-none ${fieldSpanClass} ${isComplete ? `border-[color-mix(in_srgb,var(--color-accent)_40%,var(--color-border))] ${moduleTheme.surface}` : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}
       >
         <legend className="sr-only">{prompt}</legend>
         <div className="flex items-start justify-between gap-3">
@@ -901,7 +900,7 @@ export default function TicketsPage() {
               {prompt}
               {step.required ? <span className="ml-2 text-xs font-medium uppercase tracking-wide text-[var(--color-accent)]">Required</span> : null}
             </label>
-            <p className="text-[11px] leading-4 text-[var(--color-muted)]">Use a clear, complete answer that the support team can act on quickly.</p>
+            <p className="text-xs leading-4 text-[var(--color-muted)]">Use a clear, complete answer that the support team can act on quickly.</p>
           </div>
           <TableBadge tone={isComplete ? (isRmModule ? "amber" : "cyan") : "slate"}>{fieldTypeLabel}</TableBadge>
         </div>
@@ -984,35 +983,25 @@ export default function TicketsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] px-3 py-1 text-xs uppercase tracking-wide text-[var(--color-muted)]">
-              <Ticket className="size-3.5" />
-              {moduleLabel}
-            </p>
-            <h1 className="text-2xl font-semibold text-[var(--color-text)]">{pageHeading}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">{pageSummary}</p>
-            {activeCategory ? (
-              <div className="mt-3">
-                <TableBadge tone="violet">{activeCategory.name}</TableBadge>
-              </div>
-            ) : null}
+      {/* The app header already carries the route title and the signed-in role. What
+          belongs here is the view the queue is filtered to, which the header cannot
+          know: the whole queue, the caller's own tickets, or one category. */}
+      <section className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--color-text)]">{pageHeading}</h2>
+            <TableBadge tone="indigo">{moduleLabel}</TableBadge>
+            {activeCategory ? <TableBadge tone="violet">{activeCategory.name}</TableBadge> : null}
           </div>
-          <div className="grid gap-2 text-sm text-[var(--color-muted)]">
-            <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2">
-              <ShieldCheck className="size-4" />
-              {user?.roles.join(", ") || "No roles"}
-            </div>
-              {canCreateTicket ? (
-                <Button size="sm" onClick={openWizard} className="justify-center">
-                  <Plus className="mr-2 size-4" />
-                  Add {isRmModule ? "R&M Ticket" : "Ticket"}
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        </section>
+          <p className="mt-1.5 max-w-2xl text-sm text-[var(--color-muted)]">{pageSummary}</p>
+        </div>
+        {canCreateTicket ? (
+          <Button size="sm" onClick={openWizard} className="shrink-0 justify-center">
+            <Plus className="mr-2 size-4" />
+            Add {isRmModule ? "R&M Ticket" : "Ticket"}
+          </Button>
+        ) : null}
+      </section>
 
       <StatisticGrid>
         <StatisticCard label="Total Tickets" value={totalTickets} icon={Ticket} description={`All ${moduleSubjectPlural.toLowerCase()} captured in the system`} tone="information" />
@@ -1120,7 +1109,7 @@ export default function TicketsPage() {
                 <span>{wizardProgress}% complete</span>
               </div>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-secondary)]">
-                <div className="h-full rounded-full bg-[var(--color-accent)] transition-all" style={{ width: `${wizardProgress}%` }} />
+                <div className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${wizardProgress}%` }} />
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {wizardSteps.map((label, index) => (
@@ -1130,7 +1119,7 @@ export default function TicketsPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{label}</span>
-                      <span className="text-[11px] uppercase tracking-wide">{index + 1}</span>
+                      <span className="text-xs uppercase tracking-wide">{index + 1}</span>
                     </div>
                   </div>
                 ))}
@@ -1269,7 +1258,7 @@ export default function TicketsPage() {
                       <div className="text-sm font-medium text-[var(--color-text)]">Completion</div>
                       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3">
                         <div className="h-2 overflow-hidden rounded-full bg-[var(--color-secondary)]">
-                          <div className="h-full rounded-full bg-[var(--color-accent)] transition-all" style={{ width: `${wizardProgress}%` }} />
+                          <div className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${wizardProgress}%` }} />
                         </div>
                         <div className="mt-2 text-xs text-[var(--color-muted)]">{wizardProgress}% complete</div>
                       </div>
@@ -1349,7 +1338,7 @@ export default function TicketsPage() {
                   <div className="grid gap-2 lg:grid-cols-2">
                     {wizardTemplateSteps.map((step) => (
                       <div key={step.id} className="flex flex-col rounded-2xl border border-[var(--color-border)] p-3">
-                        <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-wide">
+                        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-wide">
                           <span>{step.label}</span>
                           <span>{step.required ? "Required" : "Optional"}</span>
                         </div>

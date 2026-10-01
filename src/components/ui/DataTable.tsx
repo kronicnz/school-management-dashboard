@@ -215,7 +215,12 @@ export const DataTable = forwardRef<
             ) : (
                 <TableRow>
                   <TableCell as="td" colSpan={columns.length} className="px-4 py-6 text-center text-[var(--color-muted)]">
-                    {emptyMessage}
+                    {/* An empty table because a search matched nothing is a different
+                        situation from an empty table, and it needs a different next
+                        step: clear the search rather than go and create a record. */}
+                    {data.length === 0 && searchQuery.trim()
+                      ? `No rows match "${searchQuery.trim()}".`
+                      : emptyMessage}
                   </TableCell>
                 </TableRow>
               )}

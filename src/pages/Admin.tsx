@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   BookOpen,
   Check,
-  CheckCircle2,
   ChevronRight,
   ClipboardList,
   Clock3,
@@ -75,6 +74,7 @@ import { TableBadge } from "../components/ui/TableBadge"
 import { useToast } from "../components/ui/useToast"
 import { getErrorMessage } from "../utils/getErrorMessage"
 import { labelize } from "../utils/labelize"
+import { cn } from "../utils/cn"
 import { useAsyncTask } from "../hooks/useAsyncTask"
 import { logError } from "../utils/logger"
 
@@ -800,7 +800,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-white/10 bg-[var(--color-surface-muted)]/40">
+      <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40">
         <Spinner size="xl" className="text-[var(--color-information)]" />
       </div>
     )
@@ -808,51 +808,30 @@ export default function AdminPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 space-y-6">
-      {/* 2-Column Asymmetric Hero Header */}
-      <section className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--color-information)_20%,transparent)] bg-[linear-gradient(to_right,var(--color-surface),var(--color-surface),color-mix(in_srgb,var(--color-information)_14%,var(--color-surface)))] p-6 sm:p-8 shadow-xl">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--color-information)_15%,transparent)] blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-12 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--color-accent-strong)_10%,transparent)] blur-3xl" />
-        
-        <div className="relative grid gap-6 md:grid-cols-[1.6fr_1fr] items-center">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--color-accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] px-3 py-1 text-xs font-medium uppercase tracking-wider text-[var(--color-information)] backdrop-blur-md">
-              <ShieldCheck className="size-3.5 text-[var(--color-information)]" />
-              Admin Control Center
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              User Directory & Scope Workspace
-            </h1>
-            <p className="text-sm text-[var(--color-text)] sm:text-base leading-relaxed">
-              Manage staff accounts, assign granular role permissions, establish teaching scope rules, and execute Google Workspace sync operations.
+      {/* Access context only. The page title, breadcrumb and active role already sit in
+          the app header, so this strip carries what the header cannot: who you are acting
+          as and what that allows. The gradient, glow orbs, shadow and pulsing "Live
+          Directory" dot it replaced described nothing the data supports. */}
+      <section className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {isAdmin
+            ? <BadgeCheck className="size-5 shrink-0 text-[var(--color-success)]" aria-hidden="true" />
+            : <ShieldCheck className="size-5 shrink-0 text-[var(--color-muted)]" aria-hidden="true" />}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--color-text)]">
+              {isAdmin ? "Administrative access" : "Read-only governance view"}
             </p>
-            <div className="flex flex-wrap gap-2 pt-1 text-xs text-[var(--color-text)]">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_40%,transparent)] px-3 py-1">
-                <span className="size-2 rounded-full bg-[var(--color-success)] animate-pulse" /> Live Directory
-              </span>
-              <span className="rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_40%,transparent)] px-3 py-1">
-                {assignmentDrafts.length} Queued Drafts
-              </span>
-              <span className="rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_40%,transparent)] px-3 py-1">
-                {activeIncidents} Active Incidents
-              </span>
-            </div>
+            <p className="truncate text-xs text-[var(--color-muted)]">
+              <span className="sr-only">Signed in as </span>{user?.email}
+              {" · "}
+              <span className="sr-only">Active roles: </span>
+              {roles.length > 0 ? roles.map(labelize).join(", ") : "no roles assigned"}
+            </p>
           </div>
-
-          <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,transparent)] p-4 text-xs text-[var(--color-text)] backdrop-blur-md w-full">
-            <div className="flex items-center gap-2 font-medium text-[var(--color-text)]">
-              <BadgeCheck className="size-4 text-[var(--color-success)]" />
-              {isAdmin ? "Administrative Access Granted" : "Read-Only Governance View"}
-            </div>
-            <div className="truncate text-[var(--color-muted)]">User: <span className="text-[var(--color-text)]">{user?.email}</span></div>
-            <div className="text-[var(--color-muted)]">Active Roles: <span className="text-[var(--color-information)] font-medium">{roles.length > 0 ? roles.map(labelize).join(", ") : "None"}</span></div>
-            
-            <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[var(--color-muted)]">System Status</span>
-              <span className="inline-flex items-center gap-1 text-[var(--color-success)] font-medium">
-                <CheckCircle2 className="size-3.5" /> Operational
-              </span>
-            </div>
-          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <TableBadge tone="slate">{assignmentDrafts.length} queued drafts</TableBadge>
+          <TableBadge tone="slate">{activeIncidents} active incidents</TableBadge>
         </div>
       </section>
 
@@ -860,8 +839,8 @@ export default function AdminPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-[var(--color-text)]">Live Metrics</h2>
-            <p className="text-xs text-[var(--color-muted)]">Six governance KPIs arranged for a three-column rhythm on larger screens.</p>
+            <h2 className="text-sm font-semibold text-[var(--color-text)]">Governance metrics</h2>
+            <p className="text-xs text-[var(--color-muted)]">Counts across the accounts, cohorts and incidents this workspace manages.</p>
           </div>
         </div>
         <StatisticGrid>
@@ -885,8 +864,10 @@ export default function AdminPage() {
         </StatisticGrid>
       </section>
 
-      {/* Interactive Navigation Tabs */}
-      <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-1">
+      {/* Workspace tabs. A real tablist: the strip is one control with one selected
+          child, so it is announced and arrow-key navigable rather than four buttons
+          that look like one. */}
+      <div role="tablist" aria-label="Admin sections" className="flex gap-1 overflow-x-auto border-b border-[var(--color-border)] pb-px">
         {[
           { id: "directory", label: "User Directory", icon: Users, badge: staff.length },
           { id: "assignments", label: "Scope & Assignments", icon: SlidersHorizontal, badge: assignmentDrafts.length },
@@ -898,22 +879,31 @@ export default function AdminPage() {
           return (
             <button
               key={tab.id}
+              type="button"
+              role="tab"
+              id={`admin-tab-${tab.id}`}
+              aria-selected={isActive}
+              aria-controls={`admin-panel-${tab.id}`}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab.id as DashboardTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+              className={`flex min-h-11 items-center gap-2 whitespace-nowrap rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-medium transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
                 isActive
-                  ? "bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-information)] border border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] shadow-sm"
-                  : "text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-white/5"
+                  ? "border-[var(--color-information)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-information)]"
+                  : "border-transparent text-[var(--color-muted)] hover:bg-[var(--color-row-hover)] hover:text-[var(--color-text)]"
               }`}
             >
-              <Icon className={`size-4 ${isActive ? "text-[var(--color-information)]" : "text-[var(--color-muted)]"}`} />
+              <Icon className={`size-4 ${isActive ? "text-[var(--color-information)]" : "text-[var(--color-muted)]"}`} aria-hidden="true" />
               <span>{tab.label}</span>
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-                  isActive ? "bg-[color-mix(in_srgb,var(--color-accent)_20%,transparent)] text-[var(--color-information)]" : "bg-white/10 text-[var(--color-text)]"
-                }`}>
+              {tab.badge !== undefined && tab.badge > 0 ? (
+                <span className={cn(
+                  "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                  isActive
+                    ? "bg-[color-mix(in_srgb,var(--color-information)_18%,transparent)] text-[var(--color-information)]"
+                    : "bg-[var(--color-surface-muted)] text-[var(--color-text)]",
+                )}>
                   {tab.badge}
                 </span>
-              )}
+              ) : null}
             </button>
           )
         })}
@@ -921,9 +911,14 @@ export default function AdminPage() {
 
       {/* TAB 1: USER DIRECTORY & SELECTION */}
       {activeTab === "directory" && (
-        <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,2.35fr)_minmax(300px,0.9fr)]">
-          <Card className="min-w-0 overflow-hidden p-0 border-white/10">
-            <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <section
+          role="tabpanel"
+          id="admin-panel-directory"
+          aria-labelledby="admin-tab-directory"
+          className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,2.35fr)_minmax(300px,0.9fr)]"
+        >
+          <Card className="min-w-0 overflow-hidden p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Users className="size-4 text-[var(--color-information)]" />
@@ -978,7 +973,7 @@ export default function AdminPage() {
               </div>
 
               {(roleFilter || departmentFilter || statusFilter || search) && (
-                <div className="flex min-w-0 flex-col gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-[var(--color-muted)] sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-col gap-2 rounded-lg bg-[var(--color-row-hover)] px-3 py-2 text-xs text-[var(--color-muted)] sm:flex-row sm:items-center">
                   <Filter className="size-3 text-[var(--color-information)]" />
                   <span className="min-w-0 break-words sm:flex-1">Filters active: showing {filteredStaff.length} of {staff.length} users</span>
                   <button
@@ -1009,8 +1004,8 @@ export default function AdminPage() {
 
           {/* Selected User Inspector Panel */}
           <div className="space-y-4">
-            <Card className="p-0 border-white/10 sticky top-4">
-              <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+            <Card className="p-0 border-[var(--color-border)] sticky top-4">
+              <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
                 <div>
                   <CardTitle className="text-base flex items-center gap-2">
                     <UserCheck className="size-4 text-[var(--color-success)]" />
@@ -1022,7 +1017,7 @@ export default function AdminPage() {
               <CardContent className="space-y-4 px-5 py-5">
                 {selectedStaff ? (
                   <>
-                    <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-base font-bold text-[var(--color-text)]">
@@ -1049,7 +1044,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-white/10 grid gap-2 text-xs text-[var(--color-text)]">
+                      <div className="pt-2 border-t border-[var(--color-border)] grid gap-2 text-xs text-[var(--color-text)]">
                         <div className="flex justify-between"><span className="text-[var(--color-muted)]">Roles:</span> <span className="font-medium text-[var(--color-text)]">{selectedStaff.roles.length > 0 ? selectedStaff.roles.map(labelize).join(", ") : "Unassigned"}</span></div>
                         {selectedStaff.dated_roles.length > 0 && (
                           <div className="flex justify-between gap-3">
@@ -1077,7 +1072,7 @@ export default function AdminPage() {
                     </div>
 
                     {isAdmin && (
-                      <div className="space-y-2 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+                      <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                         <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-text)]">
                           <KeyRound className="size-3.5 text-[var(--color-information)]" />
                           Login &amp; Access
@@ -1085,7 +1080,7 @@ export default function AdminPage() {
 
                         {!selectedProfileId ? (
                           <div className="space-y-2">
-                            <p className="text-[11px] leading-relaxed text-[var(--color-muted)]">
+                            <p className="text-xs leading-relaxed text-[var(--color-muted)]">
                               Organisation staff sign in with Google, so no password login is needed. The roles
                               below are held on their staff record and applied automatically the first time
                               they sign in.
@@ -1130,7 +1125,7 @@ export default function AdminPage() {
                                 </Button>
                               ) : confirmRevokeFor === selectedProfileId ? (
                                 <div className="space-y-2 rounded-lg border border-[color-mix(in_srgb,var(--color-destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] p-2.5">
-                                  <p className="text-[11px] leading-relaxed text-[var(--color-destructive)]">
+                                  <p className="text-xs leading-relaxed text-[var(--color-destructive)]">
                                     Revoking deactivates every role grant and suspends the login. It is
                                     reversible, and roles are not restored automatically.
                                   </p>
@@ -1170,7 +1165,7 @@ export default function AdminPage() {
 
                             {selectedStaff.account_status === "revoked" && (
                               <div className="rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] p-2.5">
-                                <p className="text-[11px] leading-relaxed text-[var(--color-warning)]">
+                                <p className="text-xs leading-relaxed text-[var(--color-warning)]">
                                   This account is suspended and every role grant is deactivated. Lifting the
                                   suspension does not bring the roles back &mdash; re-granting them is a
                                   separate decision.
@@ -1187,21 +1182,21 @@ export default function AdminPage() {
                               </div>
                             )}
 
-                            <div className="border-t border-white/10 pt-2">
-                              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                            <div className="border-t border-[var(--color-border)] pt-2">
+                              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                                 <History className="size-3 text-[var(--color-muted)]" />
                                 Recent account activity
                               </div>
                               {auditLoading ? (
-                                <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
+                                <div className="mt-2 flex items-center gap-2 text-xs text-[var(--color-muted)]">
                                   <Spinner size="sm" /> Loading...
                                 </div>
                               ) : auditRows.length === 0 ? (
-                                <p className="mt-2 text-[11px] text-[var(--color-muted)]">No account changes recorded.</p>
+                                <p className="mt-2 text-xs text-[var(--color-muted)]">No account changes recorded.</p>
                               ) : (
                                 <ul className="mt-2 space-y-1.5">
                                   {auditRows.map((row) => (
-                                    <li key={row.id} className="flex items-start justify-between gap-2 text-[11px]">
+                                    <li key={row.id} className="flex items-start justify-between gap-2 text-xs">
                                       <span className="text-[var(--color-text)]">
                                         {labelize(row.action)}
                                         {row.actor_email ? (
@@ -1241,15 +1236,15 @@ export default function AdminPage() {
                     </div>
 
                     {selectedDrafts.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-white/10">
+                      <div className="space-y-2 pt-2 border-t border-[var(--color-border)]">
                         <span className="text-xs font-semibold text-[var(--color-text)]">Pending Drafts for User:</span>
                         {selectedDrafts.map((draft) => (
                           <div key={draft.id} className="rounded-lg border border-[color-mix(in_srgb,var(--color-information)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_20%,transparent)] p-2.5 text-xs">
                             <div className="flex items-center justify-between font-medium text-[var(--color-information)]">
                               <span>{draft.targetName} ({labelize(draft.targetType)})</span>
-                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--color-accent)_20%,transparent)]">{draft.mode}</span>
+                              <TableBadge tone={getModeBadgeTone(draft.mode)}>{draft.mode}</TableBadge>
                             </div>
-                            <div className="mt-1 text-[var(--color-muted)] text-[11px]">{draft.notes || "No notes"}</div>
+                            <div className="mt-1 text-[var(--color-muted)] text-xs">{draft.notes || "No notes"}</div>
                           </div>
                         ))}
                       </div>
@@ -1268,9 +1263,14 @@ export default function AdminPage() {
 
       {/* TAB 2: ASSIGNMENT QUEUE & GOVERNANCE */}
       {activeTab === "assignments" && (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <Card className="p-0 border-white/10">
-            <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+        <section
+          role="tabpanel"
+          id="admin-panel-assignments"
+          aria-labelledby="admin-tab-assignments"
+          className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]"
+        >
+          <Card className="p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <SlidersHorizontal className="size-4 text-[var(--color-information)]" />
@@ -1285,7 +1285,7 @@ export default function AdminPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 px-5 py-5">
-              <form onSubmit={handleQueueAssignment} className="space-y-4 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
+              <form onSubmit={handleQueueAssignment} className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
                 <div className="grid gap-3 md:grid-cols-2">
                   <FormField label="Assignment Scope" htmlFor="assignment-scope" labelClassName="text-xs font-medium text-[var(--color-text)]">
                     <Select
@@ -1402,8 +1402,8 @@ export default function AdminPage() {
           </Card>
 
           {/* Draft List Sidebar */}
-          <Card className="p-0 border-white/10">
-            <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+          <Card className="p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center justify-between">
                   <span>Queued Drafts ({assignmentDrafts.length})</span>
@@ -1424,7 +1424,7 @@ export default function AdminPage() {
             <CardContent className="space-y-3 px-5 py-5 max-h-[550px] overflow-y-auto">
               {assignmentDrafts.length > 0 ? (
                 assignmentDrafts.map((draft) => (
-                  <div key={draft.id} className="group relative rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5 hover:border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] transition-colors">
+                  <div key={draft.id} className="group relative rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5 hover:border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] transition-colors">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <div className="font-semibold text-xs text-[var(--color-text)] flex items-center gap-1.5">
@@ -1432,7 +1432,7 @@ export default function AdminPage() {
                           <ArrowRight className="size-3 text-[var(--color-muted)]" />
                           <span className="text-[var(--color-information)]">{draft.targetName}</span>
                         </div>
-                        <div className="mt-1 text-[11px] text-[var(--color-muted)]">
+                        <div className="mt-1 text-xs text-[var(--color-muted)]">
                           {labelize(draft.scopeType)} via <span className="text-[var(--color-text)]">{labelize(draft.source)}</span>
                         </div>
                       </div>
@@ -1445,27 +1445,27 @@ export default function AdminPage() {
                       </button>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px]">
-                      <TableBadge tone={getModeBadgeTone(draft.mode)} className="px-2 py-0.5 text-[10px] font-medium">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                      <TableBadge tone={getModeBadgeTone(draft.mode)}>
                         {labelize(draft.mode)}
                       </TableBadge>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[var(--color-text)]">
+                      <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-row-hover)] px-2 py-0.5 text-[var(--color-text)]">
                         {draft.targetType.toUpperCase()}
                       </span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[var(--color-muted)]">
+                      <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-row-hover)] px-2 py-0.5 text-[var(--color-muted)]">
                         {formatWindow(draft.effectiveFrom, draft.effectiveTo)}
                       </span>
                     </div>
 
                     {draft.notes && (
-                      <p className="mt-2 text-[11px] text-[var(--color-muted)] italic bg-white/5 p-2 rounded">
+                      <p className="mt-2 text-xs text-[var(--color-muted)] italic bg-[var(--color-row-hover)] p-2 rounded">
                         "{draft.notes}"
                       </p>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="rounded-xl border border-dashed border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_30%,transparent)] p-8 text-center text-xs text-[var(--color-muted)]">
+                <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_30%,transparent)] p-8 text-center text-xs text-[var(--color-muted)]">
                   <Sparkles className="mx-auto size-6 text-[var(--color-muted)] mb-2" />
                   No changes queued. Fill out the scope form to stage updates before applying.
                 </div>
@@ -1477,9 +1477,14 @@ export default function AdminPage() {
 
       {/* TAB 3: WORKSPACE SYNC & GOVERNANCE */}
       {activeTab === "sync" && (
-        <section className="grid gap-6 xl:grid-cols-2">
-          <Card className="p-0 border-white/10">
-            <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+        <section
+          role="tabpanel"
+          id="admin-panel-sync"
+          aria-labelledby="admin-tab-sync"
+          className="grid gap-6 xl:grid-cols-2"
+        >
+          <Card className="p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <RefreshCw className="size-4 text-[var(--color-information)]" />
@@ -1489,7 +1494,7 @@ export default function AdminPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 px-5 py-5">
-              <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
+              <div className="rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold text-[var(--color-text)]">Staff Organizational Unit</div>
@@ -1507,7 +1512,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
+              <div className="rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold text-[var(--color-text)]">Students Organizational Units</div>
@@ -1536,8 +1541,8 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          <Card className="p-0 border-white/10">
-            <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+          <Card className="p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Crown className="size-4 text-[var(--color-warning)]" />
@@ -1556,9 +1561,9 @@ export default function AdminPage() {
                         <span className="font-medium text-[var(--color-text)]">{labelize(role)}</span>
                         <span className="text-[var(--color-muted)]">{count} accounts ({percentage}%)</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-[var(--color-surface)] overflow-hidden border border-white/5">
+                      <div className="h-2 w-full rounded-full bg-[var(--color-surface)] overflow-hidden border border-[var(--color-border-muted)]">
                         <div
-                          className="h-full bg-[var(--color-accent)] rounded-full transition-all duration-500"
+                          className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-500 motion-reduce:transition-none"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -1575,9 +1580,14 @@ export default function AdminPage() {
 
       {/* TAB 4: ANALYTICS & QUICK SHORTCUTS */}
       {activeTab === "analytics" && (
-        <section className="grid gap-6 xl:grid-cols-2">
-          <Card className="p-0 border-white/10">
-            <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+        <section
+          role="tabpanel"
+          id="admin-panel-analytics"
+          aria-labelledby="admin-tab-analytics"
+          className="grid gap-6 xl:grid-cols-2"
+        >
+          <Card className="p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <AlertTriangle className="size-4 text-[var(--color-destructive)]" />
@@ -1593,19 +1603,19 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="space-y-3 px-5 py-5">
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
+                <div className="rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
                   <div className="text-xs text-[var(--color-muted)]">Open Incidents</div>
                   <div className="mt-1 text-2xl font-bold text-[var(--color-destructive)]">{activeIncidents}</div>
-                  <div className="mt-1 text-[11px] text-[var(--color-muted)]">Requires triage or delegate assignment</div>
+                  <div className="mt-1 text-xs text-[var(--color-muted)]">Requires triage or delegate assignment</div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
+                <div className="rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
                   <div className="text-xs text-[var(--color-muted)]">Total Logged</div>
                   <div className="mt-1 text-2xl font-bold text-[var(--color-text)]">{incidents.length}</div>
-                  <div className="mt-1 text-[11px] text-[var(--color-muted)]">Lifetime system incident logs</div>
+                  <div className="mt-1 text-xs text-[var(--color-muted)]">Lifetime system incident logs</div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-white/10 space-y-2">
+              <div className="pt-2 border-t border-[var(--color-border)] space-y-2">
                 <div className="text-xs font-semibold text-[var(--color-text)]">Quick Navigation Shortcuts</div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <Button asChild variant="outline" size="sm" className="w-full justify-between text-xs">
@@ -1631,8 +1641,8 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          <Card className="p-0 border-white/10">
-            <CardHeader className="mb-0 border-b border-white/10 px-5 py-4">
+          <Card className="p-0 border-[var(--color-border)]">
+            <CardHeader className="mb-0 border-b border-[var(--color-border)] px-5 py-4">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Layers3 className="size-4 text-[var(--color-information)]" />
@@ -1642,21 +1652,21 @@ export default function AdminPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3 px-5 py-5 text-xs text-[var(--color-text)]">
-              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+              <div className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                 <Layers3 className="mt-0.5 size-4 text-[var(--color-information)] shrink-0" />
                 <div>
                   <div className="font-semibold text-[var(--color-text)]">Explicit Role Grants</div>
                   <div className="text-[var(--color-muted)] mt-0.5">Always verify staff access rights before granting leadership or delegate role overrides.</div>
                 </div>
               </div>
-              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+              <div className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                 <BookOpen className="mt-0.5 size-4 text-[var(--color-success)] shrink-0" />
                 <div>
                   <div className="font-semibold text-[var(--color-text)]">Teaching Scope Isolation</div>
                   <div className="text-[var(--color-muted)] mt-0.5">Scope follows explicit class assignments first, followed by manual inclusion/exclusion rules.</div>
                 </div>
               </div>
-              <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+              <div className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                 <Clock3 className="mt-0.5 size-4 text-[var(--color-warning)] shrink-0" />
                 <div>
                   <div className="font-semibold text-[var(--color-text)]">Audit Windowing</div>
@@ -1737,7 +1747,7 @@ export default function AdminPage() {
                 <input
                   id="admin-staff-create-account"
                   type="checkbox"
-                  className="mt-0.5 rounded border-white/20 bg-[var(--color-surface-muted)] text-[var(--color-information)] focus:ring-[var(--color-information)]"
+                  className="mt-0.5 size-4 shrink-0 rounded border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))] accent-[var(--color-information)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                   checked={staffForm.createAccount}
                   onChange={(event) =>
                     setStaffForm((current) => ({ ...current, createAccount: event.target.checked }))
@@ -1747,7 +1757,7 @@ export default function AdminPage() {
                   <span className="block text-sm font-medium text-[var(--color-text)]">
                     Create a manual login (no Google account)
                   </span>
-                  <span className="mt-0.5 block text-[11px] leading-relaxed text-[var(--color-muted)]">
+                  <span className="mt-0.5 block text-xs leading-relaxed text-[var(--color-muted)]">
                     Only for people outside the organisation, who cannot sign in with Google. Creates a
                     password sign-in for {staffForm.email || "this address"} and emails a one-time link so
                     they set their own password. No password is ever generated, emailed, or shown here.
@@ -1757,7 +1767,7 @@ export default function AdminPage() {
                 </label>
               </div>
 
-              <div className="mt-3 flex items-start gap-2 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-[var(--color-muted)]">
+              <div className="mt-3 flex items-start gap-2 border-t border-[var(--color-border)] pt-3 text-xs leading-relaxed text-[var(--color-muted)]">
                 <MailWarning className="mt-0.5 size-3.5 shrink-0 text-[var(--color-information)]" />
                 <span>
                   {allowedEmailDomains.length === 0
@@ -1769,7 +1779,7 @@ export default function AdminPage() {
           )}
 
           <FormField label="Roles" htmlFor="admin-staff-roles" labelClassName="text-xs font-medium text-[var(--color-text)]">
-            <div id="admin-staff-roles" className="space-y-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
+            <div id="admin-staff-roles" className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-[var(--color-muted)]">
                   Manage all active roles for this staff member. Dates are optional; a role with no dates is
@@ -1793,13 +1803,13 @@ export default function AdminPage() {
                   return (
                     <div
                       key={role}
-                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-[color-mix(in_srgb,var(--color-information)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-text)]" : "border-white/10 bg-[var(--color-surface-muted)]/50 text-[var(--color-text)] hover:border-white/20"}`}
+                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-[color-mix(in_srgb,var(--color-information)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-text)]" : "border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 text-[var(--color-text)] hover:border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))]"}`}
                     >
                       <label className="flex cursor-pointer items-center justify-between gap-3">
                         <span>{labelize(role)}</span>
                         <input
                           type="checkbox"
-                          className="rounded border-white/20 bg-[var(--color-surface-muted)] text-[var(--color-information)] focus:ring-[var(--color-information)]"
+                          className="size-4 shrink-0 rounded border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))] accent-[var(--color-information)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                           checked={selected}
                           onChange={() => {
                             setStaffForm((current) => ({
@@ -1818,11 +1828,11 @@ export default function AdminPage() {
                       </label>
 
                       {selected && (
-                        <div className="mt-2 grid gap-2 border-t border-white/10 pt-2 sm:grid-cols-2">
+                        <div className="mt-2 grid gap-2 border-t border-[var(--color-border)] pt-2 sm:grid-cols-2">
                           <div>
                             <label
                               htmlFor={`admin-staff-role-from-${role}`}
-                              className="block text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]"
+                              className="block text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]"
                             >
                               From
                             </label>
@@ -1846,7 +1856,7 @@ export default function AdminPage() {
                           <div>
                             <label
                               htmlFor={`admin-staff-role-to-${role}`}
-                              className="block text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]"
+                              className="block text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]"
                             >
                               To
                             </label>
@@ -1879,7 +1889,7 @@ export default function AdminPage() {
                   return (
                     <span
                       key={role}
-                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-[var(--color-text)]"
+                      className="rounded-full border border-[var(--color-border)] bg-[var(--color-row-hover)] px-2.5 py-1 text-xs text-[var(--color-text)]"
                     >
                       {labelize(role)}
                       {window?.effective_from || window?.effective_to ? (
@@ -1916,7 +1926,7 @@ export default function AdminPage() {
             </FormField>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+          <div className="flex justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
             <Button type="button" variant="outline" size="sm" onClick={() => setShowStaffDialog(false)}>
               Cancel
             </Button>

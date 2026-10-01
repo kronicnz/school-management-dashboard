@@ -121,7 +121,7 @@ export function AppHeader({
 
                       <div
                         className={cn(
-                          "absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[min(calc(100vw-1rem),16rem)] origin-top-left overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-all",
+                          "absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[min(calc(100vw-1rem),16rem)] origin-top-left overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
                           menu === "roles" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
                         )}
                         role="menu"
@@ -189,7 +189,7 @@ export function AppHeader({
 
                 <div
                   className={cn(
-                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),22rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-all",
+                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),22rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
                     menu === "notifications" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
                   )}
                   role="menu"
@@ -230,7 +230,7 @@ export function AppHeader({
 
                 <div
                   className={cn(
-                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),20rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-all",
+                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),20rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
                     menu === "profile" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
                   )}
                   role="menu"
@@ -270,7 +270,7 @@ export function AppHeader({
 
                 <div
                   className={cn(
-                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),22rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-all",
+                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),22rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
                     menu === "notifications" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
                   )}
                   role="menu"
