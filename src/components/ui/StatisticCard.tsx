@@ -64,7 +64,7 @@ export function StatisticCard({
 
   const body =
     variant === "compact" ? (
-      <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-2.5">
+      <div className="flex min-w-0 items-center justify-between gap-3 px-3.5 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           {Icon ? <Icon className={cn("size-4 shrink-0", toneIconClasses[tone])} aria-hidden="true" /> : null}
           <span className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">{label}</span>
@@ -76,8 +76,7 @@ export function StatisticCard({
     ) : (
       <div
         className={cn(
-          "flex h-full flex-col gap-2.5 px-4 py-3.5",
-          variant === "primary" ? "sm:px-5" : undefined,
+          "flex h-full flex-col gap-2 px-3.5 py-3 sm:px-4",
         )}
       >
         <div className="flex items-start justify-between gap-3">
