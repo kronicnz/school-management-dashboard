@@ -1,0 +1,12 @@
+{
+	"unstable": ["sloppy-imports"],
+	"compilerOptions": {
+		"lib": ["deno.ns", "esnext", "dom", "dom.iterable"]
+	},
+	"fmt": {
+		"useTabs": true,
+		"lineWidth": 100,
+		"semiColons": false,
+		"singleQuote": false
+	}
+}

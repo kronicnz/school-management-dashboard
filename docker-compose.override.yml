@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  vector:
+    environment:
+      # On Windows with Docker Desktop, the daemon must be exposed via TCP
+      # If you see connection refused errors, enable: Settings > General > Expose daemon on tcp://localhost:2375
+      DOCKER_HOST: "tcp://docker:2375"
+    networks:
+      - supabase_network_school-management-system
+
+networks:
+  supabase_network_school-management-system:
+    external: true
+
