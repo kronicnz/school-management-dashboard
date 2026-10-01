@@ -1,5 +1,5 @@
-import { Bell, ChevronDown, Menu, Search } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { ChevronDown, Menu, Search } from "lucide-react"
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/Input"
 import { ThemeToggle } from "../ui/ThemeToggle"
@@ -14,12 +14,6 @@ import { PageHeader } from "./PageHeader"
 // Switcher order follows the same precedence the default active role uses.
 const ROLE_ORDER = ROLE_PRECEDENCE
 
-type NotificationItem = {
-  title: string
-  message: string
-  time: string
-}
-
 type AppHeaderProps = {
   pathname: string
   activeRole: AppRole | null
@@ -31,7 +25,6 @@ type AppHeaderProps = {
   onSearchValueChange: (value: string) => void
   onMenuClick: () => void
   onSignOut: () => void | Promise<void>
-  notifications: NotificationItem[]
   children?: ReactNode
 }
 
@@ -46,12 +39,16 @@ export function AppHeader({
   onSearchValueChange,
   onMenuClick,
   onSignOut,
-  notifications,
 }: AppHeaderProps) {
   const pageMeta = useMemo(() => getShellPageMeta(pathname, activeRole), [activeRole, pathname])
   const quickNote = useMemo(() => getRoleQuickNote(activeRole), [activeRole])
-  const [menu, setMenu] = useState<"notifications" | "profile" | "roles" | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const [menu, setMenu] = useState<"profile" | "roles" | null>(null)
+  const shellRef = useRef<HTMLDivElement>(null)
+  const profileTriggerRef = useRef<HTMLButtonElement>(null)
+  const rolesTriggerRef = useRef<HTMLButtonElement>(null)
+  const rolesPanelRef = useRef<HTMLDivElement>(null)
+  const profilePanelId = useId()
+  const rolesPanelId = useId()
 
   // Only a user holding more than one role gets a switcher, and the options
   // always come from the roles actually held.
@@ -63,30 +60,95 @@ export function AppHeader({
   )
   const showRoleSwitcher = heldRoles.length > 1
 
+  function closeMenu(restoreFocus: boolean) {
+    if (menu === null) return
+    setMenu(null)
+    if (!restoreFocus) return
+    const trigger = menu === "roles" ? rolesTriggerRef.current : profileTriggerRef.current
+    trigger?.focus()
+  }
+
+  // Escape closes and hands focus back to the control that opened the panel.
+  // Keyed on `menu` so the listener only exists while something is open.
   useEffect(() => {
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (!menuRef.current) return
-      if (event.target instanceof Node && menuRef.current.contains(event.target)) return
-      setMenu(null)
-    }
+    if (menu === null) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenu(null)
+      if (event.key !== "Escape") return
+      event.stopPropagation()
+      setMenu(null)
+      const trigger = menu === "roles" ? rolesTriggerRef.current : profileTriggerRef.current
+      trigger?.focus()
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [menu])
+
+  // A pointer press outside the shell dismisses without reclaiming focus: the
+  // user has already moved to whatever they clicked.
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!shellRef.current) return
+      if (event.target instanceof Node && shellRef.current.contains(event.target)) return
+      setMenu(null)
     }
 
     document.addEventListener("mousedown", handlePointerDown)
     document.addEventListener("touchstart", handlePointerDown)
-    window.addEventListener("keydown", handleKeyDown)
 
     return () => {
       document.removeEventListener("mousedown", handlePointerDown)
       document.removeEventListener("touchstart", handlePointerDown)
-      window.removeEventListener("keydown", handleKeyDown)
     }
   }, [])
 
+  // The role switcher is a menu, so focus enters it on open. The profile panel
+  // is a disclosure and leaves focus on its trigger, since its contents are
+  // ordinary links and buttons reached by Tab.
+  useEffect(() => {
+    if (menu !== "roles") return
+    rolesPanelRef.current?.querySelector<HTMLButtonElement>('[role="menuitemradio"]')?.focus()
+  }, [menu])
+
+  function handleRolesKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const items = Array.from(
+      rolesPanelRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]') ?? [],
+    )
+    if (items.length === 0) return
+
+    const index = items.indexOf(document.activeElement as HTMLButtonElement)
+
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault()
+        items[(index + 1) % items.length]?.focus()
+        break
+      case "ArrowUp":
+        event.preventDefault()
+        items[(index - 1 + items.length) % items.length]?.focus()
+        break
+      case "Home":
+        event.preventDefault()
+        items[0]?.focus()
+        break
+      case "End":
+        event.preventDefault()
+        items[items.length - 1]?.focus()
+        break
+      case "Tab":
+        setMenu(null)
+        break
+      default:
+        break
+    }
+  }
+
   return (
-    <div className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-background)_92%,transparent)] shadow-sm backdrop-blur-xl">
+    <div
+      ref={shellRef}
+      className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-background)_92%,transparent)] shadow-sm backdrop-blur-xl"
+    >
       <div className="px-3 py-2 sm:px-4 sm:py-3 lg:px-8 lg:py-4">
         <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] lg:gap-4 lg:items-start">
           <div className="flex items-start gap-3 min-w-0">
@@ -108,24 +170,29 @@ export function AppHeader({
                   {showRoleSwitcher ? (
                     <div className="relative">
                       <Button
+                        ref={rolesTriggerRef}
                         variant="outline"
                         size="sm"
                         className="h-7 gap-1.5 px-2.5 text-xs"
                         onClick={() => setMenu(menu === "roles" ? null : "roles")}
                         aria-expanded={menu === "roles"}
                         aria-haspopup="menu"
+                        aria-controls={rolesPanelId}
                       >
                         Switch view
                         <ChevronDown className="size-3.5" />
                       </Button>
 
                       <div
+                        ref={rolesPanelRef}
+                        id={rolesPanelId}
                         className={cn(
                           "absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[min(calc(100vw-1rem),16rem)] origin-top-left overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
                           menu === "roles" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
                         )}
                         role="menu"
                         aria-label="Switch dashboard view"
+                        onKeyDown={handleRolesKeyDown}
                       >
                         {heldRoles.map((role) => (
                           <button
@@ -141,7 +208,7 @@ export function AppHeader({
                             )}
                             onClick={() => {
                               onActiveRoleChange(role)
-                              setMenu(null)
+                              closeMenu(true)
                             }}
                           >
                             <span>{ROLE_LABELS[role]}</span>
@@ -157,7 +224,7 @@ export function AppHeader({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-2 lg:justify-self-end" ref={menuRef}>
+          <div className="flex shrink-0 flex-col gap-2 lg:justify-self-end">
             <div className="relative lg:w-[clamp(24rem,28vw,32rem)]">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
               <Input
@@ -173,54 +240,21 @@ export function AppHeader({
             </div>
 
             <div className="flex items-center justify-end gap-2">
-              <div className="relative lg:hidden">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-10 w-10 gap-0 px-0"
-                  onClick={() => setMenu(menu === "notifications" ? null : "notifications")}
-                  aria-expanded={menu === "notifications"}
-                  aria-haspopup="menu"
-                  aria-label={notifications.length > 0 ? `Alerts, ${notifications.length} unread` : "Alerts"}
-                >
-                  <Bell className="size-4" />
-                  {notifications.length > 0 ? <TableBadge tone="rose" className="ml-1 hidden sm:inline-flex">{notifications.length}</TableBadge> : null}
-                </Button>
-
-                <div
-                  className={cn(
-                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),22rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
-                    menu === "notifications" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
-                  )}
-                  role="menu"
-                  aria-label="Notifications"
-                >
-                  <div className="border-b border-[var(--color-border)] px-4 py-3">
-                    <div className="text-sm font-semibold text-[var(--color-foreground)]">Notifications</div>
-                    <div className="text-xs text-[var(--color-muted-foreground)]">Recent system and workflow updates</div>
-                  </div>
-                  <div className="max-h-80 overflow-auto p-2">
-                    {notifications.length > 0 ? (
-                      notifications.map((item) => (
-                        <button key={`${item.title}-${item.time}`} type="button" className="flex w-full flex-col items-start gap-1 rounded-xl px-3 py-3 text-left transition-colors hover:bg-[var(--color-secondary)]" role="menuitem">
-                          <div className="flex w-full items-center justify-between gap-3">
-                            <span className="truncate text-sm font-medium text-[var(--color-foreground)]">{item.title}</span>
-                            <span className="shrink-0 text-xs text-[var(--color-muted-foreground)]">{item.time}</span>
-                          </div>
-                          <p className="text-xs leading-5 text-[var(--color-muted-foreground)]">{item.message}</p>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-6 text-sm text-[var(--color-muted-foreground)]">No new notifications</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               <ThemeToggle className="h-10 w-10 px-0 sm:w-auto sm:px-3" />
 
+              {/* A disclosure, not a menu: the panel holds account details and a
+                  single button, so it is labelled and controlled rather than
+                  pretending to be a menu of commands. */}
               <div className="relative">
-                <Button variant="outline" size="sm" onClick={() => setMenu(menu === "profile" ? null : "profile")} aria-expanded={menu === "profile"} aria-haspopup="menu" className="h-10 gap-2 px-3">
+                <Button
+                  ref={profileTriggerRef}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMenu(menu === "profile" ? null : "profile")}
+                  aria-expanded={menu === "profile"}
+                  aria-controls={profilePanelId}
+                  className="h-10 gap-2 px-3"
+                >
                   <div className="flex size-7 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-xs font-semibold text-[var(--color-primary)]">
                     {(displayName?.[0] ?? email?.[0] ?? "U").toUpperCase()}
                   </div>
@@ -229,12 +263,11 @@ export function AppHeader({
                 </Button>
 
                 <div
+                  id={profilePanelId}
                   className={cn(
                     "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),20rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
                     menu === "profile" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
                   )}
-                  role="menu"
-                  aria-label="Profile"
                 >
                   <div className="border-b border-[var(--color-border)] px-4 py-4">
                     <div className="text-sm font-semibold text-[var(--color-foreground)]">{displayName}</div>
@@ -246,54 +279,9 @@ export function AppHeader({
                   </div>
                   <div className="px-4 pb-3 text-xs leading-5 text-[var(--color-muted-foreground)]">Roles: {roles.length > 0 ? roles.join(", ") : "None"}</div>
                   <div className="border-t border-[var(--color-border)] px-2 py-2">
-                    <button type="button" className="w-full rounded-xl px-3 py-2 text-left text-sm text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]" role="menuitem" onClick={onSignOut}>
+                    <button type="button" className="w-full rounded-xl px-3 py-2 text-left text-sm text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]" onClick={onSignOut}>
                       Sign out
                     </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative lg:block hidden">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-10 gap-2 px-3"
-                  onClick={() => setMenu(menu === "notifications" ? null : "notifications")}
-                  aria-expanded={menu === "notifications"}
-                  aria-haspopup="menu"
-                  aria-label={notifications.length > 0 ? `Alerts, ${notifications.length} unread` : "Alerts"}
-                >
-                  <Bell className="size-4" />
-                  <span className="hidden xl:inline">Alerts</span>
-                  {notifications.length > 0 ? <TableBadge tone="rose" className="ml-1">{notifications.length}</TableBadge> : null}
-                </Button>
-
-                <div
-                  className={cn(
-                    "absolute right-0 top-[calc(100%+0.75rem)] w-[min(calc(100vw-1rem),22rem)] origin-top-right overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-elevated)] shadow-2xl transition-[opacity,transform] duration-150 motion-reduce:transition-none",
-                    menu === "notifications" ? "visible translate-y-0 opacity-100" : "invisible translate-y-1 opacity-0"
-                  )}
-                  role="menu"
-                  aria-label="Notifications"
-                >
-                  <div className="border-b border-[var(--color-border)] px-4 py-3">
-                    <div className="text-sm font-semibold text-[var(--color-foreground)]">Notifications</div>
-                    <div className="text-xs text-[var(--color-muted-foreground)]">Recent system and workflow updates</div>
-                  </div>
-                  <div className="max-h-80 overflow-auto p-2">
-                    {notifications.length > 0 ? (
-                      notifications.map((item) => (
-                        <button key={`${item.title}-${item.time}`} type="button" className="flex w-full flex-col items-start gap-1 rounded-xl px-3 py-3 text-left transition-colors hover:bg-[var(--color-secondary)]" role="menuitem">
-                          <div className="flex w-full items-center justify-between gap-3">
-                            <span className="truncate text-sm font-medium text-[var(--color-foreground)]">{item.title}</span>
-                            <span className="shrink-0 text-xs text-[var(--color-muted-foreground)]">{item.time}</span>
-                          </div>
-                          <p className="text-xs leading-5 text-[var(--color-muted-foreground)]">{item.message}</p>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-6 text-sm text-[var(--color-muted-foreground)]">No new notifications</div>
-                    )}
                   </div>
                 </div>
               </div>

@@ -24,14 +24,12 @@ export function AppShell({ children }: AppShellProps) {
   const roles = useMemo(() => user?.roles ?? [], [user?.roles])
   const displayName = useMemo(() => getDisplayName(fullName, email), [email, fullName])
 
-  const notifications = useMemo(
-    () => [
-      { title: "Attendance sync complete", message: "The latest classroom attendance batch has been processed.", time: "5m" },
-      { title: "3 tickets awaiting triage", message: "Support requests need assignment from the queue.", time: "18m" },
-      { title: "Asset warranty expiring soon", message: "Several devices are due for review this month.", time: "1h" },
-    ],
-    []
-  )
+  // The shell used to render three fixed notifications with a live-looking
+  // unread count. Nothing in the app produced them, so the badge was a permanent
+  // "3" implying a queue the user could act on and could not. There is no
+  // shell-level alert source yet, so the header shows no alert control rather
+  // than a fabricated one. Real work surfaces on the dashboard, which already
+  // derives its queue from the user's roles and permissions.
 
   async function handleSignOut() {
     await signOut()
@@ -62,7 +60,6 @@ export function AppShell({ children }: AppShellProps) {
           onSearchValueChange={setSearchValue}
           onMenuClick={() => setSidebarOpen((value) => !value)}
           onSignOut={handleSignOut}
-          notifications={notifications}
         />
 
         <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
