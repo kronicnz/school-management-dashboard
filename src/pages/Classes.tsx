@@ -148,14 +148,14 @@ export default function ClassesPage() {
         <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Class Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage classes and capacity.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage classes and capacity.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input placeholder="Search classes..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)} className="w-full sm:w-52 sm:flex-none">
@@ -176,17 +176,17 @@ export default function ClassesPage() {
                   <div className="flex items-center gap-3">
                     <TableAvatar>{value?.slice(0, 2).toUpperCase() || "CL"}</TableAvatar>
                     <div className="min-w-0">
-                      <div className="font-medium text-white">{value}</div>
-                      <div className="text-xs text-slate-400">Class section</div>
+                      <div className="font-medium text-[var(--color-text)]">{value}</div>
+                      <div className="text-xs text-[var(--color-muted)]">Class section</div>
                     </div>
                   </div>
                 ),
               },
-              { accessor: "grade_level", header: "Grade", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-slate-400">{value ?? "-"}</span> },
-              { accessor: "school_year", header: "Year", sortable: true, className: "whitespace-nowrap min-w-[140px]", cell: (value: string) => <span className="text-slate-400">{value}</span> },
-              { accessor: "subject", header: "Subject", sortable: true, className: "min-w-[220px]", cell: (value: string | null) => <span className="text-slate-400">{value ?? "-"}</span> },
-              { accessor: "room_number", header: "Room", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-slate-400">{value ?? "-"}</span> },
-              { accessor: "capacity", header: "Capacity", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: number | null) => <span className="text-slate-400">{value ?? "-"}</span> },
+              { accessor: "grade_level", header: "Grade", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
+              { accessor: "school_year", header: "Year", sortable: true, className: "whitespace-nowrap min-w-[140px]", cell: (value: string) => <span className="text-[var(--color-muted)]">{value}</span> },
+              { accessor: "subject", header: "Subject", sortable: true, className: "min-w-[220px]", cell: (value: string | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
+              { accessor: "room_number", header: "Room", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
+              { accessor: "capacity", header: "Capacity", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: number | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
               {
                 accessor: "actions",
                 header: "Actions",
@@ -195,7 +195,7 @@ export default function ClassesPage() {
                 cell: (_: unknown, cls: Class) => (
                   <div className="flex items-center gap-1 whitespace-nowrap" onClick={(event) => event.stopPropagation()}>
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(cls)}><Pencil className="size-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)}><Trash2 className="size-4 text-rose-400" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)}><Trash2 className="size-4 text-[var(--color-destructive)]" /></Button>
                   </div>
                 ),
               },

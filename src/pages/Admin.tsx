@@ -438,7 +438,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-3">
           <TableAvatar>{`${row.first_name?.[0] ?? ""}${row.last_name?.[0] ?? ""}`.trim() || "U"}</TableAvatar>
           <div>
-            <div className="font-medium text-white">{row.first_name} {row.last_name}</div>
+            <div className="font-medium text-[var(--color-text)]">{row.first_name} {row.last_name}</div>
             <div className="text-xs text-[var(--color-muted)]">{row.org_unit_path || "No org unit"}</div>
           </div>
         </div>
@@ -819,7 +819,7 @@ export default function AdminPage() {
               <ShieldCheck className="size-3.5 text-[var(--color-information)]" />
               Admin Control Center
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">
               User Directory & Scope Workspace
             </h1>
             <p className="text-sm text-[var(--color-text)] sm:text-base leading-relaxed">
@@ -839,7 +839,7 @@ export default function AdminPage() {
           </div>
 
           <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,transparent)] p-4 text-xs text-[var(--color-text)] backdrop-blur-md w-full">
-            <div className="flex items-center gap-2 font-medium text-white">
+            <div className="flex items-center gap-2 font-medium text-[var(--color-text)]">
               <BadgeCheck className="size-4 text-[var(--color-success)]" />
               {isAdmin ? "Administrative Access Granted" : "Read-Only Governance View"}
             </div>
@@ -860,7 +860,7 @@ export default function AdminPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-white">Live Metrics</h2>
+            <h2 className="text-sm font-semibold text-[var(--color-text)]">Live Metrics</h2>
             <p className="text-xs text-[var(--color-muted)]">Six governance KPIs arranged for a three-column rhythm on larger screens.</p>
           </div>
         </div>
@@ -1025,7 +1025,7 @@ export default function AdminPage() {
                     <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-base font-bold text-white">
+                          <div className="text-base font-bold text-[var(--color-text)]">
                             {selectedStaff.first_name} {selectedStaff.last_name}
                           </div>
                           <div className="text-xs text-[var(--color-muted)] flex items-center gap-1.5 mt-0.5">
@@ -1427,7 +1427,7 @@ export default function AdminPage() {
                   <div key={draft.id} className="group relative rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5 hover:border-[color-mix(in_srgb,var(--color-information)_30%,transparent)] transition-colors">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <div className="font-semibold text-xs text-white flex items-center gap-1.5">
+                        <div className="font-semibold text-xs text-[var(--color-text)] flex items-center gap-1.5">
                           <span>{draft.ownerName}</span>
                           <ArrowRight className="size-3 text-[var(--color-muted)]" />
                           <span className="text-[var(--color-information)]">{draft.targetName}</span>
@@ -1492,7 +1492,7 @@ export default function AdminPage() {
               <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-white">Staff Organizational Unit</div>
+                    <div className="text-sm font-semibold text-[var(--color-text)]">Staff Organizational Unit</div>
                     <div className="text-xs text-[var(--color-muted)]">/Accounts/Automated/Staff</div>
                   </div>
                   <Button
@@ -1510,7 +1510,7 @@ export default function AdminPage() {
               <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-white">Students Organizational Units</div>
+                    <div className="text-sm font-semibold text-[var(--color-text)]">Students Organizational Units</div>
                     <div className="text-xs text-[var(--color-muted)]">Year 7 & Year 8 Active Cohorts</div>
                   </div>
                   <Button
@@ -1600,7 +1600,7 @@ export default function AdminPage() {
                 </div>
                 <div className="rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-4">
                   <div className="text-xs text-[var(--color-muted)]">Total Logged</div>
-                  <div className="mt-1 text-2xl font-bold text-white">{incidents.length}</div>
+                  <div className="mt-1 text-2xl font-bold text-[var(--color-text)]">{incidents.length}</div>
                   <div className="mt-1 text-[11px] text-[var(--color-muted)]">Lifetime system incident logs</div>
                 </div>
               </div>
@@ -1645,21 +1645,21 @@ export default function AdminPage() {
               <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                 <Layers3 className="mt-0.5 size-4 text-[var(--color-information)] shrink-0" />
                 <div>
-                  <div className="font-semibold text-white">Explicit Role Grants</div>
+                  <div className="font-semibold text-[var(--color-text)]">Explicit Role Grants</div>
                   <div className="text-[var(--color-muted)] mt-0.5">Always verify staff access rights before granting leadership or delegate role overrides.</div>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                 <BookOpen className="mt-0.5 size-4 text-[var(--color-success)] shrink-0" />
                 <div>
-                  <div className="font-semibold text-white">Teaching Scope Isolation</div>
+                  <div className="font-semibold text-[var(--color-text)]">Teaching Scope Isolation</div>
                   <div className="text-[var(--color-muted)] mt-0.5">Scope follows explicit class assignments first, followed by manual inclusion/exclusion rules.</div>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,transparent)] p-3.5">
                 <Clock3 className="mt-0.5 size-4 text-[var(--color-warning)] shrink-0" />
                 <div>
-                  <div className="font-semibold text-white">Audit Windowing</div>
+                  <div className="font-semibold text-[var(--color-text)]">Audit Windowing</div>
                   <div className="text-[var(--color-muted)] mt-0.5">Temporary relief teachers should always have strict effective start and expiry date windows.</div>
                 </div>
               </div>
@@ -1744,7 +1744,7 @@ export default function AdminPage() {
                   }
                 />
                 <label htmlFor="admin-staff-create-account" className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-white">
+                  <span className="block text-sm font-medium text-[var(--color-text)]">
                     Create a manual login (no Google account)
                   </span>
                   <span className="mt-0.5 block text-[11px] leading-relaxed text-[var(--color-muted)]">
@@ -1793,7 +1793,7 @@ export default function AdminPage() {
                   return (
                     <div
                       key={role}
-                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-[color-mix(in_srgb,var(--color-information)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-white" : "border-white/10 bg-[var(--color-surface-muted)]/50 text-[var(--color-text)] hover:border-white/20"}`}
+                      className={`rounded-lg border px-3 py-2 text-sm transition ${selected ? "border-[color-mix(in_srgb,var(--color-information)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-information)_10%,transparent)] text-[var(--color-text)]" : "border-white/10 bg-[var(--color-surface-muted)]/50 text-[var(--color-text)] hover:border-white/20"}`}
                     >
                       <label className="flex cursor-pointer items-center justify-between gap-3">
                         <span>{labelize(role)}</span>

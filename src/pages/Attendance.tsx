@@ -249,8 +249,8 @@ export default function AttendancePage() {
         <div className="flex items-center gap-3">
           <TableAvatar>{value.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "S"}</TableAvatar>
           <div className="min-w-0">
-            <div className="font-medium text-white">{value}</div>
-            <div className="text-xs text-slate-400">Student record</div>
+            <div className="font-medium text-[var(--color-text)]">{value}</div>
+            <div className="text-xs text-[var(--color-muted)]">Student record</div>
           </div>
         </div>
       ),
@@ -260,7 +260,7 @@ export default function AttendancePage() {
       header: "Class",
       sortable: true,
       className: "min-w-[220px]",
-      cell: (value: string) => <span className="text-slate-400">{value}</span>,
+      cell: (value: string) => <span className="text-[var(--color-muted)]">{value}</span>,
     },
     {
       accessor: "status",
@@ -304,7 +304,7 @@ export default function AttendancePage() {
           <TableBadge tone={statusTone(row.status)}>
             {labelize(row.status)}
           </TableBadge>
-          {value ? <span className="text-xs text-amber-400">Unsaved</span> : <span className="text-xs text-emerald-400">Saved</span>}
+          {value ? <span className="text-xs text-[var(--color-warning)]">Unsaved</span> : <span className="text-xs text-[var(--color-success)]">Saved</span>}
         </div>
       ),
     },

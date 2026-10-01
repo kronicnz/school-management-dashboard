@@ -210,8 +210,8 @@ export default function StaffPage() {
         <div className="flex items-center gap-3 whitespace-nowrap">
           <TableAvatar>{`${row.first_name?.[0] ?? ""}${row.last_name?.[0] ?? ""}`.trim() || "S"}</TableAvatar>
           <div className="min-w-0">
-            <div className="font-medium text-white">{row.first_name} {row.last_name}</div>
-            <div className="text-xs text-slate-400">{row.org_unit_path || "No org unit"}</div>
+            <div className="font-medium text-[var(--color-text)]">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-[var(--color-muted)]">{row.org_unit_path || "No org unit"}</div>
           </div>
         </div>
       ),
@@ -221,7 +221,7 @@ export default function StaffPage() {
       header: "Email",
       sortable: true,
       className: "min-w-[260px]",
-      cell: (value: any) => <span className="text-slate-400">{value ?? "-"}</span>,
+      cell: (value: any) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span>,
     },
     {
       accessor: "status",
@@ -243,12 +243,12 @@ export default function StaffPage() {
         <div className="flex flex-wrap gap-1.5">
           {row.roles.length > 0 ? (
             row.roles.map((role) => (
-              <span key={role} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">
+              <span key={role} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-[var(--color-text)]">
                 {labelize(role)}
               </span>
             ))
           ) : (
-            <span className="text-slate-500">No roles</span>
+            <span className="text-[var(--color-muted)]">No roles</span>
           )}
         </div>
       ),
@@ -258,7 +258,7 @@ export default function StaffPage() {
       header: "Department",
       sortable: true,
       className: "whitespace-nowrap min-w-[180px]",
-      cell: (value: any) => <span className="text-slate-400">{value ?? "-"}</span>,
+      cell: (value: any) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span>,
     },
     {
       accessor: "actions",
@@ -271,7 +271,7 @@ export default function StaffPage() {
             <Pencil className="size-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
-            <Trash2 className="size-4 text-rose-400" />
+            <Trash2 className="size-4 text-[var(--color-destructive)]" />
           </Button>
         </div>
       ),
@@ -287,7 +287,7 @@ export default function StaffPage() {
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-hidden">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Staff</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-text)]">Staff</h1>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => loadStaff()}>
             <RefreshCw className="size-4 mr-1" />
@@ -306,8 +306,8 @@ export default function StaffPage() {
 
       <section className="mb-5 space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Staff Overview</h2>
-          <p className="text-xs text-slate-400">Live roster counts and scope breakdown.</p>
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Staff Overview</h2>
+          <p className="text-xs text-[var(--color-muted)]">Live roster counts and scope breakdown.</p>
         </div>
         <StatisticGrid>
           <StatisticCard label="Total Staff" value={totalStaff} icon={Plus} description="All staff identity records" tone="information" />
@@ -323,14 +323,14 @@ export default function StaffPage() {
         <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Staff Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage staff identity records. Role editing lives in Admin.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage staff identity records. Role editing lives in Admin.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input placeholder="Search staff..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full sm:w-52 sm:flex-none">
@@ -372,7 +372,7 @@ export default function StaffPage() {
             <FormField label="Department" htmlFor="staff-department">
               <Input id="staff-department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
             </FormField>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-[var(--color-muted)]">
               The staff record links to the matching profile automatically on save.
             </div>
           </div>

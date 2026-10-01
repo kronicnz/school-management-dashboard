@@ -327,7 +327,7 @@ export default function AssetsPage() {
       cell: (val: string) => (
         <div className="flex items-center gap-3 whitespace-nowrap">
           <TableAvatar>{val.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase() || "AS"}</TableAvatar>
-          <span className="font-mono font-medium text-white">{val}</span>
+          <span className="font-mono font-medium text-[var(--color-text)]">{val}</span>
         </div>
       ),
     },
@@ -344,11 +344,11 @@ export default function AssetsPage() {
 
         return (
           <div className="max-w-[260px]">
-            <div className="font-medium text-slate-200 truncate" title={name}>
+            <div className="font-medium text-[var(--color-text)] truncate" title={name}>
               {name}
             </div>
             {subtext && !isDuplicate && (
-              <div className="text-xs text-slate-400 truncate" title={subtext}>
+              <div className="text-xs text-[var(--color-muted)] truncate" title={subtext}>
                 {subtext}
               </div>
             )}
@@ -362,7 +362,7 @@ export default function AssetsPage() {
       sortable: true,
       className: "whitespace-nowrap min-w-[160px]",
       cell: (val: string) => (
-        <span className="font-mono text-xs text-slate-300 whitespace-nowrap">
+        <span className="font-mono text-xs text-[var(--color-text)] whitespace-nowrap">
           {val || "-"}
         </span>
       ),
@@ -391,7 +391,7 @@ export default function AssetsPage() {
       sortable: true,
       className: "min-w-[220px]",
       cell: (val: string) => (
-        <span className="text-xs text-slate-400 max-w-[200px] truncate block" title={val || "-"}>
+        <span className="text-xs text-[var(--color-muted)] max-w-[200px] truncate block" title={val || "-"}>
           {val || "-"}
         </span>
       ),
@@ -405,14 +405,14 @@ export default function AssetsPage() {
         const assignedName = getAssignedToName(row)
         const isDeprovisioned = getLocationCategory(row.location) === "deprovisioned"
         if (!row.assigned_to) {
-          return <span className="text-xs text-slate-500 whitespace-nowrap">{isDeprovisioned ? "Deprovisioned" : "Unassigned"}</span>
+          return <span className="text-xs text-[var(--color-muted)] whitespace-nowrap">{isDeprovisioned ? "Deprovisioned" : "Unassigned"}</span>
         }
         return (
           <div className="whitespace-nowrap">
-            <div className="text-xs font-medium text-indigo-300">
+            <div className="text-xs font-medium text-[var(--color-accent)]">
               {assignedName || "Allocated User"}
             </div>
-            <div className="text-[10px] capitalize text-slate-400">{row.assigned_to_type || "User"}</div>
+            <div className="text-[10px] capitalize text-[var(--color-muted)]">{row.assigned_to_type || "User"}</div>
           </div>
         )
       },
@@ -430,7 +430,7 @@ export default function AssetsPage() {
               size="sm"
               title="Unassign Device"
               onClick={() => handleUnassign(row)}
-              className="text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
+              className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)]"
             >
               <UserMinus className="size-4" />
             </Button>
@@ -440,16 +440,16 @@ export default function AssetsPage() {
               size="sm"
               title="Assign Device"
               onClick={() => openAssignModal(row)}
-              className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-400/10"
+              className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)]"
             >
               <UserPlus className="size-4" />
             </Button>
           )}
           <Button variant="ghost" size="sm" title="Edit" onClick={() => handleEdit(row)}>
-            <Pencil className="size-4 text-slate-300" />
+            <Pencil className="size-4 text-[var(--color-text)]" />
           </Button>
           <Button variant="ghost" size="sm" title="Delete" onClick={() => handleDelete(row.id)}>
-            <Trash2 className="size-4 text-rose-400" />
+            <Trash2 className="size-4 text-[var(--color-destructive)]" />
           </Button>
         </div>
       ),
@@ -459,7 +459,7 @@ export default function AssetsPage() {
   return (
     <div className="w-full max-w-full min-w-0 overflow-hidden">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Assets & Devices</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-text)]">Assets & Devices</h1>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => void loadData()} isLoading={loading && !isSyncing}>
             <RefreshCw className="size-4 mr-1" />
@@ -485,8 +485,8 @@ export default function AssetsPage() {
 
       <section className="mb-5 space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Asset Overview</h2>
-          <p className="text-xs text-slate-400">Device lifecycle counts and assignment status.</p>
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Asset Overview</h2>
+          <p className="text-xs text-[var(--color-muted)]">Device lifecycle counts and assignment status.</p>
         </div>
         <StatisticGrid>
           <StatisticCard label="Total Assets" value={totalAssets} icon={Laptop} description="Inventory items tracked in the register" tone="information" />
@@ -503,14 +503,14 @@ export default function AssetsPage() {
         <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Asset Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage the asset inventory.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage the asset inventory.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input
                 placeholder="Search assets..."
                 value={search}
@@ -661,7 +661,7 @@ export default function AssetsPage() {
               id="asset-notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              className="w-full rounded-lg border border-white/10 bg-[var(--color-surface-muted)]/50 px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-accent)_50%,transparent)]"
               rows={2}
             />
           </FormField>
@@ -689,9 +689,9 @@ export default function AssetsPage() {
       >
         <form onSubmit={handleAssignSubmit} className="space-y-4">
           <div className="space-y-2">
-            <span className="block text-sm font-medium text-slate-300">Assignee Type</span>
+            <span className="block text-sm font-medium text-[var(--color-text)]">Assignee Type</span>
             <div className="flex gap-4">
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                 <input
                   type="radio"
                   name="assigneeType"
@@ -701,11 +701,11 @@ export default function AssetsPage() {
                     setAssigneeType("student")
                     setSelectedAssigneeId("")
                   }}
-                  className="accent-indigo-500"
+                  className="accent-[var(--color-accent)]"
                 />
                 Student
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                 <input
                   type="radio"
                   name="assigneeType"
@@ -715,14 +715,14 @@ export default function AssetsPage() {
                     setAssigneeType("staff")
                     setSelectedAssigneeId("")
                   }}
-                  className="accent-indigo-500"
+                  className="accent-[var(--color-accent)]"
                 />
                 Staff Member
               </label>
             </div>
           </div>
 
-          <FormField label={`Select ${assigneeType === "student" ? "Student" : "Staff Member"}`} htmlFor="asset-assignee" labelClassName="text-sm font-medium text-slate-300">
+          <FormField label={`Select ${assigneeType === "student" ? "Student" : "Staff Member"}`} htmlFor="asset-assignee" labelClassName="text-sm font-medium text-[var(--color-text)]">
             <Select
               id="asset-assignee"
               value={selectedAssigneeId}

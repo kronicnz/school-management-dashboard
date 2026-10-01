@@ -706,7 +706,7 @@ export default function IncidentsPage() {
           <div className="flex items-center gap-3">
             <TableAvatar>{name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "S"}</TableAvatar>
             <div className="min-w-0">
-              <div className="font-medium text-white">{name}</div>
+              <div className="font-medium text-[var(--color-text)]">{name}</div>
               <div className="text-xs text-[var(--color-muted)]">Student linked to incident</div>
             </div>
           </div>
@@ -914,7 +914,7 @@ export default function IncidentsPage() {
                   setStatusFilter("")
                   setVisibilityFilter("")
                 }}
-                className="text-xs text-[var(--color-muted)] hover:text-white"
+                className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)]"
               >
                 Reset Filters
               </Button>
@@ -941,7 +941,7 @@ export default function IncidentsPage() {
                 <DataTable
                   data={retentionRows.slice(0, 8)}
                   columns={[
-                { accessor: "incident_id", header: "Incident", sortable: true, cell: (value: string) => <span className="font-medium text-white">{value}</span> },
+                { accessor: "incident_id", header: "Incident", sortable: true, cell: (value: string) => <span className="font-medium text-[var(--color-text)]">{value}</span> },
                 { accessor: "severity", header: "Severity", sortable: true, cell: (value: string) => <span className="text-[var(--color-muted)]">{value}</span> },
                 { accessor: "archive_due_at", header: "Archive Due", sortable: true, cell: (value: string) => <span className="text-[var(--color-muted)]">{formatDate(value)}</span> },
                 { accessor: "dispose_due_at", header: "Dispose Due", sortable: true, cell: (value: string) => <span className="text-[var(--color-muted)]">{formatDate(value)}</span> },
@@ -1202,7 +1202,7 @@ export default function IncidentsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Primary Student</span>
-                  <span className="font-semibold text-white text-sm">{studentNameMap.get(selectedIncident.student_id) ?? "Unknown"}</span>
+                  <span className="font-semibold text-[var(--color-text)] text-sm">{studentNameMap.get(selectedIncident.student_id) ?? "Unknown"}</span>
                 </div>
                 <div>
                   <span className="text-[var(--color-muted)] block uppercase font-medium text-[10px]">Category</span>
@@ -1458,7 +1458,7 @@ export default function IncidentsPage() {
                 <Card className="border-white/10 bg-white/[0.02]">
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                      <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
                         <MessageSquare className="size-4 text-[var(--color-information)]" />
                         Discussion Comments
                       </div>
@@ -1499,7 +1499,7 @@ export default function IncidentsPage() {
                 <Card className="border-white/10 bg-white/[0.02]">
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                      <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
                         <CalendarClock className="size-4 text-[var(--color-information)]" />
                         Follow-up Tasks
                       </div>
@@ -1511,7 +1511,7 @@ export default function IncidentsPage() {
                         selectedIncidentFollowUps.map((followUp) => (
                           <div key={followUp.id} className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3.5 text-xs text-[var(--color-text)] space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-semibold text-white uppercase text-[10px] tracking-wider">{followUp.status}</span>
+                              <span className="font-semibold text-[var(--color-text)] uppercase text-[10px] tracking-wider">{followUp.status}</span>
                               <Select
                                 value={followUp.status}
                                 onChange={(event) => void handleFollowUpStatusChange(followUp, event.target.value)}
@@ -1579,7 +1579,7 @@ export default function IncidentsPage() {
                 {canManageSensitive ? (
                   <Card className="border-white/10 bg-white/[0.02]">
                     <CardContent className="space-y-3 p-5">
-                      <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                      <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
                         <Mail className="size-4 text-[var(--color-information)]" />
                         Merged Email Dispatch
                       </div>
@@ -1612,7 +1612,7 @@ export default function IncidentsPage() {
 
                       {emailPreview ? (
                         <div className="rounded-lg border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_80%,var(--color-canvas))] p-4 text-xs text-[var(--color-text)] space-y-2 mt-2">
-                          <div className="font-semibold text-white">Subject: {emailPreview.subject}</div>
+                          <div className="font-semibold text-[var(--color-text)]">Subject: {emailPreview.subject}</div>
                           <pre className="max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-[var(--color-text)] font-mono bg-[color-mix(in_srgb,var(--color-surface)_90%,var(--color-canvas))] p-3 rounded border border-white/5 no-scrollbar">
                             {emailPreview.body}
                           </pre>
@@ -1624,7 +1624,7 @@ export default function IncidentsPage() {
 
                 <Card className="border-white/10 bg-white/[0.02]">
                   <CardContent className="space-y-3 p-5">
-                    <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                    <div className="flex items-center gap-2 text-[var(--color-text)] font-semibold text-sm">
                       <History className="size-4 text-[var(--color-success)]" />
                       Audit & Email Logs
                     </div>
@@ -1636,7 +1636,7 @@ export default function IncidentsPage() {
                           {auditLog.length > 0 ? (
                             auditLog.slice(0, 10).map((row) => (
                               <div key={row.id} className="rounded-md border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)]">
-                                <div className="font-medium text-white">{row.action}</div>
+                                <div className="font-medium text-[var(--color-text)]">{row.action}</div>
                                 <div className="text-[10px] text-[var(--color-muted)]">{formatDate(row.changed_at)}</div>
                               </div>
                             ))
@@ -1652,7 +1652,7 @@ export default function IncidentsPage() {
                           {emailLogs.length > 0 ? (
                             emailLogs.map((row) => (
                               <div key={row.id} className="rounded-md border border-white/10 bg-[color-mix(in_srgb,var(--color-surface)_60%,var(--color-canvas))] p-3 text-xs text-[var(--color-text)] space-y-0.5">
-                                <div className="font-medium text-white flex items-center justify-between">
+                                <div className="font-medium text-[var(--color-text)] flex items-center justify-between">
                                   <span>{row.template_key}</span>
                                   <span className="text-[10px] uppercase font-semibold text-[var(--color-information)]">{row.status}</span>
                                 </div>

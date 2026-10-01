@@ -660,8 +660,8 @@ export default function TicketsPage() {
             {value.slice(0, 2).toUpperCase() || row.ticket_number.slice(0, 2).toUpperCase() || "TK"}
           </TableAvatar>
           <div className="min-w-0">
-            <div className="font-mono text-sm text-white">{value}</div>
-            <div className="text-xs text-slate-400">Ticket reference</div>
+            <div className="font-mono text-sm text-[var(--color-text)]">{value}</div>
+            <div className="text-xs text-[var(--color-muted)]">Ticket reference</div>
           </div>
         </div>
       ),
@@ -672,7 +672,7 @@ export default function TicketsPage() {
       sortable: true,
       searchable: true,
       className: "min-w-[300px]",
-      cell: (value: string) => <span className="block min-w-0 max-w-[320px] truncate font-medium text-white" title={value}>{value}</span>,
+      cell: (value: string) => <span className="block min-w-0 max-w-[320px] truncate font-medium text-[var(--color-text)]" title={value}>{value}</span>,
     },
     {
       accessor: "category_id",
@@ -681,7 +681,7 @@ export default function TicketsPage() {
       className: "min-w-[240px]",
       cell: (_value: string, row: TicketRow) => {
         const categoryName = moduleCategories.find((category) => category.id === row.category_id)?.name ?? row.category_id
-        return <span className="block min-w-0 max-w-[240px] truncate text-slate-400" title={categoryName}>{categoryName}</span>
+        return <span className="block min-w-0 max-w-[240px] truncate text-[var(--color-muted)]" title={categoryName}>{categoryName}</span>
       },
     },
     {
@@ -689,7 +689,7 @@ export default function TicketsPage() {
       header: "Priority",
       sortable: true,
       className: "whitespace-nowrap min-w-[150px]",
-      cell: (value: string) => <span className="text-slate-400">{labelize(value)}</span>,
+      cell: (value: string) => <span className="text-[var(--color-muted)]">{labelize(value)}</span>,
     },
     {
       accessor: "status",
@@ -707,14 +707,14 @@ export default function TicketsPage() {
       header: "Assignment",
       sortable: true,
       className: "min-w-[240px]",
-      cell: (value: string | null) => <span className="block min-w-0 max-w-[260px] truncate text-slate-400" title={value ?? "Unassigned"}>{value ?? "Unassigned"}</span>,
+      cell: (value: string | null) => <span className="block min-w-0 max-w-[260px] truncate text-[var(--color-muted)]" title={value ?? "Unassigned"}>{value ?? "Unassigned"}</span>,
     },
     {
       accessor: "updated_at",
       header: "Updated",
       sortable: true,
       className: "whitespace-nowrap min-w-[180px]",
-      cell: (value: string) => <span className="text-slate-400">{formatTicketDate(value)}</span>,
+      cell: (value: string) => <span className="text-[var(--color-muted)]">{formatTicketDate(value)}</span>,
     },
   ]
 

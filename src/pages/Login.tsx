@@ -99,7 +99,7 @@ export default function LoginPage() {
 
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)] sm:p-8">
           {error && (
-            <div className="mb-4 rounded-lg border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-rose-400">
+            <div className="mb-4 rounded-lg border border-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-destructive)_10%,transparent)] p-3 text-sm text-[var(--color-destructive)]">
               {error}
             </div>
           )}
@@ -108,7 +108,7 @@ export default function LoginPage() {
             <div
               role="status"
               aria-live="polite"
-              className="mb-4 flex items-start gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm text-emerald-400"
+              className="mb-4 flex items-start gap-2 rounded-lg border border-[color-mix(in_srgb,var(--color-success)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] p-3 text-sm text-[var(--color-success)]"
             >
               <Mail className="mt-0.5 size-4 shrink-0" />
               <span>{resetNotice}</span>
