@@ -1,4 +1,4 @@
-import { forwardRef, useState, useMemo, useCallback, useDeferredValue } from "react"
+import { forwardRef, startTransition, useState, useMemo, useCallback, useDeferredValue } from "react"
 import { cn } from "../../utils/cn"
 import { Button } from "./button"
 import { Select } from "./Select"
@@ -96,21 +96,27 @@ export const DataTable = forwardRef<
   }, [sortedData, currentPage, itemsPerPage])
 
   const setPage = useCallback((pageNum: number) => {
-    setPageState(Math.max(1, Math.min(pageNum, totalPages)))
+    startTransition(() => {
+      setPageState(Math.max(1, Math.min(pageNum, totalPages)))
+    })
   }, [totalPages])
 
   const setItemsPerPage = useCallback((itemsPerPageNum: number) => {
-    setItemsPerPageState(itemsPerPageNum)
-    setPageState(1)
+    startTransition(() => {
+      setItemsPerPageState(itemsPerPageNum)
+      setPageState(1)
+    })
   }, [])
 
   const toggleSort = useCallback((columnId: keyof any | string) => {
-    if (sortId === columnId) {
-      setSortDesc(prev => !prev)
-    } else {
-      setSortId(columnId)
-      setSortDesc(false)
-    }
+    startTransition(() => {
+      if (sortId === columnId) {
+        setSortDesc(prev => !prev)
+      } else {
+        setSortId(columnId)
+        setSortDesc(false)
+      }
+    })
   }, [sortId])
 
   const handleHeaderClick = useCallback((column: ColumnConfig<any>) => {
@@ -175,7 +181,7 @@ export const DataTable = forwardRef<
                 <TableRow
                   key={row.id ?? rowIndex}
                   className={cn(onRowClick && "cursor-pointer")}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onClick={onRowClick ? () => startTransition(() => onRowClick(row)) : undefined}
                 >
                   {columns.map((column) => {
                     let cellContent: ReactNode

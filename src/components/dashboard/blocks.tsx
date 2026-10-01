@@ -77,7 +77,7 @@ function ChartFrame({
           type="button"
           size="sm"
           variant="ghost"
-          className="min-h-8 px-2 text-xs"
+          className="min-h-11 px-2 text-xs"
           aria-expanded={showTable}
           aria-controls={tableId}
           onClick={() => setShowTable((previous) => !previous)}
@@ -392,19 +392,19 @@ export function WorkList({ items, onEdit, onReview, canEdit = true, emptyMessage
             <div className="relative z-10 flex flex-col items-end gap-2">
               <TableBadge tone={item.tone}>{item.status}</TableBadge>
               {canCorrect ? (
-                <Button type="button" size="sm" variant="ghost" onClick={() => onEdit?.(item)}>
+                <Button type="button" size="sm" variant="ghost" className="min-h-11" onClick={() => onEdit?.(item)}>
                   Correct
                   <span className="sr-only"> {item.title}</span>
                 </Button>
               ) : null}
               {canReview ? (
-                <Button type="button" size="sm" variant="outline" onClick={() => onReview?.(item)}>
+                <Button type="button" size="sm" variant="outline" className="min-h-11" onClick={() => onReview?.(item)}>
                   Review
                   <span className="sr-only"> {item.title}</span>
                 </Button>
               ) : null}
               {item.href && !isStretchLink ? (
-                <Button asChild size="sm" variant="ghost">
+                <Button asChild size="sm" variant="ghost" className="min-h-11">
                   <Link to={item.href}>
                     Open module
                     <span className="sr-only">: {item.title}</span>
@@ -432,7 +432,7 @@ export function RefreshControl({ onRefresh, busy, label = "Refresh" }: { onRefre
       type="button"
       size="sm"
       variant="outline"
-      className="min-h-9"
+      className="min-h-11"
       disabled={working}
       aria-busy={working}
       onClick={() => {

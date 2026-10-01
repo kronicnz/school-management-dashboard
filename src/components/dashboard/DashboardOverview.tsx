@@ -339,8 +339,7 @@ function ShortcutGrid({ shortcuts }: { shortcuts: DashboardShortcut[] }) {
       {shortcuts.map((shortcut) => {
         const Icon = shortcut.icon
         return (
-          <Button key={shortcut.to} asChild variant="outline" className="h-auto min-h-11 justify-start rounded-2xl px-4 py-3">
-            <Link to={shortcut.to}>
+          <Button key={shortcut.to} asChild variant="outline" className="h-auto min-h-11 justify-start rounded-2xl px-4 py-3">            <Link to={shortcut.to}>
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-surface-soft)] text-[var(--color-primary)]">
                 <Icon className="size-4" aria-hidden="true" />
               </span>
