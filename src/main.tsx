@@ -18,7 +18,9 @@ createRoot(toastRoot).render(<ToastViewport />)
 
 createRoot(appRoot).render(
   <StrictMode>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    {/* v7_startTransition and v7_relativeSplatPath were opt-in flags under v6.
+        They are the default in v7 and the future prop was removed. */}
+    <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
           <ToastProvider>

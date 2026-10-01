@@ -50,7 +50,7 @@
         "npm:lucide-react@^1.49.0",
         "npm:oxlint@^1.79.0",
         "npm:react-dom@^19.2.8",
-        "npm:react-router-dom@^6.30.6",
+        "npm:react-router-dom@^7.18.4",
         "npm:react@^19.2.8",
         "npm:shadcn@^4.21.0",
         "npm:tailwind-merge@^3.7.0",
