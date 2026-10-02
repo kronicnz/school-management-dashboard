@@ -6,12 +6,16 @@ create table if not exists public.user_roles (
   profile_id uuid not null references public.profiles(id) on delete cascade,
   role text not null check (
     role in (
+      'site_admin',
+      'finance_admin',
+      'finance_read_only',
+      'board_member',
+      'it_admin',
+      'it_staff',
+      'property_manager',
+      'property_staff',
       'teacher',
-      'counsellor',
-      'principal',
-      'deputy_principal',
-      'counsellor_delegate',
-      'leadership_delegate'
+      'counsellor'
     )
   ),
   active boolean not null default true,
@@ -211,7 +215,7 @@ set search_path = public
 as $$
   select public.user_has_any_role(
     p_user_id,
-    array['principal', 'deputy_principal', 'counsellor_delegate', 'leadership_delegate']::text[]
+    array['site_admin', 'it_admin']::text[]
   );
 $$;
 
@@ -224,7 +228,7 @@ set search_path = public
 as $$
   select public.user_has_any_role(
     p_user_id,
-    array['counsellor', 'principal', 'deputy_principal', 'counsellor_delegate', 'leadership_delegate']::text[]
+    array['site_admin', 'it_admin', 'counsellor']::text[]
   );
 $$;
 
@@ -749,7 +753,7 @@ declare
 begin
   if not public.user_has_any_role(
     auth.uid(),
-    array['principal', 'deputy_principal', 'counsellor_delegate', 'leadership_delegate']::text[]
+    array['site_admin', 'it_admin']::text[]
   ) then
     raise exception 'insufficient_privilege';
   end if;
@@ -1172,7 +1176,7 @@ for select
 using (
   public.user_has_any_role(
     auth.uid(),
-    array['principal', 'deputy_principal', 'counsellor_delegate', 'leadership_delegate']::text[]
+    array['site_admin', 'it_admin']::text[]
   )
 );
 

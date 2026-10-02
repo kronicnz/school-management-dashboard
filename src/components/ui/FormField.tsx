@@ -29,13 +29,13 @@ const FormField = ({
     <div className={cn("space-y-2", className)} {...props}>
       <label htmlFor={htmlFor} className={cn("block text-sm font-medium text-[var(--color-muted)]", labelClassName)}>
         {label}
-        {required && <span className="text-rose-400"> *</span>}
+        {required && <span className="text-[var(--color-destructive)]"> *</span>}
       </label>
 
       <div className={contentClassName}>{children}</div>
 
       {helperText && (
-        <p className={cn("text-xs text-[var(--color-muted)]", error ? "text-rose-400" : undefined, helperClassName)}>{error ?? helperText}</p>
+        <p className={cn("text-xs text-[var(--color-muted)]", error ? "text-[var(--color-destructive)]" : undefined, helperClassName)}>{error ?? helperText}</p>
       )}
     </div>
   )

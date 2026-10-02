@@ -115,18 +115,17 @@ export default function ClassesPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">Classes</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadClasses()}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => { setEditingClass(null); setFormData(getEmptyClassForm()); setShowForm(true) }}>
-            <Plus className="size-4 mr-1" />
-            Add Class
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => loadClasses()}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => { setEditingClass(null); setFormData(getEmptyClassForm()); setShowForm(true) }}>
+          <Plus className="size-4 mr-1" />
+          Add Class
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
@@ -135,27 +134,27 @@ export default function ClassesPage() {
           <p className="text-xs text-[var(--color-muted)]">Capacity and curriculum coverage at a glance.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Classes" value={totalClasses} icon={Plus} description="Class sections scheduled in the system" accentClassName="text-cyan-300" />
-          <StatisticCard label="Grades Represented" value={grades.length} icon={RefreshCw} description="Distinct grade levels in use" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Subject Linked" value={subjectLinkedClasses} icon={BookOpen} description="Classes tied to subject assignments" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Rooms Assigned" value={roomsAssigned} icon={School} description="Classes with a room allocation" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Total Capacity" value={totalCapacity} icon={Users} description="Combined seats across all classes" accentClassName="text-cyan-300" />
-          <StatisticCard label="Avg Capacity" value={averageCapacity} icon={BarChart3} description="Average seats per class" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Classes" value={totalClasses} icon={Plus} description="Class sections scheduled in the system" tone="information" />
+          <StatisticCard label="Grades Represented" value={grades.length} icon={RefreshCw} description="Distinct grade levels in use" tone="primary" />
+          <StatisticCard label="Subject Linked" value={subjectLinkedClasses} icon={BookOpen} description="Classes tied to subject assignments" tone="pending" />
+          <StatisticCard label="Rooms Assigned" value={roomsAssigned} icon={School} description="Classes with a room allocation" tone="completed" />
+          <StatisticCard label="Total Capacity" value={totalCapacity} icon={Users} description="Combined seats across all classes" tone="information" />
+          <StatisticCard label="Avg Capacity" value={averageCapacity} icon={BarChart3} description="Average seats per class" tone="primary" />
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Class Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage classes and capacity.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage classes and capacity.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input placeholder="Search classes..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)} className="w-full sm:w-52 sm:flex-none">
@@ -176,17 +175,17 @@ export default function ClassesPage() {
                   <div className="flex items-center gap-3">
                     <TableAvatar>{value?.slice(0, 2).toUpperCase() || "CL"}</TableAvatar>
                     <div className="min-w-0">
-                      <div className="font-medium text-white">{value}</div>
-                      <div className="text-xs text-slate-400">Class section</div>
+                      <div className="font-medium text-[var(--color-text)]">{value}</div>
+                      <div className="text-xs text-[var(--color-muted)]">Class section</div>
                     </div>
                   </div>
                 ),
               },
-              { accessor: "grade_level", header: "Grade", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-slate-400">{value ?? "-"}</span> },
-              { accessor: "school_year", header: "Year", sortable: true, className: "whitespace-nowrap min-w-[140px]", cell: (value: string) => <span className="text-slate-400">{value}</span> },
-              { accessor: "subject", header: "Subject", sortable: true, className: "min-w-[220px]", cell: (value: string | null) => <span className="text-slate-400">{value ?? "-"}</span> },
-              { accessor: "room_number", header: "Room", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-slate-400">{value ?? "-"}</span> },
-              { accessor: "capacity", header: "Capacity", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: number | null) => <span className="text-slate-400">{value ?? "-"}</span> },
+              { accessor: "grade_level", header: "Grade", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
+              { accessor: "school_year", header: "Year", sortable: true, className: "whitespace-nowrap min-w-[140px]", cell: (value: string) => <span className="text-[var(--color-muted)]">{value}</span> },
+              { accessor: "subject", header: "Subject", sortable: true, className: "min-w-[220px]", cell: (value: string | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
+              { accessor: "room_number", header: "Room", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: string | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
+              { accessor: "capacity", header: "Capacity", sortable: true, className: "whitespace-nowrap min-w-[120px]", cell: (value: number | null) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span> },
               {
                 accessor: "actions",
                 header: "Actions",
@@ -195,7 +194,7 @@ export default function ClassesPage() {
                 cell: (_: unknown, cls: Class) => (
                   <div className="flex items-center gap-1 whitespace-nowrap" onClick={(event) => event.stopPropagation()}>
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(cls)}><Pencil className="size-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)}><Trash2 className="size-4 text-rose-400" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)}><Trash2 className="size-4 text-[var(--color-destructive)]" /></Button>
                   </div>
                 ),
               },

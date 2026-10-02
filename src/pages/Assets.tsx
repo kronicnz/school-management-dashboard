@@ -25,6 +25,7 @@ import type { Asset, Student, Staff } from "../lib/api/database.types"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/Input"
+import { Textarea } from "../components/ui/Textarea"
 import { Select } from "../components/ui/Select"
 import { Dialog } from "../components/ui/Dialog"
 import { DataTable } from "../components/ui/DataTable"
@@ -70,6 +71,10 @@ export default function AssetsPage() {
   const [assigneeType, setAssigneeType] = useState<"student" | "staff">("student")
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("")
   const [isAssigning, setIsAssigning] = useState(false)
+
+  function normalizeStatValue(value: string | null | undefined) {
+    return (value ?? "").trim().toLowerCase().replace(/\s+/g, "_")
+  }
 
   const loadData = useCallback(async () => {
     try {
@@ -269,8 +274,12 @@ export default function AssetsPage() {
 
   const filteredAssets = useMemo(() => {
     return assets.filter((a) => {
-      const matchesStatus = !filterStatus || a.status === filterStatus
       const locationCategory = getLocationCategory(a.location)
+      if (!filterLocationCategory && locationCategory === "deprovisioned") {
+        return false
+      }
+
+      const matchesStatus = !filterStatus || a.status === filterStatus
       const matchesLocationCategory =
         !filterLocationCategory || locationCategory === filterLocationCategory
       const query = search.trim().toLowerCase()
@@ -289,12 +298,14 @@ export default function AssetsPage() {
     })
   }, [assets, filterStatus, filterLocationCategory, getAssignedToName, search])
 
-  const totalAssets = assets.length
-  const availableAssets = assets.filter((asset) => asset.status === "available").length
-  const assignedAssets = assets.filter((asset) => Boolean(asset.assigned_to)).length
-  const maintenanceAssets = assets.filter((asset) => asset.status === "maintenance").length
-  const retiredAssets = assets.filter((asset) => asset.status === "retired").length
-  const lostAssets = assets.filter((asset) => asset.status === "lost").length
+  const deprovisionedAssets = assets.filter((asset) => getLocationCategory(asset.location) === "deprovisioned").length
+  const activeAssets = assets.filter((asset) => getLocationCategory(asset.location) !== "deprovisioned")
+  const totalAssets = activeAssets.length
+  const availableAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "available").length
+  const assignedAssets = activeAssets.filter((asset) => Boolean(asset.assigned_to)).length
+  const maintenanceAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "maintenance").length
+  const retiredAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "retired").length
+  const lostAssets = activeAssets.filter((asset) => normalizeStatValue(asset.status) === "lost").length
 
   const statuses = ["available", "in_use", "maintenance", "retired", "lost"]
   const locationCategories = [
@@ -317,7 +328,7 @@ export default function AssetsPage() {
       cell: (val: string) => (
         <div className="flex items-center gap-3 whitespace-nowrap">
           <TableAvatar>{val.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase() || "AS"}</TableAvatar>
-          <span className="font-mono font-medium text-white">{val}</span>
+          <span className="font-mono font-medium text-[var(--color-text)]">{val}</span>
         </div>
       ),
     },
@@ -334,11 +345,11 @@ export default function AssetsPage() {
 
         return (
           <div className="max-w-[260px]">
-            <div className="font-medium text-slate-200 truncate" title={name}>
+            <div className="font-medium text-[var(--color-text)] truncate" title={name}>
               {name}
             </div>
             {subtext && !isDuplicate && (
-              <div className="text-xs text-slate-400 truncate" title={subtext}>
+              <div className="text-xs text-[var(--color-muted)] truncate" title={subtext}>
                 {subtext}
               </div>
             )}
@@ -352,7 +363,7 @@ export default function AssetsPage() {
       sortable: true,
       className: "whitespace-nowrap min-w-[160px]",
       cell: (val: string) => (
-        <span className="font-mono text-xs text-slate-300 whitespace-nowrap">
+        <span className="font-mono text-xs text-[var(--color-text)] whitespace-nowrap">
           {val || "-"}
         </span>
       ),
@@ -362,15 +373,17 @@ export default function AssetsPage() {
       header: "Status",
       sortable: true,
       className: "whitespace-nowrap min-w-[130px]",
-      cell: (val: string) => {
+      cell: (val: string, row: Asset) => {
+        const locationCategory = getLocationCategory(row.location)
+        const displayValue = locationCategory === "deprovisioned" ? "deprovisioned" : (val || "available")
         const tone =
-          val === "available" ? "emerald" :
-          val === "in_use" ? "cyan" :
-          val === "maintenance" ? "amber" :
-          val === "retired" ? "rose" :
-          val === "lost" ? "purple" :
+          displayValue === "available" ? "emerald" :
+          displayValue === "in_use" ? "cyan" :
+          displayValue === "maintenance" ? "amber" :
+          displayValue === "retired" ? "rose" :
+          displayValue === "lost" ? "purple" :
           "slate"
-        return <TableBadge tone={tone} className="capitalize">{(val || "available").replace("_", " ")}</TableBadge>
+        return <TableBadge tone={tone} className="capitalize">{displayValue.replace("_", " ")}</TableBadge>
       },
     },
     {
@@ -379,27 +392,28 @@ export default function AssetsPage() {
       sortable: true,
       className: "min-w-[220px]",
       cell: (val: string) => (
-        <span className="text-xs text-slate-400 max-w-[200px] truncate block" title={val || "-"}>
+        <span className="text-xs text-[var(--color-muted)] max-w-[200px] truncate block" title={val || "-"}>
           {val || "-"}
         </span>
       ),
     },
     {
       accessor: "assigned_to",
-      header: "Assigned To",
+      header: "Allocated To",
       sortable: true,
       className: "whitespace-nowrap min-w-[180px]",
       cell: (_: any, row: Asset) => {
         const assignedName = getAssignedToName(row)
+        const isDeprovisioned = getLocationCategory(row.location) === "deprovisioned"
         if (!row.assigned_to) {
-          return <span className="text-xs text-slate-500 whitespace-nowrap">Unassigned</span>
+          return <span className="text-xs text-[var(--color-muted)] whitespace-nowrap">{isDeprovisioned ? "Deprovisioned" : "Unassigned"}</span>
         }
         return (
           <div className="whitespace-nowrap">
-            <div className="text-xs font-medium text-indigo-300">
-              {assignedName || "Assigned User"}
+            <div className="text-xs font-medium text-[var(--color-accent)]">
+              {assignedName || "Allocated User"}
             </div>
-            <div className="text-[10px] capitalize text-slate-400">{row.assigned_to_type || "User"}</div>
+            <div className="text-xs capitalize text-[var(--color-muted)]">{row.assigned_to_type || "User"}</div>
           </div>
         )
       },
@@ -417,7 +431,7 @@ export default function AssetsPage() {
               size="sm"
               title="Unassign Device"
               onClick={() => handleUnassign(row)}
-              className="text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
+              className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)]"
             >
               <UserMinus className="size-4" />
             </Button>
@@ -427,16 +441,16 @@ export default function AssetsPage() {
               size="sm"
               title="Assign Device"
               onClick={() => openAssignModal(row)}
-              className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-400/10"
+              className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)]"
             >
               <UserPlus className="size-4" />
             </Button>
           )}
           <Button variant="ghost" size="sm" title="Edit" onClick={() => handleEdit(row)}>
-            <Pencil className="size-4 text-slate-300" />
+            <Pencil className="size-4 text-[var(--color-text)]" />
           </Button>
           <Button variant="ghost" size="sm" title="Delete" onClick={() => handleDelete(row.id)}>
-            <Trash2 className="size-4 text-rose-400" />
+            <Trash2 className="size-4 text-[var(--color-destructive)]" />
           </Button>
         </div>
       ),
@@ -445,58 +459,58 @@ export default function AssetsPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Assets & Devices</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => void loadData()} isLoading={loading && !isSyncing}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingAsset(null)
-              resetForm()
-              setShowForm(true)
-            }}
-          >
-            <Plus className="size-4 mr-1" />
-            Add Asset
-          </Button>
-          <Button variant="default" size="sm" onClick={handleGoogleSync} isLoading={isSyncing}>
-            <CloudDownload className="size-4 mr-1" />
-            Sync Google
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => void loadData()} isLoading={loading && !isSyncing}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditingAsset(null)
+            resetForm()
+            setShowForm(true)
+          }}
+        >
+          <Plus className="size-4 mr-1" />
+          Add Asset
+        </Button>
+        <Button variant="default" size="sm" onClick={handleGoogleSync} isLoading={isSyncing}>
+          <CloudDownload className="size-4 mr-1" />
+          Sync Google
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Asset Overview</h2>
-          <p className="text-xs text-slate-400">Device lifecycle counts and assignment status.</p>
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Asset Overview</h2>
+          <p className="text-xs text-[var(--color-muted)]">Device lifecycle counts and assignment status.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Assets" value={totalAssets} icon={Laptop} description="Inventory items tracked in the register" accentClassName="text-cyan-300" />
-          <StatisticCard label="Available" value={availableAssets} icon={RefreshCw} description="Ready to assign or issue" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Assigned" value={assignedAssets} icon={UserPlus} description="Currently allocated to users" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Maintenance" value={maintenanceAssets} icon={UserMinus} description="Temporarily unavailable for use" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Retired" value={retiredAssets} icon={Trash2} description="Removed from active circulation" accentClassName="text-slate-300" glowClassName="from-slate-400/25 via-slate-400/10 to-transparent" />
-          <StatisticCard label="Lost" value={lostAssets} icon={AlertTriangle} description="Items marked as missing" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
+          <StatisticCard label="Total Assets" value={totalAssets} icon={Laptop} description="Inventory items tracked in the register" tone="information" />
+          <StatisticCard label="Deprovisioned" value={deprovisionedAssets} icon={AlertTriangle} description="Devices excluded from the active directory" tone="inactive" />
+          <StatisticCard label="Available" value={availableAssets} icon={RefreshCw} description="Ready to assign or issue" tone="success" />
+          <StatisticCard label="Assigned" value={assignedAssets} icon={UserPlus} description="Currently allocated to users" tone="pending" />
+          <StatisticCard label="Maintenance" value={maintenanceAssets} icon={UserMinus} description="Temporarily unavailable for use" tone="warning" />
+          <StatisticCard label="Retired" value={retiredAssets} icon={Trash2} description="Removed from active circulation" tone="inactive" />
+          <StatisticCard label="Lost" value={lostAssets} icon={AlertTriangle} description="Items marked as missing" tone="destructive" />
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Asset Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage the asset inventory.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage the asset inventory.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input
                 placeholder="Search assets..."
                 value={search}
@@ -643,11 +657,10 @@ export default function AssetsPage() {
             </FormField>
           </div>
           <FormField label="Notes" htmlFor="asset-notes">
-            <textarea
+            <Textarea
               id="asset-notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
               rows={2}
             />
           </FormField>
@@ -675,9 +688,9 @@ export default function AssetsPage() {
       >
         <form onSubmit={handleAssignSubmit} className="space-y-4">
           <div className="space-y-2">
-            <span className="block text-sm font-medium text-slate-300">Assignee Type</span>
+            <span className="block text-sm font-medium text-[var(--color-text)]">Assignee Type</span>
             <div className="flex gap-4">
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                 <input
                   type="radio"
                   name="assigneeType"
@@ -687,11 +700,11 @@ export default function AssetsPage() {
                     setAssigneeType("student")
                     setSelectedAssigneeId("")
                   }}
-                  className="accent-indigo-500"
+                  className="accent-[var(--color-accent)]"
                 />
                 Student
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                 <input
                   type="radio"
                   name="assigneeType"
@@ -701,14 +714,14 @@ export default function AssetsPage() {
                     setAssigneeType("staff")
                     setSelectedAssigneeId("")
                   }}
-                  className="accent-indigo-500"
+                  className="accent-[var(--color-accent)]"
                 />
                 Staff Member
               </label>
             </div>
           </div>
 
-          <FormField label={`Select ${assigneeType === "student" ? "Student" : "Staff Member"}`} htmlFor="asset-assignee" labelClassName="text-sm font-medium text-slate-300">
+          <FormField label={`Select ${assigneeType === "student" ? "Student" : "Staff Member"}`} htmlFor="asset-assignee" labelClassName="text-sm font-medium text-[var(--color-text)]">
             <Select
               id="asset-assignee"
               value={selectedAssigneeId}

@@ -157,8 +157,8 @@ export default function StudentsPage() {
         <div className="flex items-center gap-3 whitespace-nowrap">
           <TableAvatar>{`${row.first_name?.[0] ?? ""}${row.last_name?.[0] ?? ""}`.trim() || "S"}</TableAvatar>
           <div className="min-w-0">
-            <div className="font-medium text-white">{row.first_name} {row.last_name}</div>
-            <div className="text-xs text-slate-400">{row.class_id ? "Assigned to class" : "No class assigned"}</div>
+            <div className="font-medium text-[var(--color-text)]">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-[var(--color-muted)]">{row.class_id ? "Assigned to class" : "No class assigned"}</div>
           </div>
         </div>
       ),
@@ -168,14 +168,14 @@ export default function StudentsPage() {
       header: "Year",
       sortable: true,
       className: "whitespace-nowrap min-w-[120px]",
-      cell: (value: any) => <span className="text-slate-400">{value ?? "-"}</span>,
+      cell: (value: any) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span>,
     },
     {
       accessor: "email",
       header: "Email",
       sortable: true,
       className: "min-w-[240px]",
-      cell: (value: any) => <span className="text-slate-400">{value ?? "-"}</span>,
+      cell: (value: any) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span>,
     },
     {
       accessor: "status",
@@ -199,7 +199,7 @@ export default function StudentsPage() {
             <Pencil className="size-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
-            <Trash2 className="size-4 text-rose-400" />
+            <Trash2 className="size-4 text-[var(--color-destructive)]" />
           </Button>
         </div>
       ),
@@ -208,51 +208,50 @@ export default function StudentsPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Students</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadStudents()}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => { setEditingStudent(null); setFormData(getEmptyStudentForm()); setShowForm(true) }}>
-            <Plus className="size-4 mr-1" />
-            Add Student
-          </Button>
-          <Button variant="default" size="sm" onClick={handleSync}>
-            <CloudDownload className="size-4 mr-1" />
-            Sync Google
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => loadStudents()}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => { setEditingStudent(null); setFormData(getEmptyStudentForm()); setShowForm(true) }}>
+          <Plus className="size-4 mr-1" />
+          Add Student
+        </Button>
+        <Button variant="default" size="sm" onClick={handleSync}>
+          <CloudDownload className="size-4 mr-1" />
+          Sync Google
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Student Overview</h2>
-          <p className="text-xs text-slate-400">Compact counts for the current student cohort.</p>
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Student Overview</h2>
+          <p className="text-xs text-[var(--color-muted)]">Compact counts for the current student cohort.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Students" value={totalStudents} icon={Plus} description="Full roster tracked in the system" accentClassName="text-cyan-300" />
-          <StatisticCard label="Active" value={activeStudents} icon={RefreshCw} description="Currently enrolled and in good standing" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Inactive" value={inactiveStudents} icon={Trash2} description="Archived or inactive records" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Assigned Classes" value={assignedStudents} icon={BookOpen} description="Students linked to classes" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Unassigned Students" value={unassignedStudents} icon={Users} description="Students not linked to a class" accentClassName="text-cyan-300" />
-          <StatisticCard label="Year Groups" value={yearGroups} icon={GraduationCap} description="Distinct year levels represented" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Students" value={totalStudents} icon={Plus} description="Full roster tracked in the system" tone="information" />
+          <StatisticCard label="Active" value={activeStudents} icon={RefreshCw} description="Currently enrolled and in good standing" tone="success" />
+          <StatisticCard label="Inactive" value={inactiveStudents} icon={Trash2} description="Archived or inactive records" tone="destructive" />
+          <StatisticCard label="Assigned Classes" value={assignedStudents} icon={BookOpen} description="Students linked to classes" tone="warning" />
+          <StatisticCard label="Unassigned Students" value={unassignedStudents} icon={Users} description="Students not linked to a class" tone="warning" />
+          <StatisticCard label="Year Groups" value={yearGroups} icon={GraduationCap} description="Distinct year levels represented" tone="primary" />
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Student Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage the student roster.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage the student roster.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full sm:w-52 sm:flex-none">

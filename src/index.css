@@ -2,10 +2,35 @@
 
 @layer base {
   :root {
+    --color-background: rgb(2 6 23);
+    --color-foreground: rgb(226 232 240);
+    --color-card: rgb(15 23 42 / 0.82);
+    --color-card-elevated: rgb(15 23 42 / 0.96);
+    --color-secondary: rgb(30 41 59 / 0.55);
+    --color-muted-foreground: rgb(148 163 184);
+    --color-primary: rgb(96 165 250);
+    --color-primary-foreground: rgb(255 255 255);
+    --color-accent: rgb(34 211 238);
+    --color-accent-foreground: rgb(255 255 255);
+    --color-border: rgb(255 255 255 / 0.1);
+    --color-destructive: rgb(248 113 113);
+    --color-success: rgb(52 211 153);
+    --color-warning: rgb(251 191 36);
+    --color-information: rgb(56 189 248);
+    --color-pending: rgb(167 139 250);
+    --color-overdue: rgb(251 113 133);
+    --color-completed: rgb(52 211 153);
+    --color-inactive: rgb(148 163 184);
+
     --color-canvas: rgb(2 6 23);
+    /* Three depth steps, deliberately non-adjacent in luminance so a card nested
+       in a card still reads as a distinct layer rather than a flat block. See
+       contrast.test.ts, which pins the separation. */
     --color-surface: rgb(15 23 42 / 0.82);
-    --color-surface-elevated: rgb(15 23 42 / 0.96);
-    --color-surface-soft: rgb(15 23 42 / 0.6);
+    --color-surface-elevated: rgb(30 41 59);
+    /* Recessed rather than raised: the nested step goes down toward the canvas
+       so the eye reads inner > outer > page without a third brightening step. */
+    --color-surface-soft: rgb(2 6 23 / 0.6);
     --color-surface-muted: rgb(30 41 59 / 0.55);
     --color-row: rgb(255 255 255 / 0.02);
     --color-row-hover: rgb(255 255 255 / 0.05);
@@ -13,15 +38,55 @@
     --color-border-muted: rgb(255 255 255 / 0.06);
     --color-text: rgb(226 232 240);
     --color-muted: rgb(148 163 184);
-    --color-subtle: rgb(100 116 139);
+    /* Lifted from slate-500: on the recessed surface-soft this tier measured
+       3.85:1, which fails AA for the small metadata text it carries. It has to
+       clear all three depth steps, so the brightest surface sets the floor. */
+    --color-subtle: rgb(140 153 172);
     --color-accent: rgb(34 211 238);
-    --color-accent-strong: rgb(59 130 246);
+    --color-accent-strong: rgb(37 99 235);
     --color-button-text: rgb(255 255 255);
+    /* Solid fills behind a button label. --color-destructive is tuned to sit
+       on white surfaces as text, which makes it far too light to carry white
+       text itself, so the button needs its own darker pair. */
+    --color-danger-fill: rgb(190 18 60);
+    --color-danger-fill-hover: rgb(159 18 57);
     --color-ring: rgb(34 211 238 / 0.35);
     --color-overlay: rgb(2 6 23 / 0.62);
+    /* Elevation is a themed token, not a baked-in dark shadow. A near-black shadow at
+       the strength the dark theme needs reads as a grey smudge on a white card, so
+       each theme carries its own. */
+    --shadow-card: 0 24px 60px -36px rgb(2 6 23 / 0.55);
+    --shadow-table: 0 20px 45px -30px rgb(2 6 23 / 0.45);
   }
 
   html[data-theme="light"] {
+    --color-background: rgb(248 250 252);
+    --color-foreground: rgb(15 23 42);
+    --color-card: rgb(255 255 255 / 0.92);
+    --color-card-elevated: rgb(255 255 255 / 0.98);
+    --color-secondary: rgb(241 245 249 / 0.95);
+    --color-muted-foreground: rgb(71 85 105);
+    --color-primary: rgb(36 91 255);
+    --color-primary-foreground: rgb(255 255 255);
+    --color-accent: rgb(14 116 144);
+    --color-accent-foreground: rgb(255 255 255);
+    --color-border: rgb(148 163 184 / 0.24);
+    /* Foreground pairings, not decorative fills. Every value below is the
+       lightest/darkest step that clears 4.5:1 against all three surface
+       composites in this theme, so a status colour is safe as text on a card
+       in either mode. Darker steps looked more muted and failed on
+       surface-soft; lighter steps failed on white. See contrast.test.ts. */
+    --color-destructive: rgb(185 28 28);
+    --color-success: rgb(4 120 87);
+    --color-warning: rgb(180 83 9);
+    --color-information: rgb(3 105 161);
+    --color-pending: rgb(109 40 217);
+    --color-overdue: rgb(194 65 12);
+    --color-completed: rgb(4 120 87);
+    /* Matches --color-subtle: "inactive" reads as de-emphasised rather than
+       unavailable, and it still has to be legible as a badge label. */
+    --color-inactive: rgb(94 110 133);
+
     --color-canvas: rgb(248 250 252);
     --color-surface: rgb(255 255 255 / 0.92);
     --color-surface-elevated: rgb(255 255 255 / 0.98);
@@ -33,12 +98,20 @@
     --color-border-muted: rgb(148 163 184 / 0.18);
     --color-text: rgb(15 23 42);
     --color-muted: rgb(71 85 105);
-    --color-subtle: rgb(100 116 139);
-    --color-accent: rgb(34 211 238);
-    --color-accent-strong: rgb(59 130 246);
+    /* Darkened from slate-500 for the same reason as the dark theme, measured
+       against the light surface-soft. */
+    --color-subtle: rgb(94 110 133);
+    /* Button fill. It carries a white label, so it is held to AA as a fill,
+       not merely as a text colour. Also resolves the duplicate --color-accent
+       declaration above, which previously left line 91 silently winning. */
+    --color-accent-strong: rgb(37 99 235);
     --color-button-text: rgb(255 255 255);
+    --color-danger-fill: rgb(190 18 60);
+    --color-danger-fill-hover: rgb(159 18 57);
     --color-ring: rgb(37 99 235 / 0.28);
     --color-overlay: rgb(15 23 42 / 0.36);
+    --shadow-card: 0 24px 60px -40px rgb(15 23 42 / 0.16);
+    --shadow-table: 0 20px 45px -34px rgb(15 23 42 / 0.12);
   }
 
   * {
@@ -89,34 +162,5 @@
   .theme-surface {
     background: var(--color-surface);
     color: var(--color-text);
-  }
-
-  html[data-theme="light"] [class*="text-white"] {
-    color: var(--color-text) !important;
-  }
-
-  html[data-theme="light"] [class*="text-slate-100"],
-  html[data-theme="light"] [class*="text-slate-200"],
-  html[data-theme="light"] [class*="text-slate-300"] {
-    color: var(--color-text) !important;
-  }
-
-  html[data-theme="light"] [class*="text-slate-400"],
-  html[data-theme="light"] [class*="text-slate-500"],
-  html[data-theme="light"] [class*="text-slate-600"] {
-    color: var(--color-muted) !important;
-  }
-
-  html[data-theme="light"] [class*="bg-slate-950"],
-  html[data-theme="light"] [class*="bg-slate-900"] {
-    background-color: var(--color-surface) !important;
-  }
-
-  html[data-theme="light"] [class*="bg-white/"] {
-    background-color: var(--color-surface-soft) !important;
-  }
-
-  html[data-theme="light"] [class*="border-white/"] {
-    border-color: var(--color-border) !important;
   }
 }

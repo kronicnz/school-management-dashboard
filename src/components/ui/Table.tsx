@@ -2,7 +2,7 @@ import { forwardRef, type HTMLAttributes, type TableHTMLAttributes, type TdHTMLA
 import { cn } from "../../utils/cn"
 
 export function TableShell({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("w-full min-w-0 overflow-x-auto overscroll-x-contain no-scrollbar rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_20px_45px_-30px_rgba(15,23,42,0.35)]", className)} {...props} />
+  return <div className={cn("w-full min-w-0 overflow-x-auto overscroll-x-contain no-scrollbar rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-table)]", className)} {...props} />
 }
 
 export function TableToolbar({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

@@ -2,6 +2,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useCallback,
   useDeferredValue,
@@ -11,6 +12,7 @@ import React, {
   type ReactNode,
   type ButtonHTMLAttributes,
 } from "react"
+import { createPortal } from "react-dom"
 import { cn } from "../../utils/cn"
 
 export interface SelectOption {
@@ -141,6 +143,13 @@ const sizeConfig = {
   },
 }
 
+type MenuPosition = {
+  top: number
+  left: number
+  width: number
+  maxHeight: number
+}
+
 const Select = forwardRef<HTMLButtonElement, SelectProps>(
   (
     {
@@ -182,6 +191,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const searchInputId = `${selectId}-search`
     const containerRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
     const searchRef = useRef<HTMLInputElement>(null)
 
     useImperativeHandle(ref, () => buttonRef.current!)
@@ -198,6 +208,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const [isOpen, setIsOpen] = useState(false)
     const [focusedIndex, setFocusedIndex] = useState<number>(-1)
     const [searchQuery, setSearchQuery] = useState("")
+    const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null)
 
     const deferredSearchQuery = useDeferredValue(searchQuery)
 
@@ -233,6 +244,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
       setIsOpen(false)
       setSearchQuery("")
       setFocusedIndex(-1)
+      setMenuPosition(null)
     }, [])
 
     const selectOption = useCallback(
@@ -259,13 +271,65 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        const target = event.target as Node
+        const isInsideTrigger = containerRef.current?.contains(target)
+        const isInsideMenu = menuRef.current?.contains(target)
+
+        if (!isInsideTrigger && !isInsideMenu) {
           closeMenu()
         }
       }
       document.addEventListener("mousedown", handleClickOutside)
       return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [closeMenu])
+
+    useLayoutEffect(() => {
+      if (!isOpen) {
+        setMenuPosition(null)
+        return
+      }
+
+      const updateMenuPosition = () => {
+        const button = buttonRef.current
+        const menu = menuRef.current
+        if (!button || !menu || typeof window === "undefined") return
+
+        const padding = 8
+        const gap = 6
+        const buttonRect = button.getBoundingClientRect()
+        const menuRect = menu.getBoundingClientRect()
+        const viewportWidth = window.innerWidth
+        const viewportHeight = window.innerHeight
+
+        const maxWidth = Math.max(0, viewportWidth - padding * 2)
+        const width = Math.min(Math.max(buttonRect.width, menuRect.width), maxWidth)
+
+        const spaceBelow = Math.max(0, viewportHeight - buttonRect.bottom - padding - gap)
+        const spaceAbove = Math.max(0, buttonRect.top - padding - gap)
+        const placeBelow = spaceBelow >= menuRect.height || spaceBelow >= spaceAbove
+        const maxHeight = Math.max(0, Math.min(menuRect.height, placeBelow ? spaceBelow : spaceAbove))
+
+        const left = Math.min(
+          Math.max(buttonRect.left, padding),
+          Math.max(padding, viewportWidth - width - padding)
+        )
+        const top = placeBelow
+          ? buttonRect.bottom + gap
+          : Math.max(padding, buttonRect.top - gap - maxHeight)
+
+        setMenuPosition({ top, left, width, maxHeight })
+      }
+
+      updateMenuPosition()
+
+      window.addEventListener("resize", updateMenuPosition)
+      window.addEventListener("scroll", updateMenuPosition, true)
+
+      return () => {
+        window.removeEventListener("resize", updateMenuPosition)
+        window.removeEventListener("scroll", updateMenuPosition, true)
+      }
+    }, [filteredOptions, isOpen, loading, searchQuery, shouldShowSearch])
 
     useEffect(() => {
       if (!isOpen || !shouldShowSearch) return
@@ -397,7 +461,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 "absolute z-10 pointer-events-none flex items-center justify-center text-[var(--color-muted)] transition-colors duration-200",
                 currentSize.iconLeft,
                 isOpen && "text-[var(--color-accent)]",
-                isError && "text-rose-400"
+                isError && "text-[var(--color-destructive)]"
               )}
             >
               <span className={currentSize.iconSize}>{startIcon}</span>
@@ -415,15 +479,15 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
             onClick={handleButtonClick}
             onKeyDown={handleKeyDown}
               className={cn(
-                "relative flex items-center justify-between w-full font-medium transition-all duration-200 text-left outline-none cursor-pointer",
+                "relative flex w-full cursor-pointer items-center justify-between text-left font-medium transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none",
                 currentSize.button,
                 startIcon ? currentSize.buttonWithIcon : undefined,
-                "bg-[var(--color-surface-soft)] text-[var(--color-text)] border border-[var(--color-border)] shadow-sm backdrop-blur-sm",
+                "bg-[var(--color-surface-soft)] text-[var(--color-text)] border border-[var(--color-border)]",
                 "hover:border-[var(--color-border-muted)] hover:bg-[var(--color-row-hover)]",
                 isOpen
                   ? "border-[var(--color-accent)] ring-2 ring-[var(--color-ring)] bg-[var(--color-surface-elevated)]"
-                  : "focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-ring)]",
-                isError && "border-rose-500/60 hover:border-rose-500 focus:border-rose-500 focus:ring-rose-500/20",
+                  : "focus-visible:border-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
+                isError && "border-[color-mix(in_srgb,var(--color-destructive)_60%,transparent)] hover:border-[var(--color-destructive)] focus-visible:border-[var(--color-destructive)] focus-visible:ring-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)]",
                 "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--color-border)]"
               )}
             {...props}
@@ -446,7 +510,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
               className={cn(
                 "absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center text-[var(--color-muted)] transition-transform duration-200",
                 isOpen && "rotate-180 text-[var(--color-accent)]",
-                isError && "text-rose-400"
+                isError && "text-[var(--color-destructive)]"
               )}
             >
               <svg
@@ -463,18 +527,24 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
           </button>
         </div>
 
-        {isOpen && (
+        {isOpen && typeof document !== "undefined" && createPortal(
           <div
+            ref={menuRef}
             id={listboxId}
             role="listbox"
             aria-labelledby={selectId}
-              className={cn(
-                "absolute z-50 left-0 min-w-full w-max max-w-[22rem] top-[calc(100%+0.375rem)] max-h-72 overflow-hidden",
-                "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-                "rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] shadow-xl backdrop-blur-xl",
-                "transition-all duration-150 ease-out",
-                menuClassName
-              )}
+            className={cn(
+              "fixed z-50 flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] shadow-xl",
+              "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              menuClassName
+            )}
+            style={{
+              top: menuPosition?.top ?? 0,
+              left: menuPosition?.left ?? 0,
+              width: menuPosition?.width ?? "auto",
+              maxHeight: menuPosition ? `${menuPosition.maxHeight}px` : undefined,
+              visibility: menuPosition ? "visible" : "hidden",
+            }}
           >
             {shouldShowSearch && (
               <div className="border-b border-[var(--color-border-muted)] p-2">
@@ -515,9 +585,8 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
               </div>
             )}
 
-            <div className="max-h-60 overflow-y-auto p-1.5 no-scrollbar">
+            <div className="min-h-0 flex-1 overflow-y-auto p-1.5 no-scrollbar">
               {filteredOptions.map((opt, index) => {
-
                 const isSelected = String(opt.value) === String(selectedValue)
                 const isFocused = index === focusedIndex
 
@@ -531,12 +600,12 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     onClick={() => !opt.disabled && selectOption(opt.value)}
                     onMouseEnter={() => setFocusedIndex(index)}
                     className={cn(
-                      "flex items-center justify-between rounded-lg cursor-pointer transition-colors duration-150 select-none my-0.5",
+                      "my-0.5 flex cursor-pointer select-none items-center justify-between rounded-lg transition-colors duration-150",
                       currentSize.option,
                       isFocused && "bg-[var(--color-row-hover)] text-[var(--color-text)]",
                       isSelected && "bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] text-[var(--color-accent)] font-semibold",
                       !isSelected && !isFocused && "text-[var(--color-text)]",
-                      opt.disabled && "opacity-40 cursor-not-allowed hover:bg-transparent",
+                      opt.disabled && "cursor-not-allowed opacity-40 hover:bg-transparent",
                       optionClassName
                     )}
                   >
@@ -549,17 +618,17 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                       <div className="flex flex-col truncate">
                         <span className="truncate leading-normal">{opt.label}</span>
                         {opt.description && (
-                            <span className="text-xs text-[var(--color-muted)] font-normal truncate">
-                              {opt.description}
-                            </span>
+                          <span className="truncate text-xs font-normal text-[var(--color-muted)]">
+                            {opt.description}
+                          </span>
                         )}
                       </div>
                     </div>
 
                     {isSelected && (
-                        <svg
-                          className="w-4 h-4 text-[var(--color-accent)] flex-shrink-0 ml-2"
-                          fill="none"
+                      <svg
+                        className="ml-2 h-4 w-4 flex-shrink-0 text-[var(--color-accent)]"
+                        fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth="2.5"
@@ -572,25 +641,26 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
               })}
 
               {!loading && filteredOptions.length === 0 && (
-                <div className="px-4 py-3 text-xs text-[var(--color-muted)] text-center select-none">
+                <div className="select-none px-4 py-3 text-center text-xs text-[var(--color-muted)]">
                   {searchQuery ? "No results found" : noOptionsText}
                 </div>
               )}
 
               {loading && (
-                <div className="px-4 py-3 text-xs text-[var(--color-muted)] text-center select-none">
+                <div className="select-none px-4 py-3 text-center text-xs text-[var(--color-muted)]">
                   {loadingText}
                 </div>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {(error || helperText) && (
           <p
             className={cn(
               "text-xs transition-opacity duration-150",
-              isError ? "text-rose-400 font-medium" : "text-[var(--color-muted)]"
+              isError ? "text-[var(--color-destructive)] font-medium" : "text-[var(--color-muted)]"
             )}
           >
             {error || helperText}

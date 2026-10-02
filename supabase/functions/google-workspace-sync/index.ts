@@ -10,11 +10,72 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
 
+const GOOGLE_OAUTH_TOKEN_URLS = [
+  "https://oauth2.googleapis.com/token",
+  "https://www.googleapis.com/oauth2/v4/token",
+]
+
+const GOOGLE_ADMIN_API_BASE_URLS = ["https://admin.googleapis.com", "https://www.googleapis.com"]
+
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     status,
   })
+}
+
+function isNameResolutionError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "")
+  return /name resolution failed|dns/i.test(message)
+}
+
+async function fetchWithDnsFallback(urls: string[], init: RequestInit, label: string): Promise<Response> {
+  let lastError: unknown
+
+  for (const url of urls) {
+    try {
+      return await fetch(url, init)
+    } catch (error) {
+      lastError = error
+      if (!isNameResolutionError(error)) {
+        throw error
+      }
+    }
+  }
+
+  throw new Error(`${label}: ${lastError instanceof Error ? lastError.message : "request failed"}`)
+}
+
+async function readLocalEnvFile(): Promise<Record<string, string>> {
+  const candidates = [new URL("../../../.env.local", import.meta.url)]
+  const env: Record<string, string> = {}
+
+  for (const candidate of candidates) {
+    try {
+      const text = await Deno.readTextFile(candidate)
+
+      for (const line of text.split(/\r?\n/)) {
+        const trimmed = line.trim()
+        if (!trimmed || trimmed.startsWith("#")) continue
+
+        const equalsIndex = trimmed.indexOf("=")
+        if (equalsIndex < 0) continue
+
+        const key = trimmed.slice(0, equalsIndex).trim()
+        let value = trimmed.slice(equalsIndex + 1).trim()
+
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1)
+        }
+
+        env[key] = value
+      }
+    } catch {
+      // try the next candidate
+    }
+  }
+
+  return env
 }
 
 /** Converts a Google ID to a deterministic UUID v5-like string */
@@ -32,16 +93,20 @@ async function googleIdToUuid(googleId: string): Promise<string> {
 
 /** Obtains an OAuth Access Token from Google */
 async function getGoogleAccessToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string> {
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }).toString(),
-  })
+  const response = await fetchWithDnsFallback(
+    GOOGLE_OAUTH_TOKEN_URLS,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }).toString(),
+    },
+    "Failed to refresh Google token"
+  )
 
   if (!response.ok) {
     const err = await response.text()
@@ -54,6 +119,33 @@ async function getGoogleAccessToken(clientId: string, clientSecret: string, refr
   }
 
   return data.access_token
+}
+
+async function resolveGoogleAccessToken(): Promise<string> {
+  const directAccessToken = Deno.env.get("GOOGLE_ACCESS_TOKEN")
+  if (directAccessToken && directAccessToken.trim()) {
+    return directAccessToken.trim()
+  }
+
+  const localEnv = await readLocalEnvFile()
+  const fileAccessToken = localEnv.GOOGLE_ACCESS_TOKEN
+  if (fileAccessToken && fileAccessToken.trim() && fileAccessToken !== "placeholder") {
+    return fileAccessToken.trim()
+  }
+
+  const refreshToken = Deno.env.get("GOOGLE_REFRESH_TOKEN") || Deno.env.get("SUPABASE_AUTH_EXTERNAL_GOOGLE_REFRESH_TOKEN") || localEnv.GOOGLE_REFRESH_TOKEN || localEnv.SUPABASE_AUTH_EXTERNAL_GOOGLE_REFRESH_TOKEN
+  const clientId = Deno.env.get("GOOGLE_CLIENT_ID") || Deno.env.get("SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID") || localEnv.GOOGLE_CLIENT_ID || localEnv.SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID
+  const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")
+    || Deno.env.get("SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET")
+    || Deno.env.get("SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET")
+    || localEnv.GOOGLE_CLIENT_SECRET
+    || localEnv.SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET
+    || localEnv.SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET
+  if (!refreshToken || !clientId || !clientSecret) {
+    throw new Error("Missing Google credentials. Set GOOGLE_ACCESS_TOKEN or GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN (or the SUPABASE_AUTH_EXTERNAL_GOOGLE_* aliases).")
+  }
+
+  return await getGoogleAccessToken(clientId, clientSecret, refreshToken)
 }
 
 /** Fetches users from Google Directory API with strict orgUnitPath matching */
@@ -71,14 +163,18 @@ async function fetchGoogleUsersForOrgPath(accessToken: string, targetOrgPath: st
     })
     if (pageToken) queryParams.set("pageToken", pageToken)
 
-    const apiUrl = `https://admin.googleapis.com/admin/directory/v1/users?${queryParams.toString()}&orgUnitPath=${encodeURI(cleanPath)}`
+    const apiPath = `/admin/directory/v1/users?${queryParams.toString()}&orgUnitPath=${encodeURI(cleanPath)}`
 
-    const response = await fetch(apiUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
+    const response = await fetchWithDnsFallback(
+      GOOGLE_ADMIN_API_BASE_URLS.map((base) => `${base}${apiPath}`),
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+        },
       },
-    })
+      `Google API request failed for ${cleanPath}`
+    )
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -134,13 +230,6 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "Missing Supabase environment configuration" }, 500)
     }
 
-    const refreshToken = Deno.env.get("GOOGLE_REFRESH_TOKEN")
-    const clientId = Deno.env.get("GOOGLE_CLIENT_ID")
-    const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")
-    if (!refreshToken || !clientId || !clientSecret) {
-      return jsonResponse({ error: "Missing Google OAuth environment credentials" }, 400)
-    }
-
     const authHeader = req.headers.get("Authorization") ?? ""
     if (!authHeader.startsWith("Bearer ")) {
       return jsonResponse({ error: "Missing authorization token" }, 401)
@@ -169,12 +258,12 @@ serve(async (req: Request) => {
       .filter((row) => row.active && (!row.effective_from || new Date(row.effective_from).getTime() <= Date.now()) && (!row.effective_to || new Date(row.effective_to).getTime() >= Date.now()))
       .map((row) => row.role)
 
-    const allowedRoles = new Set(["principal", "deputy_principal", "counsellor_delegate", "leadership_delegate"])
+    const allowedRoles = new Set(["site_admin", "it_admin"])
     if (!activeRoles.some((role) => allowedRoles.has(role))) {
       return jsonResponse({ error: "insufficient_privilege" }, 403)
     }
 
-    const accessToken = await getGoogleAccessToken(clientId, clientSecret, refreshToken)
+    const accessToken = await resolveGoogleAccessToken()
 
     // ==========================================
     // 1. Staff Sync
@@ -319,14 +408,18 @@ serve(async (req: Request) => {
         })
         if (pageToken) queryParams.set("pageToken", pageToken)
 
-        const apiUrl = `https://admin.googleapis.com/admin/directory/v1/customer/my_customer/devices/chromeos?${queryParams.toString()}`
+        const apiPath = `/admin/directory/v1/customer/my_customer/devices/chromeos?${queryParams.toString()}`
 
-        const response = await fetch(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/json",
+        const response = await fetchWithDnsFallback(
+          GOOGLE_ADMIN_API_BASE_URLS.map((base) => `${base}${apiPath}`),
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: "application/json",
+            },
           },
-        })
+          "Google ChromeOS API request failed"
+        )
 
         if (!response.ok) {
           const errorText = await response.text()

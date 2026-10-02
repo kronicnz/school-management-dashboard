@@ -120,6 +120,8 @@ export interface Database {
           org_unit_path: string | null
           created_at: string | null
           updated_at: string | null
+          pending_roles: Json
+          pending_roles_granted_by: string | null
         }
         Insert: {
           id?: string
@@ -135,6 +137,8 @@ export interface Database {
           org_unit_path?: string | null
           created_at?: string | null
           updated_at?: string | null
+          pending_roles?: Json
+          pending_roles_granted_by?: string | null
         }
         Update: {
           id?: string
@@ -150,6 +154,8 @@ export interface Database {
           org_unit_path?: string | null
           created_at?: string | null
           updated_at?: string | null
+          pending_roles?: Json
+          pending_roles_granted_by?: string | null
         }
       }
       assets: {
@@ -1090,6 +1096,541 @@ export interface Database {
           updated_at?: string
         }
       }
+      finance_intake_batches: {
+        Row: {
+          id: string
+          source: string
+          status: string
+          source_label: string | null
+          message_count: number
+          item_count: number
+          processed_count: number
+          error_count: number
+          scheduled_for: string | null
+          started_at: string | null
+          finished_at: string | null
+          retry_of: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          source: string
+          status?: string
+          source_label?: string | null
+          message_count?: number
+          item_count?: number
+          processed_count?: number
+          error_count?: number
+          scheduled_for?: string | null
+          started_at?: string | null
+          finished_at?: string | null
+          retry_of?: string | null
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          source?: string
+          status?: string
+          source_label?: string | null
+          message_count?: number
+          item_count?: number
+          processed_count?: number
+          error_count?: number
+          scheduled_for?: string | null
+          started_at?: string | null
+          finished_at?: string | null
+          retry_of?: string | null
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      finance_intake_items: {
+        Row: {
+          id: string
+          batch_id: string | null
+          source_type: string
+          source_fingerprint: string
+          source_key: string | null
+          gmail_message_id: string | null
+          gmail_thread_id: string | null
+          label_name: string | null
+          subject: string | null
+          sender_email: string | null
+          received_at: string | null
+          file_name: string | null
+          mime_type: string | null
+          storage_path: string | null
+          status: string
+          confidence: number
+          duplicate_risk: string
+          processed_at: string | null
+          failed_at: string | null
+          failure_reason: string | null
+          metadata: Json
+          validation_errors: Json
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          batch_id?: string | null
+          source_type: string
+          source_fingerprint: string
+          source_key?: string | null
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
+          label_name?: string | null
+          subject?: string | null
+          sender_email?: string | null
+          received_at?: string | null
+          file_name?: string | null
+          mime_type?: string | null
+          storage_path?: string | null
+          status?: string
+          confidence?: number
+          duplicate_risk?: string
+          processed_at?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          metadata?: Json
+          validation_errors?: Json
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          batch_id?: string | null
+          source_type?: string
+          source_fingerprint?: string
+          source_key?: string | null
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
+          label_name?: string | null
+          subject?: string | null
+          sender_email?: string | null
+          received_at?: string | null
+          file_name?: string | null
+          mime_type?: string | null
+          storage_path?: string | null
+          status?: string
+          confidence?: number
+          duplicate_risk?: string
+          processed_at?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          metadata?: Json
+          validation_errors?: Json
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      finance_invoice_candidates: {
+        Row: {
+          id: string
+          intake_item_id: string
+          supplier_name: string
+          supplier_alias: string | null
+          xero_contact_id: string | null
+          invoice_number: string | null
+          invoice_date: string | null
+          due_date: string | null
+          currency: string
+          subtotal: number
+          tax_total: number
+          gross_total: number
+          line_items: Json
+          extraction_payload: Json
+          validation_flags: Json
+          validation_errors: Json
+          confidence: number
+          duplicate_fingerprint: string
+          match_state: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          intake_item_id: string
+          supplier_name: string
+          supplier_alias?: string | null
+          xero_contact_id?: string | null
+          invoice_number?: string | null
+          invoice_date?: string | null
+          due_date?: string | null
+          currency?: string
+          subtotal?: number
+          tax_total?: number
+          gross_total?: number
+          line_items?: Json
+          extraction_payload?: Json
+          validation_flags?: Json
+          validation_errors?: Json
+          confidence?: number
+          duplicate_fingerprint: string
+          match_state?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          intake_item_id?: string
+          supplier_name?: string
+          supplier_alias?: string | null
+          xero_contact_id?: string | null
+          invoice_number?: string | null
+          invoice_date?: string | null
+          due_date?: string | null
+          currency?: string
+          subtotal?: number
+          tax_total?: number
+          gross_total?: number
+          line_items?: Json
+          extraction_payload?: Json
+          validation_flags?: Json
+          validation_errors?: Json
+          confidence?: number
+          duplicate_fingerprint?: string
+          match_state?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      finance_xero_links: {
+        Row: {
+          id: string
+          candidate_id: string
+          xero_tenant_id: string
+          xero_invoice_id: string
+          xero_invoice_number: string | null
+          xero_status: string
+          xero_type: string
+          xero_url: string | null
+          idempotency_key: string
+          create_status: string
+          last_synced_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          candidate_id: string
+          xero_tenant_id: string
+          xero_invoice_id: string
+          xero_invoice_number?: string | null
+          xero_status: string
+          xero_type?: string
+          xero_url?: string | null
+          idempotency_key: string
+          create_status?: string
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          candidate_id?: string
+          xero_tenant_id?: string
+          xero_invoice_id?: string
+          xero_invoice_number?: string | null
+          xero_status?: string
+          xero_type?: string
+          xero_url?: string | null
+          idempotency_key?: string
+          create_status?: string
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      finance_processing_events: {
+        Row: {
+          id: number
+          batch_id: string | null
+          intake_item_id: string | null
+          candidate_id: string | null
+          event_type: string
+          severity: string
+          details: Json
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          batch_id?: string | null
+          intake_item_id?: string | null
+          candidate_id?: string | null
+          event_type: string
+          severity?: string
+          details?: Json
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          batch_id?: string | null
+          intake_item_id?: string | null
+          candidate_id?: string | null
+          event_type?: string
+          severity?: string
+          details?: Json
+          created_by?: string | null
+          created_at?: string
+        }
+      }
+      finance_budgets: {
+        Row: {
+          id: string
+          budget_code: string
+          fiscal_year: string
+          term: string
+          department: string
+          category: string
+          tracking_dimension: string | null
+          budget_amount: number
+          actual_amount: number
+          forecast_amount: number
+          notes: string | null
+          is_active: boolean
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          budget_code: string
+          fiscal_year: string
+          term: string
+          department: string
+          category: string
+          tracking_dimension?: string | null
+          budget_amount?: number
+          actual_amount?: number
+          forecast_amount?: number
+          notes?: string | null
+          is_active?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          budget_code?: string
+          fiscal_year?: string
+          term?: string
+          department?: string
+          category?: string
+          tracking_dimension?: string | null
+          budget_amount?: number
+          actual_amount?: number
+          forecast_amount?: number
+          notes?: string | null
+          is_active?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      finance_forecast_snapshots: {
+        Row: {
+          id: string
+          snapshot_date: string
+          horizon_weeks: number
+          cash_balance: number
+          projected_inflow: number
+          projected_outflow: number
+          budget_variance: number
+          open_ap_count: number
+          draft_bill_count: number
+          awaiting_approval_count: number
+          exception_count: number
+          notes: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          snapshot_date: string
+          horizon_weeks?: number
+          cash_balance?: number
+          projected_inflow?: number
+          projected_outflow?: number
+          budget_variance?: number
+          open_ap_count?: number
+          draft_bill_count?: number
+          awaiting_approval_count?: number
+          exception_count?: number
+          notes?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          snapshot_date?: string
+          horizon_weeks?: number
+          cash_balance?: number
+          projected_inflow?: number
+          projected_outflow?: number
+          budget_variance?: number
+          open_ap_count?: number
+          draft_bill_count?: number
+          awaiting_approval_count?: number
+          exception_count?: number
+          notes?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      finance_supplier_aliases: {
+        Row: {
+          id: string
+          supplier_name: string
+          normalized_name: string
+          nzbn: string | null
+          xero_contact_id: string | null
+          xero_contact_name: string | null
+          default_account_code: string | null
+          category: string | null
+          active: boolean
+          usage_count: number
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          supplier_name: string
+          normalized_name: string
+          nzbn?: string | null
+          xero_contact_id?: string | null
+          xero_contact_name?: string | null
+          default_account_code?: string | null
+          category?: string | null
+          active?: boolean
+          usage_count?: number
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          supplier_name?: string
+          normalized_name?: string
+          nzbn?: string | null
+          xero_contact_id?: string | null
+          xero_contact_name?: string | null
+          default_account_code?: string | null
+          category?: string | null
+          active?: boolean
+          usage_count?: number
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      app_settings: {
+        Row: {
+          id: string
+          allowed_email_domains: string[]
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          allowed_email_domains?: string[]
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          allowed_email_domains?: string[]
+          updated_at?: string
+        }
+      }
+      account_registrations: {
+        Row: {
+          profile_id: string
+          status: string
+          created_by: string | null
+          invited_at: string
+          invite_sent_at: string | null
+          last_reinvited_at: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          profile_id: string
+          status?: string
+          created_by?: string | null
+          invited_at?: string
+          invite_sent_at?: string | null
+          last_reinvited_at?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          profile_id?: string
+          status?: string
+          created_by?: string | null
+          invited_at?: string
+          invite_sent_at?: string | null
+          last_reinvited_at?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      account_audit_log: {
+        Row: {
+          id: number
+          profile_id: string | null
+          actor_id: string | null
+          actor_email: string | null
+          action: string
+          detail: Json
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          profile_id?: string | null
+          actor_id?: string | null
+          actor_email?: string | null
+          action: string
+          detail?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          profile_id?: string | null
+          actor_id?: string | null
+          actor_email?: string | null
+          action?: string
+          detail?: Json
+          created_at?: string
+        }
+      }
     }
     Views: {
       effective_teacher_student_scope: {
@@ -1100,6 +1641,37 @@ export interface Database {
       }
     }
     Functions: {
+      sync_staff_roles_by_profile_id: {
+        Args: {
+          p_profile_id: string
+          p_grants: Json
+        }
+        Returns: undefined
+      }
+      list_staff_directory: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          profile_id: string | null
+          first_name: string
+          last_name: string
+          email: string
+          phone: string | null
+          role: string | null
+          department: string | null
+          hire_date: string | null
+          status: string | null
+          org_unit_path: string | null
+          created_at: string | null
+          updated_at: string | null
+          roles: Json
+          primary_role: string | null
+          account_status: string | null
+          account_invited_at: string | null
+          dated_roles: Json
+          pending_roles: Json
+        }[]
+      }
       soft_delete_incident: {
         Args: {
           p_incident_id: string
@@ -1366,6 +1938,30 @@ export type TicketAuditLogUpdate = Database["public"]["Tables"]["ticket_audit_lo
 export type TicketNotification = Database["public"]["Tables"]["ticket_notifications"]["Row"]
 export type TicketNotificationInsert = Database["public"]["Tables"]["ticket_notifications"]["Insert"]
 export type TicketNotificationUpdate = Database["public"]["Tables"]["ticket_notifications"]["Update"]
+export type FinanceIntakeBatch = Database["public"]["Tables"]["finance_intake_batches"]["Row"]
+export type FinanceIntakeBatchInsert = Database["public"]["Tables"]["finance_intake_batches"]["Insert"]
+export type FinanceIntakeBatchUpdate = Database["public"]["Tables"]["finance_intake_batches"]["Update"]
+export type FinanceIntakeItem = Database["public"]["Tables"]["finance_intake_items"]["Row"]
+export type FinanceIntakeItemInsert = Database["public"]["Tables"]["finance_intake_items"]["Insert"]
+export type FinanceIntakeItemUpdate = Database["public"]["Tables"]["finance_intake_items"]["Update"]
+export type FinanceInvoiceCandidate = Database["public"]["Tables"]["finance_invoice_candidates"]["Row"]
+export type FinanceInvoiceCandidateInsert = Database["public"]["Tables"]["finance_invoice_candidates"]["Insert"]
+export type FinanceInvoiceCandidateUpdate = Database["public"]["Tables"]["finance_invoice_candidates"]["Update"]
+export type FinanceXeroLink = Database["public"]["Tables"]["finance_xero_links"]["Row"]
+export type FinanceXeroLinkInsert = Database["public"]["Tables"]["finance_xero_links"]["Insert"]
+export type FinanceXeroLinkUpdate = Database["public"]["Tables"]["finance_xero_links"]["Update"]
+export type FinanceProcessingEvent = Database["public"]["Tables"]["finance_processing_events"]["Row"]
+export type FinanceProcessingEventInsert = Database["public"]["Tables"]["finance_processing_events"]["Insert"]
+export type FinanceProcessingEventUpdate = Database["public"]["Tables"]["finance_processing_events"]["Update"]
+export type FinanceBudget = Database["public"]["Tables"]["finance_budgets"]["Row"]
+export type FinanceBudgetInsert = Database["public"]["Tables"]["finance_budgets"]["Insert"]
+export type FinanceBudgetUpdate = Database["public"]["Tables"]["finance_budgets"]["Update"]
+export type FinanceForecastSnapshot = Database["public"]["Tables"]["finance_forecast_snapshots"]["Row"]
+export type FinanceForecastSnapshotInsert = Database["public"]["Tables"]["finance_forecast_snapshots"]["Insert"]
+export type FinanceForecastSnapshotUpdate = Database["public"]["Tables"]["finance_forecast_snapshots"]["Update"]
+export type FinanceSupplierAlias = Database["public"]["Tables"]["finance_supplier_aliases"]["Row"]
+export type FinanceSupplierAliasInsert = Database["public"]["Tables"]["finance_supplier_aliases"]["Insert"]
+export type FinanceSupplierAliasUpdate = Database["public"]["Tables"]["finance_supplier_aliases"]["Update"]
 
 // Auth types
 export interface AuthUser {

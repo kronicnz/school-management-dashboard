@@ -6,7 +6,8 @@ project_id = "school-management-system"
 
 [api]
 enabled = true
-external_url = "http://192-168-1-46.nip.io:54321"
+#external_url = "http://192-168-1-46.nip.io:54321"
+external_url = "http://100.115.58.8.nip.io:54321"
 # Port to use for the API URL.
 port = 54321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
@@ -98,7 +99,8 @@ port = 54323
 # External URL of the API server that frontend connects to.
 api_url = "http://127.0.0.1"
 # OpenAI API Key to use for Supabase AI in the Supabase Studio.
-openai_api_key = "env(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)"
+#openai_api_key = "env(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)"
+openai_api_key = "env(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)"
 
 # Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
 # are monitored, and you can view the emails that would have been sent from the web interface.
@@ -154,18 +156,49 @@ max_indexes = 5
 
 
 [auth]
-site_url = "http://192-168-1-46.nip.io:5173"
-additional_redirect_urls = ["http://localhost:5173", "http://192-168-1-46.nip.io:5173"]
+site_url = "http://127.0.0.1.nip.io:5173"
+# The account-admin edge function redirects an invited person to
+# APP_URL + /set-password, so every origin the dev server is actually served from
+# has to be allowed here or GoTrue silently falls back to site_url.
+#
+# The /set-password variants are listed explicitly because GoTrue matches the
+# allow-list against the full path, not just the origin. An entry ending at the
+# origin does NOT cover /set-password: the invitation still went out, but its link
+# redirected to the site root instead, so the invited person landed on the app
+# rather than on the page that asks for a password. Verified against GoTrue on this
+# stack: every /set-password target was rewritten to site_url until the exact
+# origin+path was allowed.
+additional_redirect_urls = [
+  "http://127.0.0.1:5173",
+  "http://100.115.58.8:5173",
+  "http://localhost:5173",
+  "http://127.0.0.1.nip.io:5173",
+  "http://100.115.58.8.nip.io:5173",
+  "http://127.0.0.1:5173/set-password",
+  "http://100.115.58.8:5173/set-password",
+  "http://localhost:5173/set-password",
+  "http://127.0.0.1.nip.io:5173/set-password",
+  "http://100.115.58.8.nip.io:5173/set-password",
+]
+
+
+#site_url = "http://192-168-1-46.nip.io:5173"
+#additional_redirect_urls = ["http://127.0.0.1:5173", "http://192-168-1-46.nip.io:5173", "http://100.115.58.8:5173"/]
 
 [auth.external.google]
 enabled = true
 client_id = "1004047589689-3o0rm2l1mue4adcvnf6aoh086eu4c7i6.apps.googleusercontent.com"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
-redirect_uri = "http://192-168-1-46.nip.io:54321/auth/v1/callback"
+redirect_uri = "http://127.0.0.1.nip.io:54321/auth/v1/callback"
+
+#redirect_uri = "http://192-168-1-46.nip.io:54321/auth/v1/callback"
 skip_nonce_check = true
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
+# This caps local testing of the account-admin invitation flow and the /set-password
+# reset flow at two emails an hour. Raise it temporarily when testing; put it back
+# afterwards, because the limit is a brute-force control in production.
 email_sent = 2
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
@@ -203,7 +236,27 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
+# Outbound mail for Supabase's own auth emails: invitations sent by the
+# `account-admin` edge function, and the self-service password reset that lands on
+# /set-password.
+#
+# This is the ONLY path that can deliver a credential link. The project also has an
+# app-composed mail path through the EMAIL_WEBHOOK_URL webhook in
+# supabase/functions/send-incident-email, but that cannot mint a one-time token, so
+# account provisioning deliberately does not use it.
+#
+# LEFT COMMENTED OUT ON PURPOSE. Uncommenting it here points the local stack at
+# SendGrid, which overrides [local_smtp] above and stops invitations and resets
+# from being captured in Inbucket on http://localhost:54324 - the local test path
+# for this whole flow. Enable it per environment, not in the shared config.
+#
+# Setup, without committing a secret:
+#   1. Set the provider key in the environment (SENDGRID_API_KEY for SendGrid).
+#   2. Locally: read from the environment via env(...); Inbucket needs no key.
+#   3. Hosted: `supabase secrets set SENDGRID_API_KEY=<value>`.
+#   4. The app origin must be in `additional_redirect_urls` above, because the
+#      invitation redirects to APP_URL + /set-password.
+#
 # [auth.email.smtp]
 # enabled = true
 # host = "smtp.sendgrid.net"
@@ -352,11 +405,52 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
+# The finance pipeline writes the audit trail, so an anonymous caller must not be
+# able to reach it. The gateway rejects unauthenticated requests, and the function
+# additionally re-checks the finance role per action (see auth.ts). The one
+# exception is the pg_cron drain, which authenticates with the service role key.
+[functions.finance-intake]
+verify_jwt = true
+
+[functions.google-workspace-sync]
+verify_jwt = false
+
+[functions.send-incident-email]
+verify_jwt = false
+
+# Creates logins, sends invitations, and revokes access. An anonymous caller must
+# never reach it, and the function re-checks the admin role per request on top of
+# the gateway (see supabase/functions/account-admin/auth.ts).
+[functions.account-admin]
+verify_jwt = true
+
 [edge_runtime.secrets]
 # Set these with `supabase secrets set` or local environment variables.
+# Origin of the running app. The account-admin function appends /set-password to it
+# to build the post-invitation redirect, so it must be the origin the browser uses.
+APP_URL = "env(APP_URL)"
 GOOGLE_CLIENT_ID = "env(GOOGLE_CLIENT_ID)"
 GOOGLE_CLIENT_SECRET = "env(GOOGLE_CLIENT_SECRET)"
 GOOGLE_REFRESH_TOKEN = "env(GOOGLE_REFRESH_TOKEN)"
+FINANCE_GOOGLE_CLIENT_ID = "env(FINANCE_GOOGLE_CLIENT_ID)"
+FINANCE_GOOGLE_CLIENT_SECRET = "env(FINANCE_GOOGLE_CLIENT_SECRET)"
+FINANCE_GOOGLE_REFRESH_TOKEN = "env(FINANCE_GOOGLE_REFRESH_TOKEN)"
+FINANCE_GOOGLE_ACCESS_TOKEN = "env(FINANCE_GOOGLE_ACCESS_TOKEN)"
+FINANCE_GEMINI_API_KEY = "env(FINANCE_GEMINI_API_KEY)"
+FINANCE_GEMINI_OCR_MODEL = "env(FINANCE_GEMINI_OCR_MODEL)"
+FINANCE_GEMINI_REVIEW_MODEL = "env(FINANCE_GEMINI_REVIEW_MODEL)"
+FINANCE_GEMINI_FALLBACK_MODEL = "env(FINANCE_GEMINI_FALLBACK_MODEL)"
+GEMINI_API_KEY = "env(GEMINI_API_KEY)"
+XERO_ACCESS_TOKEN = "env(XERO_ACCESS_TOKEN)"
+XERO_REFRESH_TOKEN = "env(XERO_REFRESH_TOKEN)"
+XERO_CLIENT_ID = "env(XERO_CLIENT_ID)"
+XERO_CLIENT_SECRET = "env(XERO_CLIENT_SECRET)"
+XERO_TENANT_ID = "env(XERO_TENANT_ID)"
+FINANCE_XERO_ACCESS_TOKEN = "env(FINANCE_XERO_ACCESS_TOKEN)"
+FINANCE_XERO_REFRESH_TOKEN = "env(FINANCE_XERO_REFRESH_TOKEN)"
+FINANCE_XERO_CLIENT_ID = "env(FINANCE_XERO_CLIENT_ID)"
+FINANCE_XERO_CLIENT_SECRET = "env(FINANCE_XERO_CLIENT_SECRET)"
+FINANCE_XERO_TENANT_ID = "env(FINANCE_XERO_TENANT_ID)"
 
 [analytics]
 enabled = true

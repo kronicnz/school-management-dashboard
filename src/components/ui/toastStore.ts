@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-export type ToastVariant = "success" | "error"
+export type ToastVariant = "success" | "error" | "warning"
 
 export interface ToastOptions {
   title: string
@@ -15,46 +15,61 @@ interface ToastItem extends Required<Pick<ToastOptions, "title">> {
   variant: ToastVariant
 }
 
+interface ToastStoreState {
+  currentToasts: ToastItem[]
+  listeners: Set<() => void>
+  timers: Map<string, number>
+}
+
 const DEFAULT_DURATION = 4500
 const MAX_TOASTS = 5
 
-let currentToasts: ToastItem[] = []
-const listeners = new Set<() => void>()
-const timers = new Map<string, number>()
+const store = ((globalThis as typeof globalThis & { __schoolManagementToastStore?: ToastStoreState }).__schoolManagementToastStore ??= {
+  currentToasts: [],
+  listeners: new Set<() => void>(),
+  timers: new Map<string, number>(),
+})
+
+let toastSequence = 0
+
+function createToastId() {
+  toastSequence += 1
+  return `toast-${Date.now()}-${toastSequence}-${Math.random().toString(36).slice(2, 8)}`
+}
 
 function emitChange() {
-  for (const listener of listeners) {
+  for (const listener of store.listeners) {
     listener()
   }
 }
 
 export function subscribe(listener: () => void) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
+  store.listeners.add(listener)
+  return () => store.listeners.delete(listener)
 }
 
 export function getSnapshot() {
-  return currentToasts
+  return store.currentToasts
 }
 
 function clearTimer(id: string) {
-  const timer = timers.get(id)
+  const timer = store.timers.get(id)
   if (timer !== undefined) {
     window.clearTimeout(timer)
-    timers.delete(id)
+    store.timers.delete(id)
   }
 }
 
 export function removeToast(id: string) {
   clearTimer(id)
-  const next = currentToasts.filter((toast) => toast.id !== id)
-  if (next.length === currentToasts.length) return
-  currentToasts = next
+  const next = store.currentToasts.filter((toast) => toast.id !== id)
+  if (next.length === store.currentToasts.length) return
+  store.currentToasts = next
   emitChange()
 }
 
 export function pushToast(options: ToastOptions) {
-  const id = crypto.randomUUID()
+  const id = createToastId()
   const item: ToastItem = {
     id,
     title: options.title,
@@ -62,22 +77,22 @@ export function pushToast(options: ToastOptions) {
     variant: options.variant ?? "success",
   }
 
-  currentToasts = [item, ...currentToasts].slice(0, MAX_TOASTS)
+  store.currentToasts = [item, ...store.currentToasts].slice(0, MAX_TOASTS)
   emitChange()
 
   const timer = window.setTimeout(() => {
     removeToast(id)
   }, options.duration ?? DEFAULT_DURATION)
 
-  timers.set(id, timer)
+  store.timers.set(id, timer)
   return id
 }
 
 export function clearToasts() {
-  for (const timer of timers.values()) {
+  for (const timer of store.timers.values()) {
     window.clearTimeout(timer)
   }
-  timers.clear()
-  currentToasts = []
+  store.timers.clear()
+  store.currentToasts = []
   emitChange()
 }

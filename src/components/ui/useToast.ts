@@ -19,6 +19,8 @@ export function useToast() {
         pushToast({ title, description, duration, variant: "success" }),
       error: (title: string, description?: ReactNode, duration?: number) =>
         pushToast({ title, description, duration, variant: "error" }),
+      warning: (title: string, description?: ReactNode, duration?: number) =>
+        pushToast({ title, description, duration, variant: "warning" }),
       dismiss,
       dismissAll,
     }),

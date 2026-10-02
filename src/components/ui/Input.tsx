@@ -13,7 +13,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         type={type}
         className={cn(
           "flex h-10 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-50",
-          error && "border-rose-400/50 focus:ring-rose-400/20",
+          error && "border-[color-mix(in_srgb,var(--color-destructive)_50%,transparent)] focus:ring-[color-mix(in_srgb,var(--color-destructive)_20%,transparent)]",
           className,
         )}
         {...props}

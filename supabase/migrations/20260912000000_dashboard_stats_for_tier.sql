@@ -18,18 +18,14 @@ begin
       and active = true;
   end if;
 
-  if 'it_admin' = any(v_roles) then
+  if 'site_admin' = any(v_roles) then
+    v_tier := 'site_admin';
+  elsif 'it_admin' = any(v_roles) then
     v_tier := 'it_admin';
   elsif exists (
     select 1
     from unnest(v_roles) as role
-    where role in ('principal', 'deputy_principal', 'counsellor_delegate', 'leadership_delegate')
-  ) then
-    v_tier := 'leadership';
-  elsif exists (
-    select 1
-    from unnest(v_roles) as role
-    where role in ('teacher', 'counsellor', 'it_staff')
+    where role in ('finance_admin', 'finance_read_only', 'board_member', 'property_manager', 'property_staff', 'teacher', 'counsellor', 'it_staff')
   ) then
     v_tier := 'operational_staff';
   end if;
@@ -38,6 +34,16 @@ begin
     v_operational_subtype := 'teacher';
   elsif exists (select 1 from unnest(v_roles) as role where role = 'counsellor') then
     v_operational_subtype := 'counsellor';
+  elsif exists (select 1 from unnest(v_roles) as role where role = 'finance_admin') then
+    v_operational_subtype := 'finance_admin';
+  elsif exists (select 1 from unnest(v_roles) as role where role = 'finance_read_only') then
+    v_operational_subtype := 'finance_read_only';
+  elsif exists (select 1 from unnest(v_roles) as role where role = 'board_member') then
+    v_operational_subtype := 'board_member';
+  elsif exists (select 1 from unnest(v_roles) as role where role = 'property_manager') then
+    v_operational_subtype := 'property_manager';
+  elsif exists (select 1 from unnest(v_roles) as role where role = 'property_staff') then
+    v_operational_subtype := 'property_staff';
   elsif exists (select 1 from unnest(v_roles) as role where role = 'it_staff') then
     v_operational_subtype := 'it_staff';
   end if;

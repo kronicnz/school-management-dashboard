@@ -2,7 +2,7 @@ insert into public.user_roles (id, profile_id, role, active, created_at, updated
 select
   gen_random_uuid(),
   p.id,
-  'principal', -- or other role
+  'it_admin', -- or other role
   true,
   now(),
   now()

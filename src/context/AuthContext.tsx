@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { getAppUrl } from "../lib/app-url"
 import type { AuthUser, AuthContextType } from "../lib/api/database.types"
@@ -8,11 +8,18 @@ import {
   clearStoredMockPersonaId,
   createMockSession,
   createMockUser,
+  getAvailableMockPersonas,
   getMockPersona,
   getStoredMockPersonaId,
-  mockAuthPersonas,
   setStoredMockPersonaId,
 } from "../lib/mock-auth"
+import {
+  clearStoredActiveRole,
+  getStoredActiveRole,
+  setStoredActiveRole,
+} from "../lib/mock-auth"
+import { defaultActiveRole, normalizeRoles } from "../lib/access/permissions"
+import { isAppRole, type AppRole } from "../lib/access/registry"
 
 function normalizeAuthUser(
   user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null
@@ -62,19 +69,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
   const [loading, setLoading] = useState(!initialMockPersona)
   const [mockPersonaId, setMockPersonaId] = useState<string | null>(initialMockPersonaId)
+  const [activeRoleOverride, setActiveRoleOverride] = useState<AppRole | null>(() => {
+    const stored = getStoredActiveRole()
+    return stored && isAppRole(stored) ? stored : null
+  })
+
+  // The override is only honoured while the user still holds the role, so
+  // dropping a grant never leaves a stale badge on screen.
+  const activeRole = useMemo(() => {
+    const roles = normalizeRoles(user?.roles)
+    if (activeRoleOverride && roles.includes(activeRoleOverride)) {
+      return activeRoleOverride
+    }
+    return defaultActiveRole(roles)
+  }, [activeRoleOverride, user?.roles])
+
+  const setActiveRole = useCallback((role: AppRole) => {
+    setActiveRoleOverride(role)
+    setStoredActiveRole(role)
+  }, [])
 
   const syncMockPersona = useCallback((personaId: string | null) => {
     setMockPersonaId(personaId)
 
     if (!personaId) {
       clearStoredMockPersonaId()
+      clearStoredActiveRole()
+      setActiveRoleOverride(null)
       setUser(null)
       setSession(null)
       setLoading(true)
       return
     }
 
-    const persona = getMockPersona(personaId) ?? mockAuthPersonas[0]
+    // getMockPersona returns null in a build with the sandbox switched off, so
+    // this is the backstop: a caller cannot replace the real user with a
+    // fabricated one even if it passes a persona id straight through.
+    const persona = getMockPersona(personaId)
+    if (!persona) {
+      clearStoredMockPersonaId()
+      clearStoredActiveRole()
+      setActiveRoleOverride(null)
+      setMockPersonaId(null)
+      setUser(null)
+      setSession(null)
+      setLoading(true)
+      return
+    }
+
     const mockUser = createMockUser(persona)
     setStoredMockPersonaId(persona.id)
     setUser(mockUser)
@@ -84,7 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (mockPersonaId) {
-      const persona = getMockPersona(mockPersonaId) ?? mockAuthPersonas[0]
+      const persona = getMockPersona(mockPersonaId)
+      if (!persona) {
+        setMockPersonaId(null)
+        return
+      }
       const mockUser = createMockUser(persona)
       setUser(mockUser)
       setSession(createMockSession(mockUser))
@@ -173,13 +219,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!client) return
     const { error } = await client.auth.signOut()
     if (error) throw error
+    clearStoredActiveRole()
+    setActiveRoleOverride(null)
     setUser(null)
     setSession(null)
   }, [mockPersonaId, syncMockPersona])
 
   const refreshSession = useCallback(async () => {
     if (mockPersonaId) {
-      const persona = getMockPersona(mockPersonaId) ?? mockAuthPersonas[0]
+      const persona = getMockPersona(mockPersonaId)
+      if (!persona) {
+        setMockPersonaId(null)
+        return
+      }
       const mockUser = createMockUser(persona)
       setSession(createMockSession(mockUser))
       setUser(mockUser)
@@ -201,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     syncMockPersona(null)
   }, [syncMockPersona])
 
-  const activeMockPersona = mockPersonaId ? getMockPersona(mockPersonaId) ?? mockAuthPersonas[0] : null
+  const activeMockPersona = mockPersonaId ? getMockPersona(mockPersonaId) : null
 
   const contextValue: AuthContextValue = {
     user,
@@ -212,10 +264,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     refreshSession,
     mockPersonaId,
-    mockPersonas: mockAuthPersonas,
+    mockPersonas: getAvailableMockPersonas(),
     activeMockPersona,
     setMockPersona,
     clearMockPersona,
+    activeRole,
+    setActiveRole,
   }
 
   return (

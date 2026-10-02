@@ -1,5 +1,3 @@
-export const leadershipRoles = ["counsellor", "principal", "deputy_principal", "counsellor_delegate", "leadership_delegate"]
-
 export function formatDate(value: string | null | undefined) {
   if (!value) return "-"
   const parsed = new Date(value)

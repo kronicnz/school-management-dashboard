@@ -7,14 +7,16 @@ alter table public.user_roles
   add constraint user_roles_role_check
   check (
     role in (
-      'teacher',
-      'counsellor',
-      'principal',
-      'deputy_principal',
-      'counsellor_delegate',
-      'leadership_delegate',
+      'site_admin',
+      'finance_admin',
+      'finance_read_only',
+      'board_member',
       'it_admin',
-      'it_staff'
+      'it_staff',
+      'property_manager',
+      'property_staff',
+      'teacher',
+      'counsellor'
     )
   );
 

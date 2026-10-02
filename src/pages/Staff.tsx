@@ -40,6 +40,10 @@ function getEmptyStaffForm(): StaffFormData {
   }
 }
 
+function normalizeStatValue(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase()
+}
+
 export default function StaffPage() {
   const toast = useToast()
   const [staff, setStaff] = useState<StaffDirectoryRow[]>([])
@@ -149,10 +153,24 @@ export default function StaffPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this staff member?")) return
+    // Removing a staff row does NOT revoke access: the auth account, its role
+    // grants, and its audit trail all survive. Revocation is an explicit action on
+    // the Admin page, so say this before the record disappears rather than letting
+    // an admin assume deleting a person signed them out.
+    const target = staff.find((member) => member.id === id)
+    const confirmed = window.confirm(
+      target
+        ? `Delete ${target.first_name} ${target.last_name}?\n\n`
+          + "This removes the staff record only. Any login, role grants, and account history "
+          + "are kept, and the person can still sign in. Revoke their access from the Admin "
+          + "page if that is what you intend."
+        : "Delete this staff member?\n\nThis removes the staff record only. Any login and role "
+          + "grants are kept."
+    )
+    if (!confirmed) return
     try {
       await deleteStaff(id)
-      toast.success("Staff deleted", "The staff record was removed.")
+      toast.success("Staff record deleted", "The login and any role grants were left untouched.")
       await loadStaff()
     } catch (error) {
       toast.error("Staff delete failed", getErrorMessage(error))
@@ -166,11 +184,21 @@ export default function StaffPage() {
   })
 
   const totalStaff = staff.length
-  const activeStaff = staff.filter((member) => member.status === "active").length
-  const inactiveStaff = staff.filter((member) => member.status === "inactive").length
-  const pendingStaff = staff.filter((member) => member.status === "pending").length
-  const teachers = staff.filter((member) => member.roles.some((role) => role.toLowerCase().includes("teacher"))).length
-  const departments = new Set(staff.map((member) => member.department).filter(Boolean)).size
+  const activeStaff = staff.filter((member) => normalizeStatValue(member.status) === "active").length
+  const inactiveStaff = staff.filter((member) => normalizeStatValue(member.status) === "inactive").length
+  // `staff.status` only ever holds active / inactive / on_leave. This used to count
+  // "pending", which the database check constraint rejects, so the tile was always
+  // zero - a metric that could not move is worse than no metric.
+  const onLeaveStaff = staff.filter((member) => normalizeStatValue(member.status) === "on_leave").length
+  // `teacher` is retired, so a `staff` grant is the teaching role now. Counting
+  // only the literal "teacher" string left this tile permanently at zero.
+  const teachingStaff = staff.filter((member) =>
+    member.roles.some((role) => {
+      const value = normalizeStatValue(role)
+      return value === "staff" || value.includes("teacher")
+    }),
+  ).length
+  const departments = new Set(staff.map((member) => member.department?.trim()).filter(Boolean)).size
 
   const staffColumns = [
     {
@@ -182,8 +210,8 @@ export default function StaffPage() {
         <div className="flex items-center gap-3 whitespace-nowrap">
           <TableAvatar>{`${row.first_name?.[0] ?? ""}${row.last_name?.[0] ?? ""}`.trim() || "S"}</TableAvatar>
           <div className="min-w-0">
-            <div className="font-medium text-white">{row.first_name} {row.last_name}</div>
-            <div className="text-xs text-slate-400">{row.org_unit_path || "No org unit"}</div>
+            <div className="font-medium text-[var(--color-text)]">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-[var(--color-muted)]">{row.org_unit_path || "No org unit"}</div>
           </div>
         </div>
       ),
@@ -193,7 +221,7 @@ export default function StaffPage() {
       header: "Email",
       sortable: true,
       className: "min-w-[260px]",
-      cell: (value: any) => <span className="text-slate-400">{value ?? "-"}</span>,
+      cell: (value: any) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span>,
     },
     {
       accessor: "status",
@@ -215,12 +243,12 @@ export default function StaffPage() {
         <div className="flex flex-wrap gap-1.5">
           {row.roles.length > 0 ? (
             row.roles.map((role) => (
-              <span key={role} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">
+              <span key={role} className="rounded-full border border-[var(--color-border)] bg-[var(--color-row-hover)] px-2 py-0.5 text-xs text-[var(--color-text)]">
                 {labelize(role)}
               </span>
             ))
           ) : (
-            <span className="text-slate-500">No roles</span>
+            <span className="text-[var(--color-muted)]">No roles</span>
           )}
         </div>
       ),
@@ -230,7 +258,7 @@ export default function StaffPage() {
       header: "Department",
       sortable: true,
       className: "whitespace-nowrap min-w-[180px]",
-      cell: (value: any) => <span className="text-slate-400">{value ?? "-"}</span>,
+      cell: (value: any) => <span className="text-[var(--color-muted)]">{value ?? "-"}</span>,
     },
     {
       accessor: "actions",
@@ -243,7 +271,7 @@ export default function StaffPage() {
             <Pencil className="size-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
-            <Trash2 className="size-4 text-rose-400" />
+            <Trash2 className="size-4 text-[var(--color-destructive)]" />
           </Button>
         </div>
       ),
@@ -258,51 +286,50 @@ export default function StaffPage() {
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-hidden">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Staff</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadStaff()}>
-            <RefreshCw className="size-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={handleAddStaff}>
-            <Plus className="size-4 mr-1" />
-            Add Staff
-          </Button>
-          <Button variant="default" size="sm" onClick={handleSync}>
-            <CloudDownload className="size-4 mr-1" />
-            Sync Google
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's actions only. */}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => loadStaff()}>
+          <RefreshCw className="size-4 mr-1" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={handleAddStaff}>
+          <Plus className="size-4 mr-1" />
+          Add Staff
+        </Button>
+        <Button variant="default" size="sm" onClick={handleSync}>
+          <CloudDownload className="size-4 mr-1" />
+          Sync Google
+        </Button>
       </div>
 
       <section className="mb-5 space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-white">Staff Overview</h2>
-          <p className="text-xs text-slate-400">Live roster counts and scope breakdown.</p>
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Staff Overview</h2>
+          <p className="text-xs text-[var(--color-muted)]">Live roster counts and scope breakdown.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Staff" value={totalStaff} icon={Plus} description="All staff identity records" accentClassName="text-cyan-300" />
-          <StatisticCard label="Active" value={activeStaff} icon={RefreshCw} description="Staff currently marked active" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Inactive" value={inactiveStaff} icon={Trash2} description="Staff currently marked inactive" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Pending" value={pendingStaff} icon={Clock3} description="Records awaiting activation" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Teachers" value={teachers} icon={School} description="Records in teaching roles" accentClassName="text-cyan-300" />
-          <StatisticCard label="Departments" value={departments} icon={Layers3} description="Unique departments represented" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Staff" value={totalStaff} icon={Plus} description="All staff identity records" tone="information" />
+          <StatisticCard label="Active" value={activeStaff} icon={RefreshCw} description="Staff currently marked active" tone="success" />
+          <StatisticCard label="Inactive" value={inactiveStaff} icon={Trash2} description="Staff currently marked inactive" tone="destructive" />
+          <StatisticCard label="On Leave" value={onLeaveStaff} icon={Clock3} description="Records currently marked on leave" tone="warning" />
+          <StatisticCard label="Teaching Staff" value={teachingStaff} icon={School} description="Records in teaching roles" tone="primary" />
+          <StatisticCard label="Departments" value={departments} icon={Layers3} description="Unique departments represented" tone="pending" />
         </StatisticGrid>
       </section>
 
-      <Card className="min-w-0 overflow-hidden border-white/10 p-0">
-        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-[var(--color-border)] p-0">
+        <CardHeader className="mb-0 flex-col items-start justify-start border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="text-base">Staff Directory</CardTitle>
-            <p className="mt-1 text-xs text-slate-400">Search, filter, and manage staff identity records. Role editing lives in Admin.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">Search, filter, and manage staff identity records. Role editing lives in Admin.</p>
           </div>
         </CardHeader>
 
         <CardContent className="min-w-0 space-y-4 px-0 py-0">
           <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div className="relative min-w-0">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <Input placeholder="Search staff..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full sm:w-52 sm:flex-none">
@@ -344,7 +371,7 @@ export default function StaffPage() {
             <FormField label="Department" htmlFor="staff-department">
               <Input id="staff-department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
             </FormField>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-row-hover)] px-3 py-2 text-xs text-[var(--color-muted)]">
               The staff record links to the matching profile automatically on save.
             </div>
           </div>

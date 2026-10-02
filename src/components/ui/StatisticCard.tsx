@@ -1,15 +1,52 @@
 import type { HTMLAttributes } from "react"
+import { Link } from "react-router-dom"
 import type { LucideIcon } from "lucide-react"
-import { Card, CardContent } from "./Card"
+import { Card } from "./Card"
 import { cn } from "../../utils/cn"
+import { valueClasses, valueSizeFor, type StatisticCardVariant } from "./statistic-scale"
+
+/**
+ * The single KPI primitive. Every module KPI header and every dashboard stat
+ * renders this component, so value scale, label treatment, radius, border, and
+ * hover behaviour cannot drift apart between modules.
+ *
+ * `tone` is a semantic name only. The mapping below resolves to the token scale
+ * in src/index.css, so no raw palette colour can reach a component.
+ */
+export type StatisticTone =
+  | "neutral"
+  | "primary"
+  | "success"
+  | "warning"
+  | "information"
+  | "pending"
+  | "destructive"
+  | "overdue"
+  | "completed"
+  | "inactive"
+
+const toneIconClasses: Record<StatisticTone, string> = {
+  neutral: "text-[var(--color-muted)]",
+  primary: "text-[var(--color-primary)]",
+  success: "text-[var(--color-success)]",
+  warning: "text-[var(--color-warning)]",
+  information: "text-[var(--color-information)]",
+  pending: "text-[var(--color-pending)]",
+  destructive: "text-[var(--color-destructive)]",
+  overdue: "text-[var(--color-overdue)]",
+  completed: "text-[var(--color-completed)]",
+  inactive: "text-[var(--color-inactive)]",
+}
 
 type StatisticCardProps = {
   label: string
   value: string | number
-  icon: LucideIcon
+  icon?: LucideIcon
   description?: string
-  accentClassName?: string
-  glowClassName?: string
+  tone?: StatisticTone
+  variant?: StatisticCardVariant
+  /** Makes the whole card a single link. Never render buttons inside it. */
+  href?: string
   className?: string
 }
 
@@ -18,42 +55,96 @@ export function StatisticCard({
   value,
   icon: Icon,
   description,
-  accentClassName = "text-cyan-300",
-  glowClassName = "from-cyan-400/25 via-cyan-400/10 to-transparent",
+  tone = "neutral",
+  variant = "primary",
+  href,
   className,
 }: StatisticCardProps) {
-  return (
-    <Card
-      className={cn(
-        "group relative overflow-hidden border-[var(--color-border)] bg-[var(--color-surface)] p-0 shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-muted)]",
-        className
-      )}
-    >
-      <div className={cn("absolute inset-x-0 top-0 h-px bg-gradient-to-r", glowClassName)} />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.06),_transparent_42%)]" />
-      <CardContent className="relative flex min-w-0 items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5">
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--color-muted)]">
-            {label}
-          </p>
-          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-[var(--color-text)] sm:text-[1.9rem]">
+  const interactive = Boolean(href)
+
+  const body =
+    variant === "compact" ? (
+      <div className="flex min-w-0 items-center justify-between gap-3 px-3.5 py-2 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          {Icon ? <Icon className={cn("size-4 shrink-0", toneIconClasses[tone])} aria-hidden="true" /> : null}
+          <span className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">{label}</span>
+        </div>
+          <span className={cn("shrink-0 whitespace-nowrap font-semibold tabular-nums leading-none text-[var(--color-text)]", valueClasses[variant])}>
             {value}
-          </p>
-          {description ? (
-            <p className="max-w-[28ch] text-[11px] leading-4 text-[var(--color-muted)]">{description}</p>
+          </span>
+      </div>
+    ) : (
+      <div
+        className={cn(
+          "flex h-full flex-col gap-2 px-3.5 py-3 sm:px-4",
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">{label}</p>
+          {Icon ? (
+            <span
+              className={cn(
+                "flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]",
+                toneIconClasses[tone],
+              )}
+            >
+              <Icon className="size-4" aria-hidden="true" />
+            </span>
           ) : null}
         </div>
-        <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] shadow-inner sm:size-14">
-          <div className={cn("absolute inset-0 bg-gradient-to-br opacity-80", glowClassName)} />
-          <Icon className={cn("relative size-4 sm:size-5", accentClassName)} />
-        </div>
-      </CardContent>
+        {/* whitespace-nowrap is deliberate: a number must never break across
+            lines, so an over-long value steps its size down instead of
+            wrapping. See statistic-scale.ts. */}
+        <p className={cn("whitespace-nowrap font-semibold tabular-nums leading-none tracking-tight text-[var(--color-text)]", valueClasses[variant], valueSizeFor(value, variant))}>
+          {value}
+        </p>
+        {description ? <p className="text-xs leading-5 text-[var(--color-muted)]">{description}</p> : null}
+      </div>
+    )
+
+  const card = (
+    <Card
+      className={cn(
+        "h-full p-0",
+        variant === "secondary" && "bg-[var(--color-surface-soft)]",
+        interactive && [
+          "transition-colors motion-reduce:transition-none",
+          "hover:border-[color-mix(in_srgb,var(--color-primary)_32%,var(--color-border))]",
+        ],
+        className,
+      )}
+    >
+      {body}
     </Card>
+  )
+
+  if (!href) {
+    return card
+  }
+
+  return (
+    <Link
+      to={href}
+      className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-canvas)]"
+    >
+      <span className="sr-only">Open {label}</span>
+      {card}
+    </Link>
   )
 }
 
 type StatisticGridProps = HTMLAttributes<HTMLDivElement>
 
+/**
+ * Two columns on small screens, then auto-fit. The minmax floor is sized so a
+ * currency value never truncates or wraps mid-number, and the value itself is
+ * clamped rather than shrunk with a smaller font.
+ */
 export function StatisticGrid({ className, ...props }: StatisticGridProps) {
-  return <div className={cn("grid gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]", className)} {...props} />
+  return (
+    <div
+      className={cn("grid grid-cols-2 gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]", className)}
+      {...props}
+    />
+  )
 }

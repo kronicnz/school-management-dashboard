@@ -249,8 +249,8 @@ export default function AttendancePage() {
         <div className="flex items-center gap-3">
           <TableAvatar>{value.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "S"}</TableAvatar>
           <div className="min-w-0">
-            <div className="font-medium text-white">{value}</div>
-            <div className="text-xs text-slate-400">Student record</div>
+            <div className="font-medium text-[var(--color-text)]">{value}</div>
+            <div className="text-xs text-[var(--color-muted)]">Student record</div>
           </div>
         </div>
       ),
@@ -260,7 +260,7 @@ export default function AttendancePage() {
       header: "Class",
       sortable: true,
       className: "min-w-[220px]",
-      cell: (value: string) => <span className="text-slate-400">{value}</span>,
+      cell: (value: string) => <span className="text-[var(--color-muted)]">{value}</span>,
     },
     {
       accessor: "status",
@@ -304,7 +304,7 @@ export default function AttendancePage() {
           <TableBadge tone={statusTone(row.status)}>
             {labelize(row.status)}
           </TableBadge>
-          {value ? <span className="text-xs text-amber-400">Unsaved</span> : <span className="text-xs text-emerald-400">Saved</span>}
+          {value ? <span className="text-xs text-[var(--color-warning)]">Unsaved</span> : <span className="text-xs text-[var(--color-success)]">Saved</span>}
         </div>
       ),
     },
@@ -327,31 +327,27 @@ export default function AttendancePage() {
 
   return (
     <div className="w-full max-w-full min-w-0 space-y-6">
-      <section className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]">School management</p>
-          <h1 className="mt-2 text-3xl font-bold text-[var(--color-text)]">Attendance Overview</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value)}
-            className="w-auto"
-          />
-          <Button variant="outline" size="sm" onClick={() => void loadData()}>
-            <RefreshCw className="mr-1 size-4" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-            <Plus className="mr-1 size-4" />
-            Add Record
-          </Button>
-          <Button size="sm" onClick={() => void handleSaveAll()} isLoading={saving} disabled={saving}>
-            <Save className="mr-1 size-4" />
-            Save Attendance
-          </Button>
-        </div>
+      {/* The app header already carries the page title, breadcrumb and role note, so
+          this row is the module's controls and actions only. */}
+      <section className="flex flex-wrap items-center justify-end gap-2">
+        <Input
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+          className="w-auto"
+        />
+        <Button variant="outline" size="sm" onClick={() => void loadData()}>
+          <RefreshCw className="mr-1 size-4" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+          <Plus className="mr-1 size-4" />
+          Add Record
+        </Button>
+        <Button size="sm" onClick={() => void handleSaveAll()} isLoading={saving} disabled={saving}>
+          <Save className="mr-1 size-4" />
+          Save Attendance
+        </Button>
       </section>
 
       <section className="space-y-3">
@@ -360,12 +356,12 @@ export default function AttendancePage() {
           <p className="text-xs text-[var(--color-muted)]">Live records for the selected date.</p>
         </div>
         <StatisticGrid>
-          <StatisticCard label="Total Records" value={summary.total} icon={CalendarClock} description="Entries captured for the selected date" accentClassName="text-cyan-300" />
-          <StatisticCard label="Present" value={summary.present} icon={CheckCircle2} description="Marked present in class" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
-          <StatisticCard label="Late" value={summary.late} icon={Clock3} description="Recorded after the start time" accentClassName="text-amber-300" glowClassName="from-amber-400/25 via-amber-400/10 to-transparent" />
-          <StatisticCard label="Absent" value={summary.absent} icon={XCircle} description="Missing from the attendance list" accentClassName="text-rose-300" glowClassName="from-rose-400/25 via-rose-400/10 to-transparent" />
-          <StatisticCard label="Excused" value={summary.excused} icon={RefreshCw} description="Absences approved or excused" accentClassName="text-cyan-300" />
-          <StatisticCard label="Attendance Rate" value={`${attendanceRate}%`} icon={Percent} description="Present rate for the selected date" accentClassName="text-emerald-300" glowClassName="from-emerald-400/25 via-emerald-400/10 to-transparent" />
+          <StatisticCard label="Total Records" value={summary.total} icon={CalendarClock} description="Entries captured for the selected date" tone="information" />
+          <StatisticCard label="Present" value={summary.present} icon={CheckCircle2} description="Marked present in class" tone="success" />
+          <StatisticCard label="Late" value={summary.late} icon={Clock3} description="Recorded after the start time" tone="warning" />
+          <StatisticCard label="Absent" value={summary.absent} icon={XCircle} description="Missing from the attendance list" tone="destructive" />
+          <StatisticCard label="Excused" value={summary.excused} icon={RefreshCw} description="Absences approved or excused" tone="pending" />
+          <StatisticCard label="Attendance Rate" value={`${attendanceRate}%`} icon={Percent} description="Present rate for the selected date" tone="completed" />
         </StatisticGrid>
       </section>
 
